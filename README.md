@@ -22,10 +22,11 @@
 #### Task 2.1 Testing of Suitable Initial Pipeline
 - Identication of candidates
 - Test end evaluate outputs (vibecheck)
-#### Task 2.2 Preparation of long-running execution
+#### Task 2.2 Definition and Development of Pipeline
+#### Task 2.3 Preparation of long-running execution
 - Specifiying the formats used
 - Performance metrics (pages/s)
-#### Task 2.3 Data Processing
+#### Task 2.4 Data Processing
 - Run process over dataset
 - Test with developed metrics
 
