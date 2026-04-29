@@ -7,7 +7,7 @@
 - test set with small quantity of pages (5-10) to check for object recognition metrics (60% mAP[50])
 
 ## Requirements
-- web interface with decent performance over a large quantity of pages (>10k)
+- web interface with decent performance over a large quantity of pages (>5k)
 - open source pipeline to replicate or adapt to other types of historical documents
 
 # Project Structure
@@ -44,4 +44,4 @@
 - Allow the displaying of all generated data
 
 #### Task 4.2 Stress-Testing of Webinterface
-- Test with 10k pages
+- Test with 5k pages
