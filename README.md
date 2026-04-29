@@ -9,3 +9,33 @@
 ## Requirements
 - web interface with decent performance over a large quantity of pages (>10k)
 - open source pipeline to replicate or adapt to other types of historical documents
+
+# Project Structure
+
+## WP 1 Dataset Preparation
+#### Task 1.1 Qualitative description of dataset
+#### Task 1.2 Quantitative description of dataset
+
+## WP 2 Data Processing
+#### Task 2.1 Testing of Suitable Initial Pipeline
+#### Task 2.2 Preparation of long-running execution
+- Specifiying the formats used
+- Performance metrics (pages/s)
+#### Task 2.3 Data Processing
+- Run process over dataset
+- Test with developed metrics
+
+## WP 3 Evaluation
+#### Task 3.1 Development of Test Sets (Ground Truth)
+- Clear definition of target data (e.g. pages with "sellos")
+- Manual selection of data based on targets (remove them from database)
+- Development of the datasets via manual/AI annotations
+#### Task 3.2 Development of Metrics and Evaluation Pipeline
+- Development of metrics with mock data
+- Development of evaluation pipeline (processes test set and compare with ground truth)
+
+## WP 4 Final Deliverable
+#### Task 4.1 Development of Webinterface according to defined formats
+
+#### Task 4.2 Stress-Testing of Webinterface
+- Test with 10k pages
