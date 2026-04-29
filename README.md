@@ -14,10 +14,14 @@
 
 ## WP 1 Dataset Preparation
 #### Task 1.1 Qualitative description of dataset
+- Idenfity how to the pages from different years differ
 #### Task 1.2 Quantitative description of dataset
+- Count the total number of pages and the necessary storage
 
 ## WP 2 Data Processing
 #### Task 2.1 Testing of Suitable Initial Pipeline
+- Identication of candidates
+- Test end evaluate outputs (vibecheck)
 #### Task 2.2 Preparation of long-running execution
 - Specifiying the formats used
 - Performance metrics (pages/s)
@@ -36,6 +40,7 @@
 
 ## WP 4 Final Deliverable
 #### Task 4.1 Development of Webinterface according to defined formats
+- Allow the displaying of all generated data
 
 #### Task 4.2 Stress-Testing of Webinterface
 - Test with 10k pages
