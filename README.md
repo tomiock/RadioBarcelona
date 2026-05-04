@@ -43,5 +43,5 @@
 #### Task 4.1 Development of Webinterface according to defined formats
 - Allow the displaying of all generated data
 
-#### Task 4.2 Stress-Testing of Webinterface
+#### Task 4.2 Stress-Testing of Web interface
 - Test with 5k pages
