@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+data
+output_dataset_pro_try/
+*.pyc
+*.pyo
+*.jpg
+*.jpeg
+*.png
+*.zip
+*.pdf
