@@ -3,6 +3,7 @@
 __pycache__/
 data
 output_dataset_pro_try/
+fonts/descartat/
 *.pyc
 *.pyo
 *.jpg
@@ -11,3 +12,4 @@ output_dataset_pro_try/
 *.zip
 *.pdf
 *.xcf
+*.tar.gz

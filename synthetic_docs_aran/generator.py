@@ -41,38 +41,38 @@ CONFIG = {
     "OPENAI_MODEL": os.environ.get("OPENAI_MODEL", "gpt-5-mini"),
 
     # Text base mecanografiat
-    "MIN_PROGRAM_LINES": 18,
-    "MAX_PROGRAM_LINES": 35,
-    "TYPEWRITER_FONT_MIN_SIZE": 26,
-    "TYPEWRITER_FONT_MAX_SIZE": 34,
-    "LINE_HEIGHT_MIN": 42,
-    "LINE_HEIGHT_MAX": 55,
+    "MIN_PROGRAM_LINES": 5, # Número de líneas del programa mecanografiado. Si el prompt de Gemini/OpenAI genera un número diferente, se ignora este rango y se usan las líneas generadas.     
+    "MAX_PROGRAM_LINES": 35, # 
+    "TYPEWRITER_FONT_MIN_SIZE": 14, # Tamaño mínimo de la fuente mecanografiada. Si el prompt de Gemini/OpenAI especifica un tamaño, se ignora este rango y se usa el tamaño generado.
+    "TYPEWRITER_FONT_MAX_SIZE": 50,
+    "LINE_HEIGHT_MIN": 12, # Altura mínima entre líneas del texto mecanografiado. Si el prompt de Gemini/OpenAI especifica una altura, se ignora este rango y se usa la altura generada.
+    "LINE_HEIGHT_MAX": 120,
 
     # Anotacions generades localment
-    "MIN_ANNOTATIONS": 25,
-    "MAX_ANNOTATIONS": 45,
+    "MIN_ANNOTATIONS": 1,
+    "MAX_ANNOTATIONS": 35,
 
     # Segells i censura forçats
-    "MIN_EXTRA_STAMPS": 2,
-    "MAX_EXTRA_STAMPS": 5,
-    "MIN_EXTRA_CENSORSHIP": 4,
-    "MAX_EXTRA_CENSORSHIP": 8,
+    "MIN_EXTRA_STAMPS": 0,
+    "MAX_EXTRA_STAMPS": 4,
+    "MIN_EXTRA_CENSORSHIP": 0,
+    "MAX_EXTRA_CENSORSHIP": 3,
 
     # Probabilitats d’assets reals
-    "REAL_STAMP_PROB": 0.90,
-    "EXTRA_STAMP_PROB": 0.65,
+    "REAL_STAMP_PROB": 0.90, # Probabilitat de posar un segell real en comptes de dibuixar-lo. Si no hi ha assets, ignora aquesta probabilitat i no posa segells.
+    "EXTRA_STAMP_PROB": 0.75, # Probabilitat de posar segells extra addicionals a les anotacions, a part dels que surten al text. Aquests segells extra no tenen perquè estar associats a cap frase concreta, poden estar repartits per la pàgina.
 
     "EXTRA_CENSORSHIP_PROB": 0.90,
 
-    "PATCH_PROB": 0.04,
+    "PATCH_PROB": 0.14,
 
-    "ERASURE_PROB": 0.35,
-    "MIN_EXTRA_ERASURES": 2,
-    "MAX_EXTRA_ERASURES": 4,
+    "ERASURE_PROB": 0.80,
+    "MIN_EXTRA_ERASURES": 0,
+    "MAX_EXTRA_ERASURES": 15,
 
-    "TABLE_PROB": 0.05,
+    "TABLE_PROB": 0.45,
 
-    "STAIN_PROB": 0.15,
+    "STAIN_PROB": 0.20,
 
     # Concurrència
     "MAX_CONCURRENT_TASKS": 2,
@@ -138,6 +138,11 @@ class GeminiTextGenerator:
             openai_key = os.environ.get("OPENAI_API_KEY")
             if openai_key:
                 self.openai_client = AsyncOpenAI(api_key=openai_key)
+                print("✅ OpenAI client ready")
+            else:
+                print("⚠️ USE_OPENAI=true però falta OPENAI_API_KEY")
+        elif CONFIG["USE_OPENAI"] and not OPENAI_AVAILABLE:
+            print("⚠️ USE_OPENAI=true però falta instal·lar openai")
 
 
 
@@ -199,38 +204,39 @@ class GeminiTextGenerator:
         INSTRUCCIÓN IMPORTANTE: Debes generar ENTRE {target_annotations} y {target_annotations + 4} anotaciones de diferentes tipos de la lista.
         """
 
-        if not self.client:
-            local_gen = LocalRadioTextGenerator()
-            return local_gen.generate()
-
-        try:
-            # Using client.aio for asynchronous SDK requests
-            response = await self.client.aio.models.generate_content(
-                model=self.model_id,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.7
-                )
-            )
-            return json.loads(response.text)
-
-        except Exception as e:
-            print(f"⚠️ Gemini generation failed: {type(e).__name__}: {e}")
-
-            if self.openai_client:
-                try:
-                    response = await self.openai_client.responses.create(
-                        model=CONFIG["OPENAI_MODEL"],
-                        input=prompt
+        # 1) Primer intentem Gemini, si està activat i disponible
+        if self.client:
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model=self.model_id,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.7
                     )
-                    return json.loads(response.output_text)
-                except Exception as oe:
-                    print(f"⚠️ OpenAI generation failed: {type(oe).__name__}: {oe}")
+                )
+                print("🟢 Using Gemini")
+                return json.loads(response.text)
 
+            except Exception as e:
+                print(f"⚠️ Gemini generation failed: {type(e).__name__}: {e}")
 
-            local_gen = LocalRadioTextGenerator()
-            return local_gen.generate()
+        # 2) Si Gemini no està activat o falla, intentem OpenAI
+        if self.openai_client:
+            try:
+                response = await self.openai_client.responses.create(
+                    model=CONFIG["OPENAI_MODEL"],
+                    input=prompt
+                )
+                print("🟣 Using OpenAI")
+                return json.loads(response.output_text)
+
+            except Exception as oe:
+                print(f"⚠️ OpenAI generation failed: {type(oe).__name__}: {oe}")
+
+        # 3) Si tot falla, generador local
+        local_gen = LocalRadioTextGenerator()
+        return local_gen.generate()
 
 # class SemanticLogicEngine:
 #     def __init__(self, use_llm: bool = False, llm_base_url: str = ""):
@@ -320,7 +326,7 @@ class LocalRadioTextGenerator:
         lines = []
         chosen_times = [
             f"{random.randint(6, 23):02d}:{random.choice(['00', '15', '30', '45'])}"
-            for _ in range(random.randint(18, 35))
+            for _ in range(random.randint(CONFIG["MIN_PROGRAM_LINES"], CONFIG["MAX_PROGRAM_LINES"]))
         ]
 
         for idx, t in enumerate(chosen_times, start=1):
@@ -334,7 +340,7 @@ class LocalRadioTextGenerator:
         documento_base = title + "\n" + "\n".join(lines)
 
         anotaciones = []
-        for _ in range(random.randint(25, 45)): # CONFIGURAR: número de anotaciones por documento
+        for _ in range(random.randint(CONFIG["MIN_ANNOTATIONS"], CONFIG["MAX_ANNOTATIONS"])): # CONFIGURAR: número de anotaciones por documento
             tipo = random.choices(
                 [
                     "insercion",
@@ -392,14 +398,14 @@ class LocalRadioTextGenerator:
                     "texto_a_tachar": texto_a_tachar
                 })
 
-        for _ in range(random.randint(2, 5)):
+        for _ in range(random.randint(CONFIG["MIN_EXTRA_STAMPS"], CONFIG["MAX_EXTRA_STAMPS"])):
             anotaciones.append({
                 "tipo": "sello",
                 "texto": random.choice(["REVISADO", "CENSURADO", "APROBADO", "ORIGINAL", "NULO"]),
                 "texto_a_tachar": None
             })
 
-        for _ in range(random.randint(4, 8)):
+        for _ in range(random.randint(CONFIG["MIN_EXTRA_CENSORSHIP"], CONFIG["MAX_EXTRA_CENSORSHIP"])):
             target_line = random.choice(lines)
             words = target_line.split()
             target = " ".join(words[:random.randint(2, min(6, len(words)))])
@@ -418,7 +424,7 @@ class LocalRadioTextGenerator:
 
 
 
-
+'''
 class TextGenerator:
     def __init__(self):
         self.paragraphs = [
@@ -471,6 +477,7 @@ class TextGenerator:
                 if random.random() > 0.5:
                     lines.append(f"  NOTAS: {para}\n")
             return header + "\n".join(lines)
+'''
 
 class LayerRenderer:
     def __init__(self, width=1654, height=2339):
@@ -560,7 +567,10 @@ class LayerRenderer:
 
     def get_document_typewriter_font(self):
         # Pick one specific machine font and size for the entire document
-        size = random.randint(26, 34)
+        size = random.randint(
+            CONFIG["TYPEWRITER_FONT_MIN_SIZE"],
+            CONFIG["TYPEWRITER_FONT_MAX_SIZE"]
+        )
         if self.tw_fonts_paths:
             try:
                 return ImageFont.truetype(random.choice(self.tw_fonts_paths), size)
@@ -698,7 +708,10 @@ class LayerRenderer:
 
         margin_x, margin_y = random.randint(120, 200), random.randint(150, 250)
         current_y = margin_y
-        line_height = random.randint(42, 55)
+        line_height = random.randint(
+            CONFIG["LINE_HEIGHT_MIN"],
+            CONFIG["LINE_HEIGHT_MAX"]
+        )
         word_boxes = []
         base_ink = (random.randint(10, 60), random.randint(10, 60), random.randint(10, 80))
 
@@ -986,7 +999,7 @@ class LayerRenderer:
             elif tipo == "sello":
                 # Primer intentem fer servir un segell REAL de assets/stamps/.
                 # Si no n'hi ha, o aleatòriament no toca, fem servir el comportament antic.
-                if self.stamp_paths and random.random() > 0.1: # 90% de probabilitat de usar un segell real si hay disponibles
+                if self.stamp_paths and random.random() < CONFIG["REAL_STAMP_PROB"]: # 90% de probabilitat de usar un segell real si hay disponibles
                     used_stamp = self._paste_asset_random(
                         img,
                         self.stamp_paths,
@@ -1281,6 +1294,9 @@ class DatasetOrchestrator:
         l0_white.save(os.path.join(sample_dir, "image_layer0_clean.png"))
         l1_white.save(os.path.join(sample_dir, "image_layer1_clean.png"))
 
+        #print("TEXT PREVIEW:", texto_base[:200])
+        #print("N ANOTACIONS:", len(anotaciones))
+
     # NEW: Async orchestrator function for a single item
     async def process_item(self, i: int, pbar: tqdm):
         # 1. Await the IO-bound API request
@@ -1297,7 +1313,7 @@ async def main():
     # Nombre de mostres a generar.
     # Pots canviar-ho amb una variable d'entorn sense editar el fitxer:
     #   TOTAL_SAMPLES=100 python generator.py
-    TOTAL_SAMPLES = int(os.environ.get("TOTAL_SAMPLES", "3"))
+    TOTAL_SAMPLES = CONFIG["TOTAL_SAMPLES"]
 
     print(f"Generating {TOTAL_SAMPLES} highly advanced samples asynchronously...")
 
@@ -1314,8 +1330,8 @@ async def main():
     # 60 seconds / 850 requests = ~0.07 seconds between starting each request.
     #REQUEST_DELAY = 0.07
     #MAX_CONCURRENT_TASKS = 60 # Prevent memory explosion from too many heavy image generations at once
-    MAX_CONCURRENT_TASKS = 1
-    REQUEST_DELAY = 2.0
+    MAX_CONCURRENT_TASKS = CONFIG["MAX_CONCURRENT_TASKS"]
+    REQUEST_DELAY = CONFIG["REQUEST_DELAY"]
 
     orch = DatasetOrchestrator("output_dataset_pro_try")
 
