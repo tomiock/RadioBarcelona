@@ -221,6 +221,18 @@ def classify_crops(model: nn.Module, records: list[dict],
 
 # ── Tesseract (typewritten lines) ─────────────────────────────────────────────
 
+def _tessdata_dir() -> str:
+    """Detect the tessdata directory from the tesseract binary to avoid
+    TESSDATA_PREFIX not being propagated into the subprocess."""
+    import re
+    result = subprocess.run(
+        ["tesseract", "--list-langs"], capture_output=True, text=True
+    )
+    # output: 'List of available languages in "/path/to/tessdata/" (N):'
+    m = re.search(r'in "([^"]+)"', result.stdout + result.stderr)
+    return m.group(1).rstrip("/") if m else ""
+
+
 def run_tesseract_batch(records: list[dict], lang: str) -> None:
     """OCR typewritten line crops with Tesseract PSM 7 (single text line)."""
     try:
@@ -231,7 +243,9 @@ def run_tesseract_batch(records: list[dict], lang: str) -> None:
             rec["ocr_text"] = ""
         return
 
-    config = f"--psm 7 --oem 3 -l {lang}"
+    tessdata = _tessdata_dir()
+    tessdata_flag = f"--tessdata-dir {tessdata}" if tessdata else ""
+    config = f"--psm 7 --oem 3 -l {lang} {tessdata_flag}".strip()
     for rec in records:
         img = cv2.imread(str(rec["crop_path"]))
         if img is None:
