@@ -14,7 +14,7 @@ set -euo pipefail
 
 # ── configurable paths ────────────────────────────────────────────────────────
 BATCH=${BATCH:-64}
-LANG=${LANG:-"spa+cat"}
+TESS_LANG=${TESS_LANG:-"spa+cat"}   # avoid $LANG — that's the system locale
 LOGHI_DOCKER=${LOGHI_DOCKER:-"loghi/docker.htr:2.3.0"}
 
 PDF_IMAGES_BASE="/data/storage/datasets/RadioBarcelona/pdf_images"
@@ -78,7 +78,7 @@ conda run -n docs python "$PIPELINE" \
     --work-dir       "$WORK_DIR" \
     --output-xml-dir "$OUTPUT_XML_DIR" \
     --batch-size     "$BATCH" \
-    --tesseract-lang "$LANG" \
+    --tesseract-lang "$TESS_LANG" \
     $LOGHI_ARGS \
     2>&1 | grep -v "WARN\|grfmt"
 
