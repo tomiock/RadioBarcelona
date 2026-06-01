@@ -1,33 +1,25 @@
+# Local environments and secrets
+.venv/
+venv/
+env/
+synthetic_docs_aran/.env
+__pycache__/
 
 data
 output_dataset_pro_try/
 fonts/descartat/
+
 *.pyc
 *.pyo
 *.zip
 *.xcf
 *.tar.gz
 
-# Python environments
-.venv/
-venv/
-env/
-__pycache__/
-
-# Synthetic generated outputs
-synthetic_docs_aran/output_dataset_pro_try/
-synthetic_docs_aran/output_dataset*/
-synthetic_docs_aran/**/all_final_images/
-
-# Stamp detection generated outputs
-outputs/
-runs/
-stamp_dataset/
-
 # Model weights
 *.pt
 *.pth
 *.onnx
+
 
 # OS/editor
 .DS_Store
@@ -35,3 +27,17 @@ synthetic_docs_aran/.env
 node_modules/
 prototypes/node_modules/
 prototypes/images/node_modules/
+
+# Stamp detection generated artifacts
+synthetic_docs_aran/output_dataset_pro_try/
+synthetic_docs_aran/output_dataset*/
+synthetic_docs_aran/**/all_final_images/
+stamp_dataset/
+stamp_dataset_nofilter/
+outputs/
+runs/
+stamp_dataset/
+
+
+
+
