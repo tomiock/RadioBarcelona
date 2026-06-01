@@ -613,7 +613,7 @@ class LayerRenderer:
 
     def _paste_asset_random(self, canvas: Image.Image, asset_paths: List[str],
                             min_scale: float = 0.4, max_scale: float = 0.9,
-                            rotation: float = 45.0, margin: int = 100) -> bool:
+                            rotation: float = 45.0, margin: int = 100, asset_class: str = "asset") -> dict | None:
         """
         Enganxa un asset en una posició aleatòria de la capa.
 
@@ -647,8 +647,15 @@ class LayerRenderer:
 
         x = random.randint(margin, self.width - asset.width - margin)
         y = random.randint(margin, self.height - asset.height - margin)
+
         canvas.paste(asset, (x, y), asset)
-        return True
+        return {
+        "class": asset_class,
+        "bbox": {"x1": x, "y1": y, "x2": x + asset.width, "y2": y + asset.height},
+        "confidence": 1.0,
+        "source": "synthetic_generator"
+        }
+    
 
     def _paste_asset_over_box(self, canvas: Image.Image, asset_paths: List[str],
                               box: Tuple[int, int, int, int],
@@ -797,6 +804,8 @@ class LayerRenderer:
             (10, 30, 150, 240), (20, 20, 20, 250), (180, 20, 20, 230),
             (20, 100, 30, 220), (90, 40, 140, 200), (80, 90, 100, 210)
         ]
+
+        stamp_detections = []
 
         for ano in anotaciones:
             if not isinstance(ano, dict):
@@ -1006,9 +1015,11 @@ class LayerRenderer:
                         min_scale=0.35,
                         max_scale=0.85,
                         rotation=45.0,
-                        margin=80
+                        margin=80,
+                        asset_class="official_stamp"
                     )
                     if used_stamp:
+                        stamp_detections.append(used_stamp)
                         continue
 
                 use_iam_for_stamp = self.iam_images and (random.random() > 0.3)
@@ -1058,6 +1069,12 @@ class LayerRenderer:
                     txt_img = txt_img.rotate(random.uniform(-45, 45), expand=1)
                     x, y = int(random.randint(50, self.width - 600)), int(random.randint(100, self.height - 400))
                     img.paste(txt_img, (x, y), txt_img)
+                    stamp_detections.append({
+                        "class": "synthetic_stamp",
+                        "bbox": {"x1": x, "y1": y, "x2": x + txt_img.width, "y2": y + txt_img.height},
+                        "confidence": 1.0,
+                        "source": "synthetic_generator"
+                    })
 
         # Pegats reals opcionals: són independents de les anotacions textuals.
         # Exemple: paper enganxat, cinta, fragments físics. Es posa molt poc sovint
@@ -1125,7 +1142,7 @@ class LayerRenderer:
 
 
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.0)))
-        return img
+        return img, stamp_detections
 
 class AugmentationPipeline:
     def __init__(self, width: int, height: int):
@@ -1270,8 +1287,8 @@ class DatasetOrchestrator:
         anotaciones = data.get("anotaciones", [])
 
         # CPU BOUND WORK
-        l0_img, word_boxes = self.renderer.render_layer0(texto_base)
-        l1_img = self.renderer.render_layer1(word_boxes, anotaciones)
+        l0_img, word_boxes = self.renderer.render_layer0(texto_base)        
+        l1_img, stamp_detections = self.renderer.render_layer1(word_boxes, anotaciones)
         final_img = self.aug_pipe.composite(l0_img, l1_img)
 
         # IO BOUND (Disk)
@@ -1283,6 +1300,26 @@ class DatasetOrchestrator:
 
         with open(os.path.join(sample_dir, "text_annotations.json"), "w", encoding="utf-8") as f:
             json.dump(anotaciones, f, indent=4, ensure_ascii=False)
+        
+        with open(os.path.join(sample_dir, "stamp_detections.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "document_id": f"synthetic_{i:04d}",
+                "page": 1,
+                "image": f"final_merged_{i:04d}.jpg",
+                "stamp_detections": [
+                    {
+                        "id": f"stamp_{i:04d}_{j:03d}",
+                        "class": det.get("class", "official_stamp"),
+                        "bbox": det["bbox"],
+                        "confidence": det.get("confidence", 1.0),
+                        "crop_path": None,
+                        "mask_path": None,
+                        "ocr_text": None,
+                        "notes": "synthetic ground truth"
+                    }
+                    for j, det in enumerate(stamp_detections, start=1)
+                ]
+            }, f, indent=2, ensure_ascii=False)
 
         final_filename = f"final_merged_{i:04d}.jpg"
         final_img.save(os.path.join(self.finals_dir, final_filename), quality=random.randint(70, 95))
