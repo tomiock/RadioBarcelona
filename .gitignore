@@ -32,3 +32,6 @@ stamp_dataset/
 # OS/editor
 .DS_Store
 synthetic_docs_aran/.env
+node_modules/
+prototypes/node_modules/
+prototypes/images/node_modules/
