@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--synthetic-root', required=True, help='Folder with sample_XXXX and all_final_images')
     parser.add_argument('--output', required=True, help='YOLO dataset output folder')
     parser.add_argument('--val-ratio', type=float, default=0.2)
+    parser.add_argument('--min-box-size', type=int, default=40)
     args = parser.parse_args()
 
     root = Path(args.synthetic_root)
@@ -56,9 +57,18 @@ def main():
         lines = []
         for det in detections:
             bbox = det.get('bbox')
+
             if isinstance(bbox, dict):
                 bbox = [bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2']]
+
             if bbox:
+                x1, y1, x2, y2 = bbox
+                box_w = x2 - x1
+                box_h = y2 - y1
+
+                if box_w < args.min_box_size or box_h < args.min_box_size:
+                    continue
+
                 lines.append(yolo_line_from_bbox(bbox, w, h, 0))
         if not lines:
             continue
