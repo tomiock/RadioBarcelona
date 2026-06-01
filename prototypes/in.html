@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-File Viewer with OCR & Search</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --gradient-start: #e0eafc;
+            --gradient-end: #cfdef3;
+            --card-bg: white;
+            --card-hover-shadow: rgba(0,0,0,0.15);
+            --panel-bg: white;
+            --border-color: #eee;
+            --border-dark: #ddd;
+            --btn-bg: #f0f0f0;
+            --btn-hover: #e0e0e0;
+            --btn-text: #555;
+            --heading-color: #666;
+            --img-bg: #fff;
+            --line-color: rgba(0, 0, 0, 0.2);
+            --input-bg: white;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --gradient-start: #1a1a2e;
+            --gradient-end: #16213e;
+            --card-bg: #1e1e1e;
+            --card-hover-shadow: rgba(0,0,0,0.5);
+            --panel-bg: #1e1e1e;
+            --border-color: #333;
+            --border-dark: #444;
+            --btn-bg: #333;
+            --btn-hover: #444;
+            --btn-text: #ccc;
+            --heading-color: #aaa;
+            --img-bg: #222;
+            --line-color: rgba(255, 255, 255, 0.2);
+            --input-bg: #2a2a2a;
+        }
+
+        /* Base Layout */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #themeToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-weight: 500;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+        
+        #themeToggle:hover {
+            background: var(--btn-hover);
+        }
+
+        /* --- File Selection Screen (Upper Level) --- */
+        #fileSelectionScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            overflow-y: auto;
+        }
+
+        .search-container {
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 600px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            outline: none;
+            transition: box-shadow 0.2s, background 0.3s, color 0.3s;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        #searchInput:focus {
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.3);
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .file-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px var(--card-hover-shadow);
+        }
+
+        .file-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-card-title {
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        /* --- Main Viewer Interface --- */
+        #mainViewer {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .viewer-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            gap: 60px;
+        }
+
+        #pagesContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 80px;
+            width: 100%;
+        }
+
+        .image-wrapper {
+            position: relative;
+            height: 85vh;
+            aspect-ratio: 1 / 1.414;
+            background-color: var(--img-bg);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            transition: background-color 0.3s;
+        }
+
+        .image-wrapper img {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out, box-shadow 0.5s ease-in-out;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Z-index hierarchy */
+        .img-original { z-index: 1; }
+        .img-layer1 { z-index: 2; }
+        .img-layer2 { z-index: 3; }
+        .text-layer { z-index: 4; } /* Text sits on top of everything */
+
+        /* OCR Text Layer */
+        .text-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Let clicks pass through where there is no text */
+        }
+
+        .text-layer span {
+            position: absolute;
+            color: transparent; /* Invisible text */
+            cursor: text;
+            pointer-events: auto; /* Allow selection on the text itself */
+            transform-origin: top left;
+            white-space: pre;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        /* Visible selection styling */
+        .text-layer span::selection {
+            background: rgba(0, 120, 255, 0.3);
+            color: transparent;
+        }
+
+        /* View States */
+        .img-original { opacity: 1; }
+        .img-layer1 { opacity: 0; transform: translateX(0); box-shadow: 0 0 0 0 var(--line-color); }
+        .img-layer2 { opacity: 0; transform: translateX(0); box-shadow: 0 0 0 0 var(--line-color); }
+
+        .show-layers .img-original { opacity: 0; }
+        .show-layers.show-l1 .img-layer1 { opacity: 1; }
+        .show-layers.show-l2 .img-layer2 { opacity: var(--l2-opacity, 0.8); }
+
+        .show-layers.is-separated .img-layer1 { transform: translateX(-50%); box-shadow: 0 0 0 1px var(--line-color); }
+        .show-layers.is-separated .img-layer2 { transform: translateX(50%); opacity: 1; box-shadow: 0 0 0 1px var(--line-color); }
+
+        /* Slide the text layer with Layer 1 when separated */
+        .show-layers.is-separated .text-layer { transform: translateX(-50%); transition: transform 0.5s ease-in-out; }
+        .text-layer { transition: transform 0.5s ease-in-out; }
+
+        /* Right Side: Control Menu */
+        .controls-area {
+            width: 320px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-dark);
+            padding: 32px 24px;
+            display: flex; flex-direction: column; gap: 32px;
+            box-shadow: -4px 0 12px rgba(0,0,0,0.05);
+            z-index: 10;
+            overflow-y: auto;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .top-controls {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 16px; border-bottom: 1px solid var(--border-color);
+            transition: border-color 0.3s;
+        }
+        .back-btn {
+            background: var(--btn-bg); border: none; padding: 8px 16px; border-radius: 6px;
+            cursor: pointer; font-weight: 600; color: var(--btn-text); transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover { background: var(--btn-hover); }
+        #currentFileTitle { margin: 0; font-size: 16px; color: var(--text-color); transition: color 0.3s; }
+
+        .control-group { display: flex; flex-direction: column; gap: 16px; }
+        .control-group h3 { margin: 0; font-size: 14px; text-transform: uppercase; color: var(--heading-color); letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; transition: color 0.3s, border-color 0.3s; }
+        .radio-option, .checkbox-option { display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; color: var(--text-color); transition: color 0.3s; }
+        input[type="radio"], input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .layer-controls { display: flex; flex-direction: column; gap: 16px; transition: opacity 0.3s ease; }
+        .layer-controls.disabled { opacity: 0.4; pointer-events: none; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; font-weight: 500; margin-top: 8px; color: var(--text-color); transition: color 0.3s; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        
+        .slider-container label { transition: color 0.3s; color: var(--text-color) !important; }
+        
+        #fileSelectionScreen h1 {
+            color: var(--text-color) !important;
+            transition: color 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="themeToggle">Toggle Dark Mode</button>
+
+    <!-- Upper Level: File Selection -->
+    <div id="fileSelectionScreen">
+        <h1 style="margin-bottom: 20px;">Document Library</h1>
+
+        <div class="search-container">
+            <input type="search" id="searchInput" placeholder="Search for text inside documents...">
+        </div>
+
+        <div class="file-grid" id="fileGrid">
+            <!-- Cards injected via JS -->
+        </div>
+    </div>
+
+    <!-- Main Viewer -->
+    <div id="mainViewer">
+        <div class="viewer-area">
+            <div id="pagesContainer"></div>
+        </div>
+
+        <div class="controls-area">
+            <div class="top-controls">
+                <button class="back-btn" onclick="closeFile()">← Back</button>
+                <h3 id="currentFileTitle">File</h3>
+            </div>
+            <div class="control-group">
+                <h3>View Mode</h3>
+                <label class="radio-option"><input type="radio" name="viewMode" value="original" checked> Original Image</label>
+                <label class="radio-option"><input type="radio" name="viewMode" value="layers"> Overlapping Layers</label>
+            </div>
+            <div class="control-group layer-controls disabled" id="layerControls">
+                <h3>Layer Options</h3>
+                <label class="checkbox-option"><input type="checkbox" id="toggleLayer1" checked> Show Layer 1 (Text)</label>
+                <label class="checkbox-option"><input type="checkbox" id="toggleLayer2" checked> Show Layer 2</label>
+                <div class="slider-container" style="margin-top: 8px;">
+                    <label style="font-size: 14px; display: flex; justify-content: space-between;">
+                        Layer 2 Opacity <span id="opacityLabel">80%</span>
+                    </label>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="80">
+                </div>
+                <div class="toggle-row">
+                    <span>Separate Layers</span>
+                    <label class="switch"><input type="checkbox" id="separateToggle"><span class="slider"></span></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+
+    <script>
+        // 0. THEME TOGGLE
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // 1. DATA STRUCTURE (Now includes thumbs and OCR data)
+        const fileGrid = document.getElementById('fileGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        // 2. SEARCH AND RENDERING LOGIC
+        function renderFileGrid(searchTerm = "") {
+            fileGrid.innerHTML = ''; // Clear grid
+            const term = searchTerm.toLowerCase();
+
+            Object.values(filesData).forEach(file => {
+                // Check if search term is in the title
+                let matchFound = file.title.toLowerCase().includes(term);
+
+                // If not in title, search through all OCR text in all pages
+                if (!matchFound) {
+                    for (let page of file.pages) {
+                        if (page.ocr) {
+                            for (let word of page.ocr) {
+                                if (word.text.toLowerCase().includes(term)) {
+                                    matchFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (matchFound) break;
+                    }
+                }
+
+                // If match is found (or no search term), render the card
+                if (matchFound || term === "") {
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    card.onclick = () => openFile(file.id);
+                    card.innerHTML = `
+                        <img src="${file.thumb}" alt="${file.title} preview" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22200%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23ddd%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23888%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                        <div class="file-card-title">${file.title}</div>
+                    `;
+                    fileGrid.appendChild(card);
+                }
+            });
+        }
+
+        // Initialize Search listener
+        searchInput.addEventListener('input', (e) => {
+            renderFileGrid(e.target.value);
+        });
+
+        // Render initially
+        renderFileGrid();
+
+        // 3. VIEWER LOGIC (Now includes text injection)
+        const fileSelectionScreen = document.getElementById('fileSelectionScreen');
+        const mainViewer = document.getElementById('mainViewer');
+        const pagesContainer = document.getElementById('pagesContainer');
+        const currentFileTitle = document.getElementById('currentFileTitle');
+
+        function openFile(fileId) {
+            const fileData = filesData[fileId];
+            currentFileTitle.textContent = fileData.title;
+            pagesContainer.innerHTML = '';
+
+            fileData.pages.forEach((page, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'image-wrapper show-l1 show-l2';
+
+                // Build the transparent text layer from the OCR array
+                let textLayerHTML = '<div class="text-layer">';
+                if (page.ocr && page.ocr.length > 0) {
+                    page.ocr.forEach(word => {
+                        // Position strings as percentages, let width/height auto-compute from font-size so trailing spaces are kept by clipboard
+                        textLayerHTML += `<span style="top: ${word.top}%; left: ${word.left}%; font-size: ${word.height}vh;">${word.text} </span>`;
+                    });
+                }
+                textLayerHTML += '</div>';
+
+                wrapper.innerHTML = `
+                    <img src="${page.l1}" class="img-layer1" alt="Layer 1">
+                    <img src="${page.l2}" class="img-layer2" alt="Layer 2">
+                    <img src="${page.original}" class="img-original" alt="Original">
+                    ${textLayerHTML}
+                `;
+                pagesContainer.appendChild(wrapper);
+            });
+
+            resetControls();
+            fileSelectionScreen.style.display = 'none';
+            mainViewer.style.display = 'flex';
+        }
+
+        function closeFile() {
+            mainViewer.style.display = 'none';
+            fileSelectionScreen.style.display = 'flex';
+        }
+
+        // --- Controls Logic ---
+        const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+        const layerControlsBox = document.getElementById('layerControls');
+        const toggleLayer1 = document.getElementById('toggleLayer1');
+        const toggleLayer2 = document.getElementById('toggleLayer2');
+        const separateToggle = document.getElementById('separateToggle');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityLabel = document.getElementById('opacityLabel');
+
+        function resetControls() {
+            document.querySelector('input[name="viewMode"][value="original"]').checked = true;
+            layerControlsBox.classList.add('disabled');
+            toggleLayer1.checked = true;
+            toggleLayer2.checked = true;
+            separateToggle.checked = false;
+            opacitySlider.value = 80;
+            opacityLabel.textContent = '80%';
+            document.querySelectorAll('.image-wrapper').forEach(w => w.style.setProperty('--l2-opacity', '0.8'));
+        }
+
+        function getAllWrappers() { return document.querySelectorAll('.image-wrapper'); }
+
+        viewModeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const wrappers = getAllWrappers();
+                if (e.target.value === 'original') {
+                    wrappers.forEach(w => w.classList.remove('show-layers'));
+                    layerControlsBox.classList.add('disabled');
+                } else {
+                    wrappers.forEach(w => w.classList.add('show-layers'));
+                    layerControlsBox.classList.remove('disabled');
+                }
+            });
+        });
+
+        toggleLayer1.addEventListener('change', (e) => {
+            getAllWrappers().forEach(w => e.target.checked ? w.classList.add('show-l1') : w.classList.remove('show-l1'));
+        });
+        toggleLayer2.addEventListener('change', (e) => {
+            getAllWrappers().forEach(w => e.target.checked ? w.classList.add('show-l2') : w.classList.remove('show-l2'));
+        });
+        separateToggle.addEventListener('change', (e) => {
+            getAllWrappers().forEach(w => e.target.checked ? w.classList.add('is-separated') : w.classList.remove('is-separated'));
+        });
+        opacitySlider.addEventListener('input', (e) => {
+            opacityLabel.textContent = e.target.value + '%';
+            getAllWrappers().forEach(w => w.style.setProperty('--l2-opacity', e.target.value / 100));
+        });
+    </script>
+</body>
+</html>
