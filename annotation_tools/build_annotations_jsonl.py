@@ -55,7 +55,7 @@ def main():
         train_paths = paths[:n_train]
         val_paths = paths[n_train:n_train + n_val]
         test_paths = paths[n_train + n_val:]
-
+    
     output_dir = Path(args.output_dir)
     write_jsonl(train_paths, output_dir / "annotations_train.jsonl")
     write_jsonl(val_paths, output_dir / "annotations_val.jsonl")
