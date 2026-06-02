@@ -1,0 +1,142 @@
+{
+  "document_id": "radio_barcelona_final_merged_0000",
+  "page": 1,
+  "image_path": "synthetic_docs_aran/output_dataset_pro_try/all_final_images/final_merged_0000.jpg",
+  "stamp_detections": [
+    {
+      "id": "stamp_0001_001",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 313,
+        "y1": 1322,
+        "x2": 1398,
+        "y2": 2110
+      },
+      "confidence": 0.7574,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_001.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_002",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 1266,
+        "y1": 1152,
+        "x2": 1551,
+        "y2": 1403
+      },
+      "confidence": 0.6318,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_002.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_003",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 1047,
+        "y1": 699,
+        "x2": 1486,
+        "y2": 1097
+      },
+      "confidence": 0.5387,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_003.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_004",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 321,
+        "y1": 1417,
+        "x2": 1208,
+        "y2": 2019
+      },
+      "confidence": 0.3549,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_004.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_005",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 934,
+        "y1": 798,
+        "x2": 1195,
+        "y2": 929
+      },
+      "confidence": 0.3215,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_005.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_006",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 402,
+        "y1": 1944,
+        "x2": 604,
+        "y2": 2153
+      },
+      "confidence": 0.2463,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_006.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_007",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 504,
+        "y1": 1290,
+        "x2": 1335,
+        "y2": 1981
+      },
+      "confidence": 0.2377,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_007.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_008",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 378,
+        "y1": 1896,
+        "x2": 614,
+        "y2": 2162
+      },
+      "confidence": 0.2277,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_008.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    },
+    {
+      "id": "stamp_0001_009",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 362,
+        "y1": 1321,
+        "x2": 1278,
+        "y2": 1892
+      },
+      "confidence": 0.2004,
+      "crop_path": "outputs/yolo_stamp_json/crops/stamp_0001_009.png",
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "detected by YOLO stamp detector"
+    }
+  ]
+}

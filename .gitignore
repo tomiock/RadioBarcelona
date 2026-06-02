@@ -40,4 +40,29 @@ stamp_dataset/
 
 
 
+# Keep a small committed demo for stamp detection
+!synthetic_docs_aran/output_dataset_pro_try/
+!synthetic_docs_aran/output_dataset_pro_try/all_final_images/
+!synthetic_docs_aran/output_dataset_pro_try/all_final_images/final_merged_0000.jpg
 
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/image_layer0_clean.png
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/image_layer1_clean.png
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/text_annotations.json
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/text_original.txt
+!synthetic_docs_aran/output_dataset_pro_try/sample_0000/stamp_detections.json
+
+!outputs/
+!outputs/yolo_stamp_json/
+!outputs/yolo_stamp_json/final_merged_0000_stamps.json
+
+!runs/
+!runs/detect/
+!runs/detect/stamp_detector/
+!runs/detect/stamp_detector/weights/
+!runs/detect/stamp_detector/weights/best.pt
+
+!runs/detect/stamp_detector/results.png
+!runs/detect/stamp_detector/PR_curve.png
+!runs/detect/stamp_detector/val_batch0_pred.jpg
+!runs/detect/stamp_detector/val_batch0_labels.jpg

@@ -1,0 +1,157 @@
+[
+    {
+        "tipo": "sello",
+        "texto": "ORIGINAL",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "sello",
+        "texto": "CENSURADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "sello",
+        "texto": "ORIGINAL",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "sello",
+        "texto": "CENSURADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "Observaciones: emisión"
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "Trío 05."
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "17. 15"
+    },
+    {
+        "tipo": "sello",
+        "texto": "CENSURADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "subrayado",
+        "texto": "",
+        "texto_a_tachar": "del 12:15"
+    },
+    {
+        "tipo": "circulo",
+        "texto": "",
+        "texto_a_tachar": "22:15 Música"
+    },
+    {
+        "tipo": "sello",
+        "texto": "REVISADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "subrayado",
+        "texto": "",
+        "texto_a_tachar": "15 prevista"
+    },
+    {
+        "tipo": "subrayado",
+        "texto": "",
+        "texto_a_tachar": "Boletín para"
+    },
+    {
+        "tipo": "subrayado",
+        "texto": "",
+        "texto_a_tachar": "Lectura Radio"
+    },
+    {
+        "tipo": "tachon",
+        "texto": "",
+        "texto_a_tachar": "para Radio"
+    },
+    {
+        "tipo": "tachon",
+        "texto": "",
+        "texto_a_tachar": "E.A.J.-1. Barcelona"
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "prevista 18:00"
+    },
+    {
+        "tipo": "tachon",
+        "texto": "",
+        "texto_a_tachar": "para 45"
+    },
+    {
+        "tipo": "tachon",
+        "texto": "",
+        "texto_a_tachar": "08:00 prevista"
+    },
+    {
+        "tipo": "insercion",
+        "texto": "Pendiente de autorización oficial",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "nota_larga",
+        "texto": "Debe modificarse el fragmento indicado antes de la emisión pública.",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "45 prevista"
+    },
+    {
+        "tipo": "sello",
+        "texto": "CENSURADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "Observaciones: para"
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "EAJ-1 emisión"
+    },
+    {
+        "tipo": "sello",
+        "texto": "ORIGINAL",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "emisión del"
+    },
+    {
+        "tipo": "tachon",
+        "texto": "",
+        "texto_a_tachar": "de 15"
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "prevista para"
+    },
+    {
+        "tipo": "sello",
+        "texto": "APROBADO",
+        "texto_a_tachar": null
+    },
+    {
+        "tipo": "censura_bloque",
+        "texto": "",
+        "texto_a_tachar": "21. 11:15 Conferencia"
+    }
+]

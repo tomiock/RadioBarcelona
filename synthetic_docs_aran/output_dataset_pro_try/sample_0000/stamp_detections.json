@@ -1,0 +1,142 @@
+{
+  "document_id": "synthetic_0000",
+  "page": 1,
+  "image": "final_merged_0000.jpg",
+  "stamp_detections": [
+    {
+      "id": "stamp_0000_001",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 1086,
+        "y1": 1455,
+        "x2": 1257,
+        "y2": 1621
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_002",
+      "class": "synthetic_stamp",
+      "bbox": {
+        "x1": 578,
+        "y1": 1252,
+        "x2": 1460,
+        "y2": 2050
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_003",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 943,
+        "y1": 805,
+        "x2": 1222,
+        "y2": 919
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_004",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 1262,
+        "y1": 1163,
+        "x2": 1539,
+        "y2": 1397
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_005",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 642,
+        "y1": 87,
+        "x2": 1008,
+        "y2": 450
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_006",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 849,
+        "y1": 1623,
+        "x2": 1035,
+        "y2": 1732
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_007",
+      "class": "synthetic_stamp",
+      "bbox": {
+        "x1": 354,
+        "y1": 1339,
+        "x2": 1246,
+        "y2": 2013
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_008",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 1042,
+        "y1": 687,
+        "x2": 1499,
+        "y2": 1104
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    },
+    {
+      "id": "stamp_0000_009",
+      "class": "official_stamp",
+      "bbox": {
+        "x1": 404,
+        "y1": 1963,
+        "x2": 591,
+        "y2": 2152
+      },
+      "confidence": 1.0,
+      "crop_path": null,
+      "mask_path": null,
+      "ocr_text": null,
+      "notes": "synthetic ground truth"
+    }
+  ]
+}
