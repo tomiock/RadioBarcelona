@@ -37,12 +37,24 @@ def main():
     random.shuffle(paths)
 
     n = len(paths)
-    n_train = int(n * args.train_ratio)
-    n_val = int(n * args.val_ratio)
 
-    train_paths = paths[:n_train]
-    val_paths = paths[n_train:n_train + n_val]
-    test_paths = paths[n_train + n_val:]
+    if n == 0:
+        train_paths, val_paths, test_paths = [], [], []
+    elif n < 3:
+        train_paths = paths
+        val_paths = []
+        test_paths = []
+    else:
+        n_train = max(1, int(n * args.train_ratio))
+        n_val = max(1, int(n * args.val_ratio))
+
+        if n_train + n_val >= n:
+            n_train = n - 2
+            n_val = 1
+
+        train_paths = paths[:n_train]
+        val_paths = paths[n_train:n_train + n_val]
+        test_paths = paths[n_train + n_val:]
 
     output_dir = Path(args.output_dir)
     write_jsonl(train_paths, output_dir / "annotations_train.jsonl")
