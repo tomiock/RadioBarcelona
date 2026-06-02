@@ -156,9 +156,10 @@ def union_bbox(boxes):
 
 
 
-def build_typewritten_objects(word_boxes, sample_id):
+def build_typewritten_objects(word_boxes, sample_id, line_y_tolerance=12):
     objects = []
 
+    # 1. Paraules individuals
     for idx, wb in enumerate(word_boxes, start=1):
         box = wb.get("box")
         word = wb.get("word", "")
@@ -176,8 +177,47 @@ def build_typewritten_objects(word_boxes, sample_id):
             )
         )
 
-    return objects
+    # 2. Agrupació simple en línies segons coordenada Y
+    valid_words = [
+        wb for wb in word_boxes
+        if wb.get("box") and wb.get("word", "").strip()
+    ]
 
+    valid_words.sort(key=lambda wb: (wb["box"][1], wb["box"][0]))
+
+    lines = []
+
+    for wb in valid_words:
+        box = wb["box"]
+        y = int(box[1])
+
+        placed = False
+        for line in lines:
+            if abs(line["y"] - y) <= line_y_tolerance:
+                line["words"].append(wb)
+                line["y"] = int((line["y"] + y) / 2)
+                placed = True
+                break
+
+        if not placed:
+            lines.append({"y": y, "words": [wb]})
+
+    for line_idx, line in enumerate(lines, start=1):
+        words = sorted(line["words"], key=lambda wb: wb["box"][0])
+        boxes = [wb["box"] for wb in words]
+        text = " ".join(wb["word"] for wb in words)
+
+        objects.append(
+            make_layout_object(
+                obj_id=f"typewritten_line_{sample_id:04d}_{line_idx:04d}",
+                obj_type="typewritten_line",
+                bbox=union_bbox(boxes),
+                text=text,
+                layer="layer0_clean",
+            )
+        )
+
+    return objects
 
 class GeminiTextGenerator:
     def __init__(self):
@@ -1002,14 +1042,39 @@ class LayerRenderer:
                         y = random.randint(100, max(101, self.height - decal.height - 100))
                         decal = decal.rotate(random.uniform(-15, 15), expand=True, resample=Image.BICUBIC)
                         img.paste(decal, (x, y), decal)
+                        layout_detections.append({
+                            "class": "handwritten_text",
+                            "bbox": {"x1": x, "y1": y, "x2": x + decal.width, "y2": y + decal.height},
+                            "confidence": 1.0,
+                            "source": "synthetic_generator",
+                            "target_text": texto,
+                            "subtype": "iam_sample",
+                        })
                 else:
                     x = random.randint(100, self.width - 400)
                     y = random.randint(100, self.height - 200)
                     font = self.get_random_cursive_font(60, 100)
                     try:
+                        bbox_text = draw.textbbox((x, y), texto_seguro, font=font)
                         draw.text((x, y), texto_seguro, font=font, fill=main_ink)
                     except OSError:
-                        draw.text((x, y), texto_seguro, font=ImageFont.load_default(), fill=main_ink)
+                        font = ImageFont.load_default()
+                        bbox_text = draw.textbbox((x, y), texto_seguro, font=font)
+                        draw.text((x, y), texto_seguro, font=font, fill=main_ink)
+
+                    layout_detections.append({
+                        "class": "handwritten_text",
+                        "bbox": {
+                            "x1": bbox_text[0],
+                            "y1": bbox_text[1],
+                            "x2": bbox_text[2],
+                            "y2": bbox_text[3],
+                        },
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": texto,
+                        "subtype": "procedural_font",
+                    })
 
             # -----------------------------------------------------------------
             # 2.5 NOTAS LARGAS (Buscando espacios en blanco)
@@ -1083,6 +1148,20 @@ class LayerRenderer:
 
                     # Lo pegamos en la imagen final ajustando el offset de la imagen temporal
                     img.paste(txt_img, (x - 50, y - 50), txt_img)
+
+                    layout_detections.append({
+                        "class": "handwritten_text",
+                        "bbox": {
+                            "x1": x - 50,
+                            "y1": y - 50,
+                            "x2": x - 50 + txt_img.width,
+                            "y2": y - 50 + txt_img.height,
+                        },
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": texto,
+                        "subtype": "long_note",
+                    })
 
             # -----------------------------------------------------------------
             # 3. SELLOS / FIRMAS GIGANTES
@@ -1176,25 +1255,47 @@ class LayerRenderer:
         # Esborrats reals opcionals
         if self.erasure_paths and random.random() < CONFIG["ERASURE_PROB"]:
             for _ in range(random.randint(CONFIG["MIN_EXTRA_ERASURES"], CONFIG["MAX_EXTRA_ERASURES"])):
-                self._paste_asset_random(
+                used_erasure = self._paste_asset_random(
                     img,
                     self.erasure_paths,
                     min_scale=0.3,
                     max_scale=0.9,
                     rotation=10.0,
-                    margin=80
+                    margin=80,
+                    asset_class="crossout"
                 )
+
+                if used_erasure:
+                    layout_detections.append({
+                        "class": "crossout",
+                        "bbox": used_erasure["bbox"],
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": None,
+                        "subtype": "erasure_asset",
+                    })
 
         # Fragments de taules reals opcionals
         if self.table_paths and random.random() < CONFIG["TABLE_PROB"]:
-            self._paste_asset_random(
+            used_table = self._paste_asset_random(
                 img,
                 self.table_paths,
                 min_scale=0.4,
                 max_scale=1.0,
                 rotation=4.0,
-                margin=120
+                margin=120,
+                asset_class="table_fragment"
             )
+
+            if used_table:
+                layout_detections.append({
+                    "class": "table_fragment",
+                    "bbox": used_table["bbox"],
+                    "confidence": 1.0,
+                    "source": "synthetic_generator",
+                    "target_text": None,
+                    "subtype": "table_asset",
+                })
 
 
 
@@ -1213,14 +1314,25 @@ class LayerRenderer:
         # Tatxadures/censures extra independents
         if self.censorship_paths and random.random() < CONFIG["EXTRA_CENSORSHIP_PROB"]:
             for _ in range(random.randint(2, 5)):
-                self._paste_asset_random(
+                used_censor = self._paste_asset_random(
                     img,
                     self.censorship_paths,
                     min_scale=0.25,
                     max_scale=0.8,
                     rotation=10.0,
-                    margin=80
+                    margin=80,
+                    asset_class="crossout"
                 )
+
+                if used_censor:
+                    layout_detections.append({
+                        "class": "crossout",
+                        "bbox": used_censor["bbox"],
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": None,
+                        "subtype": "censorship_asset",
+                    })
 
 
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.0)))
@@ -1384,12 +1496,13 @@ class DatasetOrchestrator:
             layout_objects.append(
                 make_layout_object(
                     obj_id=f"stamp_{i:04d}_{j:03d}",
-                    obj_type=det.get("class", "official_stamp"),
+                    obj_type="stamp",
                     bbox=det["bbox"],
                     text=None,
                     layer="layer1_annotations",
                     confidence=det.get("confidence", 1.0),
                     extra={
+                        "subtype": det.get("class", "official_stamp"),
                         "legacy_class": det.get("class", "official_stamp"),
                         "notes": "synthetic ground truth",
                     },
@@ -1407,6 +1520,7 @@ class DatasetOrchestrator:
                     layer="layer1_annotations",
                     confidence=det.get("confidence", 1.0),
                     extra={
+                        "subtype": det.get("subtype"),
                         "notes": "synthetic ground truth",
                     },
                 )
