@@ -109,6 +109,74 @@ def remove_white_background(img, threshold=235, alpha_strength=0.85):
 
 
 
+def bbox_list_to_dict(box):
+    x1, y1, x2, y2 = box
+    return {
+        "x1": int(x1),
+        "y1": int(y1),
+        "x2": int(x2),
+        "y2": int(y2),
+    }
+
+
+def make_layout_object(
+    obj_id,
+    obj_type,
+    bbox,
+    text=None,
+    layer=None,
+    source="synthetic_generator",
+    confidence=1.0,
+    extra=None,
+):
+    obj = {
+        "id": obj_id,
+        "type": obj_type,
+        "bbox": bbox if isinstance(bbox, dict) else bbox_list_to_dict(bbox),
+        "text": text,
+        "layer": layer,
+        "source": source,
+        "confidence": confidence,
+    }
+
+    if extra:
+        obj.update(extra)
+
+    return obj
+
+
+def union_bbox(boxes):
+    x1 = min(int(b[0]) for b in boxes)
+    y1 = min(int(b[1]) for b in boxes)
+    x2 = max(int(b[2]) for b in boxes)
+    y2 = max(int(b[3]) for b in boxes)
+    return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+
+
+
+
+def build_typewritten_objects(word_boxes, sample_id):
+    objects = []
+
+    for idx, wb in enumerate(word_boxes, start=1):
+        box = wb.get("box")
+        word = wb.get("word", "")
+
+        if not box or not word.strip():
+            continue
+
+        objects.append(
+            make_layout_object(
+                obj_id=f"typewritten_word_{sample_id:04d}_{idx:06d}",
+                obj_type="typewritten_word",
+                bbox=box,
+                text=word,
+                layer="layer0_clean",
+            )
+        )
+
+    return objects
 
 
 class GeminiTextGenerator:
@@ -791,7 +859,8 @@ class LayerRenderer:
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.1, 0.7)))
         return img, word_boxes
 
-    def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]) -> Image.Image:
+    # def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]) -> Image.Image:
+    def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]):
         import textwrap
 
         # Capa 1: anotacions / segells / censura.
@@ -806,6 +875,7 @@ class LayerRenderer:
         ]
 
         stamp_detections = []
+        layout_detections = []
 
         for ano in anotaciones:
             if not isinstance(ano, dict):
@@ -894,6 +964,18 @@ class LayerRenderer:
                     elif tipo == "circulo":
                         # Hand-drawn ellipse
                         draw.ellipse([x0 - random.randint(5,15), y0 - random.randint(5,10), x1 + random.randint(5,15), y1 + random.randint(5,10)], outline=main_ink, width=random.randint(2, 4))
+
+
+                    # guardar anotació posicional de tachons / censura
+                    if tipo in ["tachon", "censura_bloque"]:
+                        layout_detections.append({
+                            "class": "crossout" if tipo == "tachon" else "censorship_block",
+                            "bbox": {"x1": x0, "y1": y0, "x2": x1, "y2": y1},
+                            "confidence": 1.0,
+                            "source": "synthetic_generator",
+                            "target_text": texto_tachar,
+                        })
+
 
                     # If it's a correction, draw the replacement text above
                     if tipo == "correccion":
@@ -1142,7 +1224,8 @@ class LayerRenderer:
 
 
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.0)))
-        return img, stamp_detections
+        
+        return img, stamp_detections, layout_detections
 
 class AugmentationPipeline:
     def __init__(self, width: int, height: int):
@@ -1287,9 +1370,47 @@ class DatasetOrchestrator:
         anotaciones = data.get("anotaciones", [])
 
         # CPU BOUND WORK
-        l0_img, word_boxes = self.renderer.render_layer0(texto_base)        
-        l1_img, stamp_detections = self.renderer.render_layer1(word_boxes, anotaciones)
+        l0_img, word_boxes = self.renderer.render_layer0(texto_base)
+        l1_img, stamp_detections, layer1_detections = self.renderer.render_layer1(word_boxes, anotaciones)
         final_img = self.aug_pipe.composite(l0_img, l1_img)
+
+        layout_objects = []
+
+        # 1. Text mecanografiat
+        layout_objects.extend(build_typewritten_objects(word_boxes, i))
+
+        # 2. Stamps, mantenint compatibilitat amb stamp_detections
+        for j, det in enumerate(stamp_detections, start=1):
+            layout_objects.append(
+                make_layout_object(
+                    obj_id=f"stamp_{i:04d}_{j:03d}",
+                    obj_type=det.get("class", "official_stamp"),
+                    bbox=det["bbox"],
+                    text=None,
+                    layer="layer1_annotations",
+                    confidence=det.get("confidence", 1.0),
+                    extra={
+                        "legacy_class": det.get("class", "official_stamp"),
+                        "notes": "synthetic ground truth",
+                    },
+                )
+            )
+        
+        # 3. Altres marques de layer1: tachons, censura, etc.
+        for j, det in enumerate(layer1_detections, start=1):
+            layout_objects.append(
+                make_layout_object(
+                    obj_id=f"{det.get('class', 'layer1_object')}_{i:04d}_{j:03d}",
+                    obj_type=det.get("class", "layer1_object"),
+                    bbox=det["bbox"],
+                    text=det.get("target_text"),
+                    layer="layer1_annotations",
+                    confidence=det.get("confidence", 1.0),
+                    extra={
+                        "notes": "synthetic ground truth",
+                    },
+                )
+            )
 
         # IO BOUND (Disk)
         sample_dir = os.path.join(self.output_dir, f"sample_{i:04d}")
@@ -1319,6 +1440,16 @@ class DatasetOrchestrator:
                     }
                     for j, det in enumerate(stamp_detections, start=1)
                 ]
+            }, f, indent=2, ensure_ascii=False)
+
+        with open(os.path.join(sample_dir, "layout_annotations.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "document_id": f"synthetic_{i:04d}",
+                "page": 1,
+                "image": f"final_merged_{i:04d}.jpg",
+                "image_width": self.renderer.width,
+                "image_height": self.renderer.height,
+                "objects": layout_objects,
             }, f, indent=2, ensure_ascii=False)
 
         final_filename = f"final_merged_{i:04d}.jpg"
