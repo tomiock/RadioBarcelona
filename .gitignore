@@ -1,68 +1,60 @@
-# Local environments and secrets
+# =========================
+# OS / editor
+# =========================
+.DS_Store
+*.swp
+*.swo
+*~
+__pycache__/
+*.pyc
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+*.env
+synthetic_docs_aran/.env
 .venv/
 venv/
-env/
-synthetic_docs_aran/.env
-__pycache__/
 
-data
-output_dataset_pro_try/
-fonts/descartat/
-
-*.pyc
-*.pyo
-*.zip
-*.xcf
-*.tar.gz
-
-# Model weights
-*.pt
-*.pth
-*.onnx
-
-
-# OS/editor
-.DS_Store
-synthetic_docs_aran/.env
+# =========================
+# Node / frontend dependencies
+# =========================
 node_modules/
 prototypes/node_modules/
 prototypes/images/node_modules/
 
-# Stamp detection generated artifacts
+# =========================
+# Synthetic generated datasets
+# =========================
 synthetic_docs_aran/output_dataset_pro_try/
 synthetic_docs_aran/output_dataset*/
-synthetic_docs_aran/**/all_final_images/
+synthetic_docs_aran/annotations/
+
+# =========================
+# YOLO generated datasets
+# =========================
 stamp_dataset/
 stamp_dataset_nofilter/
+stamp_dataset_layout/
+visual_marks_dataset/
+
+# =========================
+# Runtime outputs
+# =========================
 outputs/
+real_outputs/
+real_test_pages/
+real_test_pages_25/
+
+# =========================
+# YOLO / training runs
+# =========================
 runs/
-stamp_dataset/
+*.pt
 
-
-
-# Keep a small committed demo for stamp detection
-!synthetic_docs_aran/output_dataset_pro_try/
-!synthetic_docs_aran/output_dataset_pro_try/all_final_images/
-!synthetic_docs_aran/output_dataset_pro_try/all_final_images/final_merged_0000.jpg
-
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/image_layer0_clean.png
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/image_layer1_clean.png
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/text_annotations.json
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/text_original.txt
-!synthetic_docs_aran/output_dataset_pro_try/sample_0000/stamp_detections.json
-
-!outputs/
-!outputs/yolo_stamp_json/
-!outputs/yolo_stamp_json/final_merged_0000_stamps.json
-
-!runs/
-!runs/detect/
-!runs/detect/stamp_detector/
-!runs/detect/stamp_detector/weights/
-!runs/detect/stamp_detector/weights/best.pt
-
-!runs/detect/stamp_detector/results.png
-!runs/detect/stamp_detector/PR_curve.png
-!runs/detect/stamp_detector/val_batch0_pred.jpg
-!runs/detect/stamp_detector/val_batch0_labels.jpg
+# =========================
+# Local reports / temporary exports
+# =========================
+Update Generator.pdf
+Àlex Update*.pdf
