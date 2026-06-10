@@ -41,42 +41,42 @@ CONFIG = {
     "OPENAI_MODEL": os.environ.get("OPENAI_MODEL", "gpt-5-mini"),
 
     # Text base mecanografiat
-    "MIN_PROGRAM_LINES": 5, # Número de líneas del programa mecanografiado. Si el prompt de Gemini/OpenAI genera un número diferente, se ignora este rango y se usan las líneas generadas.     
-    "MAX_PROGRAM_LINES": 35, # 
-    "TYPEWRITER_FONT_MIN_SIZE": 14, # Tamaño mínimo de la fuente mecanografiada. Si el prompt de Gemini/OpenAI especifica un tamaño, se ignora este rango y se usa el tamaño generado.
+    "MIN_PROGRAM_LINES": 3, # Número de líneas del programa mecanografiado. Si el prompt de Gemini/OpenAI genera un número diferente, se ignora este rango y se usan las líneas generadas.     
+    "MAX_PROGRAM_LINES": 40, # 
+    "TYPEWRITER_FONT_MIN_SIZE": 12, # Tamaño mínimo de la fuente mecanografiada. Si el prompt de Gemini/OpenAI especifica un tamaño, se ignora este rango y se usa el tamaño generado.
     "TYPEWRITER_FONT_MAX_SIZE": 50,
-    "LINE_HEIGHT_MIN": 12, # Altura mínima entre líneas del texto mecanografiado. Si el prompt de Gemini/OpenAI especifica una altura, se ignora este rango y se usa la altura generada.
-    "LINE_HEIGHT_MAX": 120,
+    "LINE_HEIGHT_MIN": 10, # Altura mínima entre líneas del texto mecanografiado. Si el prompt de Gemini/OpenAI especifica una altura, se ignora este rango y se usa la altura generada.
+    "LINE_HEIGHT_MAX": 150,
 
     # Anotacions generades localment
-    "MIN_ANNOTATIONS": 1,
-    "MAX_ANNOTATIONS": 35,
+    "MIN_ANNOTATIONS": 0,
+    "MAX_ANNOTATIONS": 25,
 
     # Segells i censura forçats
     "MIN_EXTRA_STAMPS": 0,
     "MAX_EXTRA_STAMPS": 4,
     "MIN_EXTRA_CENSORSHIP": 0,
-    "MAX_EXTRA_CENSORSHIP": 3,
+    "MAX_EXTRA_CENSORSHIP": 2,
 
     # Probabilitats d’assets reals
-    "REAL_STAMP_PROB": 0.90, # Probabilitat de posar un segell real en comptes de dibuixar-lo. Si no hi ha assets, ignora aquesta probabilitat i no posa segells.
-    "EXTRA_STAMP_PROB": 0.75, # Probabilitat de posar segells extra addicionals a les anotacions, a part dels que surten al text. Aquests segells extra no tenen perquè estar associats a cap frase concreta, poden estar repartits per la pàgina.
+    "REAL_STAMP_PROB": 0.95, # Probabilitat de posar un segell real en comptes de dibuixar-lo. Si no hi ha assets, ignora aquesta probabilitat i no posa segells.
+    "EXTRA_STAMP_PROB": 0.55, # Probabilitat de posar segells extra addicionals a les anotacions, a part dels que surten al text. Aquests segells extra no tenen perquè estar associats a cap frase concreta, poden estar repartits per la pàgina.
 
-    "EXTRA_CENSORSHIP_PROB": 0.90,
+    "EXTRA_CENSORSHIP_PROB": 0.30,
 
-    "PATCH_PROB": 0.14,
+    "PATCH_PROB": 0.10,
 
-    "ERASURE_PROB": 0.80,
+    "ERASURE_PROB": 0.40,
     "MIN_EXTRA_ERASURES": 0,
-    "MAX_EXTRA_ERASURES": 15,
+    "MAX_EXTRA_ERASURES": 30,
 
-    "TABLE_PROB": 0.45,
+    "TABLE_PROB": 0.25,
 
     "STAIN_PROB": 0.20,
 
     # Concurrència
-    "MAX_CONCURRENT_TASKS": 2,
-    "REQUEST_DELAY": 2.0,
+    "MAX_CONCURRENT_TASKS": 3,
+    "REQUEST_DELAY": 1.5,
 }
 
 
