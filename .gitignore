@@ -58,3 +58,15 @@ runs/
 # =========================
 Update Generator.pdf
 Àlex Update*.pdf
+
+# Backup/archive files
+*.tar.gz
+*.zip
+*.bak
+*_back
+
+# GIMP source files / large editable assets
+*.xcf
+
+# Real scraped/downloaded data
+synthetic_docs_aran/data/
