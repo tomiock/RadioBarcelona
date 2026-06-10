@@ -80,6 +80,33 @@ CONFIG = {
 }
 
 
+# ============================================================
+# ASSET DISCOVERY HELPERS
+# ============================================================
+
+ASSET_IMAGE_EXTENSIONS = ("*.png", "*.jpg", "*.jpeg", "*.webp")
+
+
+def collect_assets_from_dirs(*dirs):
+    """
+    Carrega assets d'imatge des de diverses carpetes.
+
+    Això permet combinar:
+        assets/stamps/
+        assets_real_reviewed/stamps/
+
+    Si una carpeta no existeix o és buida, simplement s'ignora.
+    """
+    paths = []
+
+    for folder in dirs:
+        for pattern in ASSET_IMAGE_EXTENSIONS:
+            paths.extend(glob.glob(os.path.join(folder, pattern)))
+
+    # Eliminem duplicats i mantenim ordre estable.
+    return sorted(set(paths))
+
+
 
 
 def remove_white_background(img, threshold=235, alpha_strength=0.85):
@@ -620,41 +647,61 @@ class LayerRenderer:
         #   pegats, textures, etc.
         #
         # El codi funciona encara que aquestes carpetes estiguin buides.
-        self.iam_images = glob.glob("iam_samples/*.png") + glob.glob("iam_samples/*.tif")
-
-        # Retalls reals de segells escanejats. Idealment PNG/JPG amb fons blanc.
-        self.stamp_paths = (
-            glob.glob("assets/stamps/*.png") +
-            glob.glob("assets/stamps/*.jpg") +
-            glob.glob("assets/stamps/*.jpeg")
+        # Manuscrit genèric:
+        # - iam_samples/ són mostres originals.
+        # - assets_real_reviewed/handwriting/ són crops reals revisats manualment.
+        self.iam_images = collect_assets_from_dirs(
+            "iam_samples",
+            "assets_real_reviewed/handwriting",
         )
 
-        # Retalls reals de tatxadures, línies negres, marques de censura, etc.
-        self.censorship_paths = (
-            glob.glob("assets/censorship/*.png") +
-            glob.glob("assets/censorship/*.jpg") +
-            glob.glob("assets/censorship/*.jpeg")
+        # Segells:
+        # - assets/stamps/ són assets inicials.
+        # - assets_real_reviewed/stamps/ són segells detectats en documents reals i validats.
+        self.stamp_paths = collect_assets_from_dirs(
+            "assets/stamps",
+            "assets_real_reviewed/stamps",
         )
 
-        # Retalls de pegats, trossos de paper enganxat, cinta, reparacions, etc.
-        self.patch_paths = (
-            glob.glob("assets/patches/*.png") +
-            glob.glob("assets/patches/*.jpg") +
-            glob.glob("assets/patches/*.jpeg")
+        # Censura:
+        # - assets/censorship/ són assets inicials.
+        # - assets_real_reviewed/censorship/ són blocs de censura validats.
+        self.censorship_paths = collect_assets_from_dirs(
+            "assets/censorship",
+            "assets_real_reviewed/censorship",
         )
 
-        # Retalls reals d'esborrats, zones raspades, blanc corrector, etc.
-        self.erasure_paths = (
-            glob.glob("assets/erasures/*.png") +
-            glob.glob("assets/erasures/*.jpg") +
-            glob.glob("assets/erasures/*.jpeg")
+        # Pegats:
+        # De moment només usem assets originals. Si més endavant revisem patches,
+        # podem afegir assets_real_reviewed/patches/.
+        self.patch_paths = collect_assets_from_dirs(
+            "assets/patches",
         )
 
-        # Retalls reals de taules, graelles o fragments tabulars.
-        self.table_paths = (
-            glob.glob("assets/tables/*.png") +
-            glob.glob("assets/tables/*.jpg") +
-            glob.glob("assets/tables/*.jpeg")
+        # Esborrats / tatxadures:
+        # Al generator, erasures són visualment crossouts/tatxadures.
+        # Per això barregem assets/erasures amb assets_real_reviewed/crossouts.
+        self.erasure_paths = collect_assets_from_dirs(
+            "assets/erasures",
+            "assets_real_reviewed/crossouts",
+        )
+
+        # Taules:
+        # - assets/tables/ són assets inicials.
+        # - assets_real_reviewed/tables/ són fragments de taules reals revisats.
+        self.table_paths = collect_assets_from_dirs(
+            "assets/tables",
+            "assets_real_reviewed/tables",
+        )
+
+        print(
+            "Assets loaded:",
+            f"iam/handwriting={len(self.iam_images)}",
+            f"stamps={len(self.stamp_paths)}",
+            f"censorship={len(self.censorship_paths)}",
+            f"patches={len(self.patch_paths)}",
+            f"erasures/crossouts={len(self.erasure_paths)}",
+            f"tables={len(self.table_paths)}",
         )
 
 
@@ -1608,6 +1655,14 @@ async def main():
     os.makedirs("assets/patches", exist_ok=True)
     os.makedirs("assets/paper_textures", exist_ok=True)
     os.makedirs("assets/stains", exist_ok=True)
+    os.makedirs("assets/erasures", exist_ok=True)
+    os.makedirs("assets/tables", exist_ok=True)
+
+    os.makedirs("assets_real_reviewed/stamps", exist_ok=True)
+    os.makedirs("assets_real_reviewed/handwriting", exist_ok=True)
+    os.makedirs("assets_real_reviewed/crossouts", exist_ok=True)
+    os.makedirs("assets_real_reviewed/censorship", exist_ok=True)
+    os.makedirs("assets_real_reviewed/tables", exist_ok=True)
     # Target ~850 RPM to stay safely under the 1000 RPM limit.
     # 60 seconds / 850 requests = ~0.07 seconds between starting each request.
     #REQUEST_DELAY = 0.07
