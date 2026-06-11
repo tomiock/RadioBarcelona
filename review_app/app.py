@@ -1025,11 +1025,7 @@ def index():
             {% endif %}
 
 
-            <div class="topbar">
-                <a class="navlink" href="{{ url_for('index', idx=prev_idx) }}">← Previous</a>
-                <a class="navlink" href="{{ url_for('index', idx=next_idx) }}">Next →</a>
-                <span>Item {{ idx + 1 }} / {{ total }}</span>
-            </div>
+            
 
             <div class="stats-bar">
                 <div class="stat-card">
@@ -1045,6 +1041,11 @@ def index():
                 <div class="stat-card">
                     <b>Pending</b><br>
                     {{ review_stats.pending_total }}
+                </div>
+
+                <div class="stat-card">
+                    <b>Progress</b><br>
+                    {{ "%.1f"|format((review_stats.reviewed_total / review_stats.total_crops * 100) if review_stats.total_crops else 0) }}%
                 </div>
 
                 <div class="stat-card good-stat">
@@ -1102,21 +1103,28 @@ def index():
                 </details>
             </div>
 
-
-            {% if previous_review %}
-            <div class="status">
-                <b>Already reviewed:</b>
-                {{ previous_review.get("decision") }}
-                as {{ previous_review.get("reviewed_type") }}
+            <div class="topbar">
+                <a class="navlink" href="{{ url_for('index', idx=prev_idx) }}">← Previous</a>
+                <a class="navlink" href="{{ url_for('index', idx=next_idx) }}">Next →</a>
+                <span>Item {{ idx + 1 }} / {{ total }}</span>
             </div>
-            {% endif %}
 
+      
             <div class="container">
 
                 <!-- COLUMN 1: crop + metadata + form -->
-                <div class="card left-panel">
+                <div class="card left-panel">                    
+                
                     <h2>Crop</h2>
                     <img class="crop-img" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
+                    {% if previous_review %}
+                    <div class="status">
+                        <b>Already reviewed:</b>
+                        {{ previous_review.get("decision") }}
+                        as {{ previous_review.get("reviewed_type") }}
+                    </div>
+                    {% endif %}
+                    
 
                     <h2>Metadata</h2>
                     <p><b>Crop ID:</b> {{ item.get("crop_id") }}</p>
