@@ -125,6 +125,8 @@ def main():
     parser.add_argument("--include-synthetic-output", action="store_true")
     parser.add_argument("--make-archive", action="store_true")
 
+    parser.add_argument("--real-pages-dir", default=None, help="Directory with real JPG pages used in the experiment.",)
+
     args = parser.parse_args()
 
     project_root = Path.cwd()
@@ -137,6 +139,7 @@ def main():
     package_dir.mkdir(parents=True, exist_ok=True)
 
     source_manifest = project_root / f"outputs/manifests/{args.run_id}_manifest.json"
+    source_manifest_json = load_json(source_manifest)
 
     copied = {}
 
@@ -155,8 +158,22 @@ def main():
         package_dir / "weights/best.pt",
     )
 
+    # Carpeta de pàgines reals.
+    # Prioritat:
+    #   1. --real-pages-dir si l'usuari l'especifica.
+    #   2. paths.real_test_dir del manifest del pipeline.
+    #   3. fallback antic: real_test_pages_25.
+    if args.real_pages_dir:
+        real_pages_dir = Path(args.real_pages_dir)
+        if not real_pages_dir.is_absolute():
+            real_pages_dir = project_root / real_pages_dir
+    elif source_manifest_json and source_manifest_json.get("paths", {}).get("real_test_dir"):
+        real_pages_dir = Path(source_manifest_json["paths"]["real_test_dir"])
+    else:
+        real_pages_dir = project_root / "real_test_pages_25"
+
     copied["real_pages"] = copy_if_exists(
-        project_root / "real_test_pages_25",
+        real_pages_dir,
         package_dir / "real_pages",
     )
 
@@ -227,7 +244,7 @@ def main():
             package_dir / "synthetic_output",
         )
 
-    source_manifest_json = load_json(source_manifest)
+
 
     package_manifest = {
         "package_id": args.run_id,

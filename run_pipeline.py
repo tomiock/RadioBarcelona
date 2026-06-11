@@ -3,9 +3,12 @@ import json
 import os
 import shutil
 import subprocess
+import random
+
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+
 
 
 def run(cmd, cwd=None, env=None):
@@ -152,6 +155,8 @@ def write_manifest(
             "imgsz": args.imgsz,
             "batch": args.batch,
             "real_pages": args.real_pages,
+            "real_selection": args.real_selection,
+            "seed": args.seed,
             "conf": args.conf,
             "skip_train": args.skip_train,
             "weights": args.weights,
@@ -218,6 +223,19 @@ def main():
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=4)
     parser.add_argument("--real-pages", type=int, default=25)
+    parser.add_argument(
+        "--real-selection",
+        choices=["first", "random"],
+        default="random",
+        help="How to select real pages: first sorted pages or random sample.",
+    )
+
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed used when --real-selection random.",
+    )
     parser.add_argument("--conf", type=float, default=0.35)
 
     parser.add_argument(
@@ -258,7 +276,12 @@ def main():
         help="Name for output experiment folders, e.g. current, real_test25, real_test290",
     )
 
-    
+    parser.add_argument(
+        "--real-pages-dir",
+        default=None,
+        help="Directory with real JPG pages used in the experiment.",
+    )
+        
 
 
     args = parser.parse_args()
@@ -269,7 +292,7 @@ def main():
     annotations_dir = root / "synthetic_docs_aran/annotations"
     yolo_dataset = root / "visual_marks_dataset"
     outputs_dir = root / "outputs"
-    real_test_dir = root / "real_test_pages_25"
+    real_test_dir = root / f"real_test_{args.run_id}_pages_{args.real_pages}"
     run_name = "visual_marks_detector_pipeline_test"
     # Output folders depending on the selected run id.
     # Example:
@@ -351,15 +374,48 @@ def main():
     real_test_dir.mkdir(parents=True, exist_ok=True)
 
     real_pages_source = root / "synthetic_docs_aran/data/pages"
-    real_pages = sorted(real_pages_source.glob("*.jpg"))[:args.real_pages]
+    all_real_pages = sorted(real_pages_source.glob("*.jpg"))
 
-    if not real_pages:
+    if not all_real_pages:
         raise RuntimeError(f"No real pages found in {real_pages_source}")
+
+    if args.real_pages > len(all_real_pages):
+        raise RuntimeError(
+            f"Requested {args.real_pages} real pages, "
+            f"but only found {len(all_real_pages)} in {real_pages_source}"
+        )
+
+    if args.real_selection == "random":
+        rng = random.Random(args.seed)
+        real_pages = sorted(rng.sample(all_real_pages, args.real_pages))
+    else:
+        real_pages = all_real_pages[:args.real_pages]
 
     for page in real_pages:
         shutil.copy2(page, real_test_dir / page.name)
 
     print(f"Copied real pages: {len(real_pages)}")
+    print(f"Real page selection: {args.real_selection}")
+    print(f"Seed: {args.seed}")
+    print(f"Real test dir: {real_test_dir}")
+
+    # Guardem quines pàgines s'han seleccionat.
+    # Això fa que l'experiment sigui reproduïble i auditable.
+    selected_pages_path = real_test_dir / "selected_real_pages.json"
+
+    with selected_pages_path.open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "real_pages_source": str(real_pages_source),
+                "real_selection": args.real_selection,
+                "seed": args.seed,
+                "requested_real_pages": args.real_pages,
+                "selected_pages": [p.name for p in real_pages],
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
 
     # ------------------------------------------------------------------
     # 7. Run YOLO inference on real pages and export predicted_layout.json
