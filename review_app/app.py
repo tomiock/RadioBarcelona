@@ -567,12 +567,43 @@ def index():
     review_schema = load_review_schema()
     crop_id = item.get("crop_id")
     previous_review = reviewed_entries.get(crop_id)
+    # Classe efectiva que ha de mostrar la UI.
+    # Si el crop ja està revisat, prioritzem la classe humana.
+    # Si no, usem la predicció original del model.
+    current_type = (
+        previous_review.get("reviewed_type")
+        if previous_review and previous_review.get("reviewed_type")
+        else item.get("type")
+    )
+
+    # Review JSON separat del Raw JSON.
+    # El Raw JSON és la predicció original; el Review JSON és la decisió humana.
+    if previous_review:
+        review_json = json.dumps(previous_review, indent=2, ensure_ascii=False)
+    else:
+        review_json = json.dumps(
+            {
+                "reviewed": False,
+                "message": "This crop has not been reviewed yet.",
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
 
     similar_items = find_similar_items(item, top_k=SIMILARITY_TOP_K)
 
     for sim in similar_items:
         sim_crop_id = sim.get("crop_id")
-        sim["previous_review"] = reviewed_entries.get(sim_crop_id)
+        sim_previous_review = reviewed_entries.get(sim_crop_id)
+        sim["previous_review"] = sim_previous_review
+
+        # Classe efectiva del similar:
+        # revisió humana si existeix; si no, predicció original.
+        sim["effective_type"] = (
+            sim_previous_review.get("reviewed_type")
+            if sim_previous_review and sim_previous_review.get("reviewed_type")
+            else sim.get("type")
+        )
 
     prev_idx = max(0, idx - 1)
     next_idx = min(total - 1, idx + 1)
@@ -709,6 +740,19 @@ def index():
                     display: block;
                     margin-bottom: 8px;
                 }
+
+                .review-json {
+                    background: #eef8ee;
+                    border-left: 4px solid #2f8f2f;
+                }
+
+                pre {
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    max-height: 520px;
+                    overflow: auto;
+                }
+
             </style>
         </head>
         <body>
@@ -756,7 +800,7 @@ def index():
                         <label>Correct class:</label><br>
                         <select name="new_type">
                             {% for cls in review_schema.classes %}
-                                <option value="{{ cls }}" {% if cls == item.get('type') %}selected{% endif %}>
+                                <option value="{{ cls }}" {% if cls == current_type %}selected{% endif %}>
                                     {{ cls }}
                                 </option>
                             {% endfor %}
@@ -811,7 +855,10 @@ def index():
                     <h2>Full page with bbox</h2>
                     <img class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
 
-                    <h3>Raw JSON</h3>
+                    <h3>Review JSON</h3>
+                    <pre class="review-json">{{ review_json }}</pre>
+
+                    <h3>Raw prediction JSON</h3>
                     <pre>{{ raw_json }}</pre>
                 </div>
 
@@ -827,18 +874,27 @@ def index():
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
                                     <br>
-                                    type={{ sim.get("type") }}
-                                    <br>
-                                    crop={{ sim.get("crop_id") }}
-                                    <br>
-                                    conf={{ sim.get("confidence") }}
+                                    <p>
+                                        <b>#{{ sim.rank }}</b>
+                                        score={{ "%.4f"|format(sim.score) }}
+                                        <br>
+                                        <b>Predicted:</b> {{ sim.get("type") }}
+                                        <br>
+                                        <b>Effective:</b> {{ sim.get("effective_type") }}
+                                        <br>
+                                        crop={{ sim.get("crop_id") }}
+                                        <br>
+                                        conf={{ sim.get("confidence") }}
 
-                                    {% if sim.previous_review %}
-                                    <br>
-                                    <b>Reviewed:</b>
-                                    {{ sim.previous_review.get("decision") }}
-                                    as {{ sim.previous_review.get("reviewed_type") }}
-                                    {% endif %}
+                                        {% if sim.previous_review %}
+                                        <br>
+                                        <b>Reviewed:</b>
+                                        {{ sim.previous_review.get("decision") }}
+                                        {% if sim.previous_review.get("reviewed_type") %}
+                                            as {{ sim.previous_review.get("reviewed_type") }}
+                                        {% endif %}
+                                        {% endif %}
+                                    </p>
                                 </p>
 
                                 <img
@@ -849,7 +905,14 @@ def index():
                                 <form method="post" action="{{ url_for('review_similar') }}">
                                     <input type="hidden" name="faiss_id" value="{{ sim.faiss_id }}">
                                     <input type="hidden" name="idx" value="{{ idx }}">
-                                    <input type="hidden" name="new_type" value="{{ sim.get('type') }}">
+                                    <label>Class:</label><br>
+                                    <select name="new_type">
+                                        {% for cls in review_schema.classes %}
+                                            <option value="{{ cls }}" {% if cls == sim.get("effective_type") %}selected{% endif %}>
+                                                {{ cls }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
 
                                     <button class="accept" name="decision" value="accepted">Accept similar</button>
                                     <button class="reject" name="decision" value="rejected">Reject similar</button>
@@ -867,6 +930,8 @@ def index():
         """,
         item=item,
         raw_json=json.dumps(item, indent=2, ensure_ascii=False),
+        review_json=review_json,
+        current_type=current_type,
         idx=idx,
         total=total,
         prev_idx=prev_idx,
@@ -992,18 +1057,26 @@ def review_similar():
 
     item = metadata[faiss_id]
 
+    if decision == "rejected":
+        reviewed_type = "false_positive"
+    else:
+        reviewed_type = new_type
+
     save_review(
         item=item,
         decision=decision,
-        new_type=new_type,
+        new_type=reviewed_type,
         notes="reviewed from similar crop suggestion",
         human_confidence="medium",
-        bbox_quality="good",
+        bbox_quality="good" if decision == "accepted" else "bad_location",
         attributes=["similar_review"],
     )
 
     crop_id = item.get("crop_id", "unknown")
-    msg = f"Similar crop {crop_id} marked as {decision}"
+    if decision == "rejected":
+        msg = f"Similar crop {crop_id} rejected. Predicted type was {item.get('type')}"
+    else:
+        msg = f"Similar crop {crop_id} accepted as {new_type}"
 
     # Tornem al mateix crop principal, però amb missatge visible.
     return redirect(url_for("index", idx=idx, msg=msg))
