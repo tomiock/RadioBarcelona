@@ -1,7 +1,10 @@
 import argparse
+import json
 import os
 import shutil
 import subprocess
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 
@@ -33,6 +36,176 @@ def remove_path(path):
     elif path.exists():
         path.unlink()
         print(f"Removed file: {path}")
+
+
+
+
+
+
+def count_predicted_objects(layouts_dir):
+    """
+    Compta quants objectes detectats hi ha per classe dins els predicted_layout.json.
+
+    Exemple de sortida:
+        {
+            "stamp": 60,
+            "handwritten_text": 148,
+            "crossout": 41
+        }
+    """
+    layouts_dir = Path(layouts_dir)
+    counts = Counter()
+
+    if not layouts_dir.exists():
+        return {}
+
+    for path in layouts_dir.glob("*_predicted_layout.json"):
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        for obj in data.get("objects", []):
+            counts[obj.get("type", "unknown")] += 1
+
+    return dict(counts)
+
+
+def count_crops_by_class(crops_dir):
+    """
+    Compta crops guardats per classe.
+
+    Espera estructura:
+        outputs/object_crops_raw/stamp/*.jpg
+        outputs/object_crops_raw/handwritten_text/*.jpg
+        ...
+    """
+    crops_dir = Path(crops_dir)
+    counts = {}
+
+    if not crops_dir.exists():
+        return counts
+
+    for class_dir in sorted(p for p in crops_dir.iterdir() if p.is_dir()):
+        n = len(list(class_dir.glob("*.jpg"))) + len(list(class_dir.glob("*.png")))
+        counts[class_dir.name] = n
+
+    return counts
+
+
+def count_jsonl_lines(path):
+    """
+    Compta línies no buides d'un JSONL.
+    """
+    path = Path(path)
+
+    if not path.exists():
+        return 0
+
+    with path.open("r", encoding="utf-8") as f:
+        return sum(1 for line in f if line.strip())
+
+
+def write_manifest(
+    *,
+    root,
+    run_id,
+    args,
+    synthetic_root,
+    annotations_dir,
+    yolo_dataset,
+    real_test_dir,
+    embeddings_dir,
+    faiss_dir,
+    search_dir,
+    run_name,
+    status="completed",
+):
+    """
+    Escriu un manifest JSON amb el resum de l'execució del pipeline.
+
+    Aquest fitxer és important per poder compartir l'experiment i saber:
+        - amb quina configuració es va executar,
+        - quins outputs va generar,
+        - quantes deteccions/crops hi ha,
+        - quins pesos i índex FAISS s'han fet servir.
+    """
+    root = Path(root)
+
+    layouts_dir = root / "outputs/real_predicted_layouts"
+    crops_dir = root / "outputs/object_crops_raw"
+    review_log = root / "outputs/review_logs/review_log.jsonl"
+
+    embeddings_path = embeddings_dir / "embeddings.npy"
+    faiss_index_path = faiss_dir / "visual_index.faiss"
+    faiss_metadata_path = faiss_dir / "metadata.jsonl"
+
+    raw_crops_by_type = count_crops_by_class(crops_dir)
+
+    manifest = {
+        "run_id": run_id,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "pipeline": "synthetic_generation_detection_review_retrieval",
+        "status": status,
+
+        "config": {
+            "samples": args.samples,
+            "epochs": args.epochs,
+            "imgsz": args.imgsz,
+            "batch": args.batch,
+            "real_pages": args.real_pages,
+            "conf": args.conf,
+            "skip_train": args.skip_train,
+            "weights": args.weights,
+            "classes": args.classes,
+            "retrieval_classes": args.retrieval_classes,
+        },
+
+        "paths": {
+            "synthetic_root": str(synthetic_root),
+            "annotations_dir": str(annotations_dir),
+            "yolo_dataset": str(yolo_dataset),
+            "real_test_dir": str(real_test_dir),
+            "real_predicted_layouts": str(layouts_dir),
+            "object_crops_raw": str(crops_dir),
+            "embeddings_dir": str(embeddings_dir),
+            "faiss_dir": str(faiss_dir),
+            "search_dir": str(search_dir),
+            "review_log": str(review_log),
+            "training_run": str(root / f"runs/detect/{run_name}"),
+        },
+
+        "counts": {
+            "synthetic_layout_jsons": len(list(Path(synthetic_root).glob("sample_*/layout_annotations.json"))),
+            "real_pages": len(list(Path(real_test_dir).glob("*.jpg"))),
+            "predicted_layout_jsons": len(list(layouts_dir.glob("*_predicted_layout.json"))) if layouts_dir.exists() else 0,
+            "predicted_objects_by_type": count_predicted_objects(layouts_dir),
+            "raw_crops_by_type": raw_crops_by_type,
+            "raw_crops_total": sum(raw_crops_by_type.values()),
+            "review_entries": count_jsonl_lines(review_log),
+            "embeddings_exists": embeddings_path.exists(),
+            "faiss_index_exists": faiss_index_path.exists(),
+        },
+
+        "files": {
+            "embeddings": str(embeddings_path) if embeddings_path.exists() else None,
+            "faiss_index": str(faiss_index_path) if faiss_index_path.exists() else None,
+            "faiss_metadata": str(faiss_metadata_path) if faiss_metadata_path.exists() else None,
+        },
+    }
+
+    manifests_dir = root / "outputs/manifests"
+    manifests_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_path = manifests_dir / f"{run_id}_manifest.json"
+
+    with manifest_path.open("w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+    print(f"\nSaved manifest: {manifest_path}")
+    print(json.dumps(manifest["counts"], indent=2, ensure_ascii=False))
+
+
+
+
 
 
 def main():
@@ -84,6 +257,9 @@ def main():
         default="current",
         help="Name for output experiment folders, e.g. current, real_test25, real_test290",
     )
+
+    
+
 
     args = parser.parse_args()
 
@@ -228,6 +404,22 @@ def main():
         print("  - use real pages with visible stamps/handwriting/crossouts")
         print("\nPipeline finished partially.")
         print("Review app will not have crops to review yet.")
+
+        write_manifest(
+            root=root,
+            run_id=args.run_id,
+            args=args,
+            synthetic_root=synthetic_root,
+            annotations_dir=annotations_dir,
+            yolo_dataset=yolo_dataset,
+            real_test_dir=real_test_dir,
+            embeddings_dir=embeddings_dir,
+            faiss_dir=faiss_dir,
+            search_dir=search_dir,
+            run_name=run_name,
+            status="partial_no_crops",
+        )
+
         return
 
 
@@ -271,6 +463,21 @@ def main():
         ])
     else:
         print("No stamp crops found. Skipping similarity query.")
+
+
+    write_manifest(
+        root=root,
+        run_id=args.run_id,
+        args=args,
+        synthetic_root=synthetic_root,
+        annotations_dir=annotations_dir,
+        yolo_dataset=yolo_dataset,
+        real_test_dir=real_test_dir,
+        embeddings_dir=embeddings_dir,
+        faiss_dir=faiss_dir,
+        search_dir=search_dir,
+        run_name=run_name,
+    )
 
     print("\nPipeline finished successfully.")
     print("Review app can be launched with:")
