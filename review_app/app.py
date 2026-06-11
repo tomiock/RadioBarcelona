@@ -292,7 +292,21 @@ def save_review(
     entry["human_confidence"] = human_confidence
     entry["bbox_quality"] = bbox_quality
     entry["attributes"] = attributes
-    entry["reviewed_crop_path"] = str(target_crop_path)
+    entry["reviewed_crop_path"] = str(target_crop_path.relative_to(PROJECT_ROOT))
+
+    # Guardem paths relatius perquè el review_log.jsonl sigui portable
+    # entre ordinadors i carpetes diferents.
+    if entry.get("image_path"):
+        try:
+            entry["image_path"] = str(Path(entry["image_path"]).relative_to(PROJECT_ROOT))
+        except ValueError:
+            pass
+
+    if entry.get("reviewed_crop_path"):
+        try:
+            entry["reviewed_crop_path"] = str(Path(entry["reviewed_crop_path"]).relative_to(PROJECT_ROOT))
+        except ValueError:
+            pass
 
     with REVIEW_LOG.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -567,13 +581,37 @@ def index():
     review_schema = load_review_schema()
     crop_id = item.get("crop_id")
     previous_review = reviewed_entries.get(crop_id)
-    # Classe efectiva que ha de mostrar la UI.
-    # Si el crop ja està revisat, prioritzem la classe humana.
-    # Si no, usem la predicció original del model.
+    # Classe efectiva mostrada al formulari:
+    # si ja hi ha revisió humana, usem reviewed_type;
+    # si no, usem la predicció original.
     current_type = (
         previous_review.get("reviewed_type")
         if previous_review and previous_review.get("reviewed_type")
         else item.get("type")
+    )
+
+    current_human_confidence = (
+        previous_review.get("human_confidence")
+        if previous_review and previous_review.get("human_confidence")
+        else ""
+    )
+
+    current_bbox_quality = (
+        previous_review.get("bbox_quality")
+        if previous_review and previous_review.get("bbox_quality")
+        else ""
+    )
+
+    current_notes = (
+        previous_review.get("review_notes")
+        if previous_review and previous_review.get("review_notes")
+        else ""
+    )
+
+    current_attributes = (
+        previous_review.get("attributes", [])
+        if previous_review
+        else []
     )
 
     # Review JSON separat del Raw JSON.
@@ -629,34 +667,97 @@ def index():
                 }
                 .container {
                     display: grid;
-                    grid-template-columns: 360px minmax(520px, 1fr) 360px;
-                    gap: 20px;
+                    grid-template-columns: 300px 720px 420px 340px;
+                    gap: 16px;
                     align-items: start;
-                }
+                }                
 
                 .left-panel,
-                .center-panel,
+                .page-panel,
+                .json-panel,
                 .right-panel {
                     min-width: 0;
                 }
+
+                
+                .json-panel pre {
+                    max-height: 100%;
+                    overflow: auto;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                }
+
+                .review-json {
+                    background: #eef8ee;
+                    border-left: 4px solid #2f8f2f;
+                }
+                                
                 .card {
                     background: white;
                     padding: 18px;
                     border-radius: 10px;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
                 }
+
+
+                * {
+                    box-sizing: border-box;
+                }                
+
                 .crop-img {
-                    max-width: 380px;
-                    max-height: 320px;
+                    width: 100%;
+                    max-width: 100%;
+                    max-height: 260px;
+                    object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
                 }
+
                 .page-img {
-                    max-width: 900px;
-                    max-height: 850px;
+                    width: 100%;
+                    max-width: 700px;
+                    max-height: 820px;
+                    object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
                 }
+
+                input,
+                select {
+                    padding: 8px;
+                    font-size: 15px;
+                    margin-bottom: 10px;
+                    width: 100%;
+                    max-width: 260px;
+                }
+
+                @media (max-width: 1800px) {
+                    .container {
+                        grid-template-columns: 300px 620px 400px 320px;
+                    }
+
+                    .page-img {
+                        max-width: 600px;
+                    }
+                }
+
+                @media (max-width: 1400px) {
+                    .container {
+                        grid-template-columns: 300px 1fr 380px;
+                    }
+
+                    .right-panel {
+                        grid-column: 1 / -1;
+                    }
+                }
+
+                @media (max-width: 1000px) {
+                    .container {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+
                 pre {
                     background: #eee;
                     padding: 12px;
@@ -739,19 +840,47 @@ def index():
                     border: 1px solid #333;
                     display: block;
                     margin-bottom: 8px;
+                }          
+
+                .review-badge {
+                    display: inline-block;
+                    margin-top: 6px;
+                    padding: 4px 6px;
+                    border-radius: 4px;
+                    font-weight: bold;
                 }
 
-                .review-json {
-                    background: #eef8ee;
-                    border-left: 4px solid #2f8f2f;
+                .review-accepted {
+                    background: #d8f5df;
+                    color: #176b2c;
+                    border: 1px solid #2ecc71;
                 }
 
-                pre {
-                    white-space: pre-wrap;
-                    word-break: break-word;
-                    max-height: 520px;
-                    overflow: auto;
+                .review-rejected {
+                    background: #fde0dc;
+                    color: #9f241b;
+                    border: 1px solid #e74c3c;
                 }
+
+                .review-skipped {
+                    background: #fff1cc;
+                    color: #8a5a00;
+                    border: 1px solid #f39c12;
+                }
+
+                .button-row {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    flex-wrap: nowrap;
+                }
+
+                .button-row button {
+                    margin-right: 0;
+                    white-space: nowrap;
+                }
+
+
 
             </style>
         </head>
@@ -789,6 +918,19 @@ def index():
                     <h2>Metadata</h2>
                     <p><b>Crop ID:</b> {{ item.get("crop_id") }}</p>
                     <p><b>Predicted type:</b> {{ item.get("type") }}</p>
+
+                    {% if previous_review %}
+                    <p><b>Review decision:</b> {{ previous_review.get("decision") }}</p>
+                    <p><b>Reviewed type:</b> {{ previous_review.get("reviewed_type") }}</p>
+                    <p><b>BBox quality:</b> {{ previous_review.get("bbox_quality") }}</p>
+                    <p><b>Human confidence:</b> {{ previous_review.get("human_confidence") }}</p>
+
+                    {% if previous_review.get("review_notes") %}
+                    <p><b>Review notes:</b> {{ previous_review.get("review_notes") }}</p>
+                    {% endif %}
+                    {% endif %}
+
+                    <p><b>Effective type:</b> {{ current_type }}</p>
                     <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
                     <p><b>Document:</b> {{ item.get("document_id") }}</p>
                     <p><b>BBox:</b> {{ item.get("bbox") }}</p>
@@ -810,9 +952,11 @@ def index():
 
                         <label>Human confidence:</label><br>
                         <select name="human_confidence">
-                            <option value="">not specified</option>
+                            <option value="" {% if current_human_confidence == "" %}selected{% endif %}>not specified</option>
                             {% for conf in review_schema.human_confidence %}
-                                <option value="{{ conf }}">{{ conf }}</option>
+                                <option value="{{ conf }}" {% if conf == current_human_confidence %}selected{% endif %}>
+                                    {{ conf }}
+                                </option>
                             {% endfor %}
                         </select>
 
@@ -820,9 +964,11 @@ def index():
 
                         <label>BBox quality:</label><br>
                         <select name="bbox_quality">
-                            <option value="">not specified</option>
+                            <option value="" {% if current_bbox_quality == "" %}selected{% endif %}>not specified</option>
                             {% for q in review_schema.bbox_quality %}
-                                <option value="{{ q }}">{{ q }}</option>
+                                <option value="{{ q }}" {% if q == current_bbox_quality %}selected{% endif %}>
+                                    {{ q }}
+                                </option>
                             {% endfor %}
                         </select>
 
@@ -832,28 +978,45 @@ def index():
                         <div class="attributes-grid">
                             {% for attr in review_schema.attributes %}
                                 <label class="attribute-item">
-                                    <input type="checkbox" name="attributes" value="{{ attr }}">
+                                    <input
+                                        type="checkbox"
+                                        name="attributes"
+                                        value="{{ attr }}"
+                                        {% if attr in current_attributes %}checked{% endif %}
+                                    >
                                     <span>{{ attr }}</span>
                                 </label>
                             {% endfor %}
                         </div>
 
                         <label>Notes:</label><br>
-                        <input type="text" name="notes" placeholder="bbox partial, too large, false positive...">
+                        <input
+                            type="text"
+                            name="notes"
+                            value="{{ current_notes }}"
+                            placeholder="bbox partial, too large, false positive..."
+                        >
 
                         <br><br>
 
-                        <button class="accept" name="decision" value="accepted">Accept</button>
-                        <button class="reject" name="decision" value="rejected">Reject</button>
-                        <button class="skip" name="decision" value="skipped">Skip</button>
+                        <div class="button-row">
+                            <button class="accept" name="decision" value="accepted">Accept</button>
+                            <button class="reject" name="decision" value="rejected">Reject</button>
+                            <button class="skip" name="decision" value="skipped">Skip</button>
+                        </div>
                     </form>
                 </div>
 
 
-                <!-- COLUMN 2: full page + raw json -->
-                <div class="card center-panel">
+                <!-- COLUMN 2: full page -->
+                <div class="card page-panel">
                     <h2>Full page with bbox</h2>
                     <img class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
+                </div>
+
+                <!-- COLUMN 3: JSONs -->
+                <div class="card json-panel">
+                    <h2>JSON</h2>
 
                     <h3>Review JSON</h3>
                     <pre class="review-json">{{ review_json }}</pre>
@@ -874,27 +1037,23 @@ def index():
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
                                     <br>
-                                    <p>
-                                        <b>#{{ sim.rank }}</b>
-                                        score={{ "%.4f"|format(sim.score) }}
-                                        <br>
-                                        <b>Predicted:</b> {{ sim.get("type") }}
-                                        <br>
-                                        <b>Effective:</b> {{ sim.get("effective_type") }}
-                                        <br>
-                                        crop={{ sim.get("crop_id") }}
-                                        <br>
-                                        conf={{ sim.get("confidence") }}
+                                    <b>Predicted:</b> {{ sim.get("type") }}
+                                    <br>
+                                    <b>Effective:</b> {{ sim.get("effective_type") }}
+                                    <br>
+                                    crop={{ sim.get("crop_id") }}
+                                    <br>
+                                    conf={{ sim.get("confidence") }}
 
-                                        {% if sim.previous_review %}
-                                        <br>
-                                        <b>Reviewed:</b>
-                                        {{ sim.previous_review.get("decision") }}
+                                    {% if sim.previous_review %}
+                                    <br>
+                                    <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
+                                        Reviewed: {{ sim.previous_review.get("decision") }}
                                         {% if sim.previous_review.get("reviewed_type") %}
                                             as {{ sim.previous_review.get("reviewed_type") }}
                                         {% endif %}
-                                        {% endif %}
-                                    </p>
+                                    </span>
+                                    {% endif %}
                                 </p>
 
                                 <img
@@ -914,8 +1073,10 @@ def index():
                                         {% endfor %}
                                     </select>
 
-                                    <button class="accept" name="decision" value="accepted">Accept similar</button>
-                                    <button class="reject" name="decision" value="rejected">Reject similar</button>
+                                    <div class="button-row">
+                                        <button class="accept" name="decision" value="accepted">Accept similar</button>
+                                        <button class="reject" name="decision" value="rejected">Reject similar</button>
+                                    </div>
                                 </form>
                             </div>
                         {% endfor %}
@@ -940,6 +1101,10 @@ def index():
         similar_items=similar_items,
         message=message,
         review_schema=review_schema,
+        current_human_confidence=current_human_confidence,
+        current_bbox_quality=current_bbox_quality,
+        current_notes=current_notes,
+        current_attributes=current_attributes,
     )
 
 
@@ -1056,11 +1221,18 @@ def review_similar():
         return f"Invalid FAISS id: {faiss_id}", 404
 
     item = metadata[faiss_id]
+    crop_id = item.get("crop_id", "unknown")
 
+    # Si acceptem, guardem la classe seleccionada.
+    # Si rebutgem, ho marquem com a false_positive per no exportar-ho com asset bo.
     if decision == "rejected":
         reviewed_type = "false_positive"
+        bbox_quality = "bad_location"
+        msg = f"Similar crop {crop_id} rejected. Predicted type was {item.get('type')}"
     else:
         reviewed_type = new_type
+        bbox_quality = "good"
+        msg = f"Similar crop {crop_id} accepted as {reviewed_type}"
 
     save_review(
         item=item,
@@ -1068,15 +1240,9 @@ def review_similar():
         new_type=reviewed_type,
         notes="reviewed from similar crop suggestion",
         human_confidence="medium",
-        bbox_quality="good" if decision == "accepted" else "bad_location",
+        bbox_quality=bbox_quality,
         attributes=["similar_review"],
     )
-
-    crop_id = item.get("crop_id", "unknown")
-    if decision == "rejected":
-        msg = f"Similar crop {crop_id} rejected. Predicted type was {item.get('type')}"
-    else:
-        msg = f"Similar crop {crop_id} accepted as {new_type}"
 
     # Tornem al mateix crop principal, però amb missatge visible.
     return redirect(url_for("index", idx=idx, msg=msg))
