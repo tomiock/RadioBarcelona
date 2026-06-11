@@ -544,6 +544,76 @@ def find_similar_items(item, top_k=5):
 
 
 
+def compute_review_stats():
+    """
+    Calcula estadístiques globals de la revisió manual.
+
+    Important:
+    - metadata.jsonl conté totes les deteccions/crops originals.
+    - review_log.jsonl conté les decisions humanes.
+    - Si un crop s'ha revisat més d'una vegada, load_review_entries()
+      ja retorna només l'última decisió per crop_id.
+    """
+    items = load_items()
+    reviewed_entries = load_review_entries()
+
+    total_crops = len(items)
+    reviewed_total = len(reviewed_entries)
+    pending_total = max(0, total_crops - reviewed_total)
+
+    decisions = {}
+    reviewed_types = {}
+    bbox_qualities = {}
+    attributes = {}
+
+    exportable_types = {
+        "stamp",
+        "handwritten_text",
+        "crossout",
+        "censorship_block",
+        "table_fragment",
+    }
+
+    exportable_candidates = 0
+    false_positives = 0
+
+    for entry in reviewed_entries.values():
+        decision = entry.get("decision") or "unknown"
+        reviewed_type = entry.get("reviewed_type") or "unknown"
+        bbox_quality = entry.get("bbox_quality") or "unspecified"
+
+        decisions[decision] = decisions.get(decision, 0) + 1
+        reviewed_types[reviewed_type] = reviewed_types.get(reviewed_type, 0) + 1
+        bbox_qualities[bbox_quality] = bbox_qualities.get(bbox_quality, 0) + 1
+
+        for attr in entry.get("attributes", []) or []:
+            attributes[attr] = attributes.get(attr, 0) + 1
+
+        if reviewed_type == "false_positive":
+            false_positives += 1
+
+        if (
+            decision == "accepted"
+            and bbox_quality == "good"
+            and reviewed_type in exportable_types
+        ):
+            exportable_candidates += 1
+
+    return {
+        "total_crops": total_crops,
+        "reviewed_total": reviewed_total,
+        "pending_total": pending_total,
+        "decisions": decisions,
+        "reviewed_types": reviewed_types,
+        "bbox_qualities": bbox_qualities,
+        "attributes": attributes,
+        "exportable_candidates": exportable_candidates,
+        "false_positives": false_positives,
+    }
+
+
+
+
 
 # ============================================================
 # Rutes Flask
@@ -579,6 +649,7 @@ def index():
 
     reviewed_entries = load_review_entries()
     review_schema = load_review_schema()
+    review_stats = compute_review_stats()
     crop_id = item.get("crop_id")
     previous_review = reviewed_entries.get(crop_id)
     # Classe efectiva mostrada al formulari:
@@ -880,6 +951,66 @@ def index():
                     white-space: nowrap;
                 }
 
+                .stats-bar {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin: 12px 0 16px 0;
+                }
+
+                .stat-card {
+                    background: white;
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    min-width: 120px;
+                    box-shadow: 0 1px 5px rgba(0,0,0,0.15);
+                    text-align: center;
+                }
+
+                .good-stat {
+                    border-left: 5px solid #2ecc71;
+                }
+
+                .bad-stat {
+                    border-left: 5px solid #e74c3c;
+                }
+
+                .stats-details {
+                    background: white;
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    margin-bottom: 18px;
+                    box-shadow: 0 1px 5px rgba(0,0,0,0.12);
+                }
+
+                .stats-details summary {
+                    cursor: pointer;
+                    font-weight: bold;
+                }
+
+                .stats-columns {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(160px, 1fr));
+                    gap: 12px;
+                }
+
+                .stats-columns ul {
+                    padding-left: 18px;
+                    margin-top: 4px;
+                }
+
+                @media (max-width: 1000px) {
+                    .stats-columns {
+                        grid-template-columns: 1fr 1fr;
+                    }
+                }
+
+                @media (max-width: 650px) {
+                    .stats-columns {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
 
 
             </style>
@@ -899,6 +1030,78 @@ def index():
                 <a class="navlink" href="{{ url_for('index', idx=next_idx) }}">Next →</a>
                 <span>Item {{ idx + 1 }} / {{ total }}</span>
             </div>
+
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <b>Total crops</b><br>
+                    {{ review_stats.total_crops }}
+                </div>
+
+                <div class="stat-card">
+                    <b>Reviewed</b><br>
+                    {{ review_stats.reviewed_total }}
+                </div>
+
+                <div class="stat-card">
+                    <b>Pending</b><br>
+                    {{ review_stats.pending_total }}
+                </div>
+
+                <div class="stat-card good-stat">
+                    <b>Exportable assets</b><br>
+                    {{ review_stats.exportable_candidates }}
+                </div>
+
+                <div class="stat-card bad-stat">
+                    <b>False positives</b><br>
+                    {{ review_stats.false_positives }}
+                </div>
+            </div>
+
+            <div class="stats-details">
+                <details>
+                    <summary>Review statistics</summary>
+
+                    <div class="stats-columns">
+                        <div>
+                            <h4>Decisions</h4>
+                            <ul>
+                                {% for key, value in review_stats.decisions.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>Reviewed types</h4>
+                            <ul>
+                                {% for key, value in review_stats.reviewed_types.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>BBox quality</h4>
+                            <ul>
+                                {% for key, value in review_stats.bbox_qualities.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>Attributes</h4>
+                            <ul>
+                                {% for key, value in review_stats.attributes.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
 
             {% if previous_review %}
             <div class="status">
@@ -1105,6 +1308,7 @@ def index():
         current_bbox_quality=current_bbox_quality,
         current_notes=current_notes,
         current_attributes=current_attributes,
+        review_stats=review_stats,
     )
 
 
