@@ -84,7 +84,7 @@ CONFIG = {
 # ASSET DISCOVERY HELPERS
 # ============================================================
 
-ASSET_IMAGE_EXTENSIONS = ("*.png", "*.jpg", "*.jpeg", "*.webp")
+ASSET_IMAGE_EXTENSIONS = ("*.png", "*.jpg", "*.jpeg", "*.webp", "*.tif", "*.tiff")
 
 
 def collect_assets_from_dirs(*dirs):
@@ -1349,14 +1349,20 @@ class LayerRenderer:
         # Segells reals extra independents
         if self.stamp_paths and random.random() < CONFIG["EXTRA_STAMP_PROB"]:
             for _ in range(random.randint(1, 3)):
-                self._paste_asset_random(
+                used_stamp = self._paste_asset_random(
                     img,
                     self.stamp_paths,
                     min_scale=0.25,
                     max_scale=0.65,
                     rotation=35.0,
-                    margin=80
+                    margin=80,
+                    asset_class="official_stamp",
                 )
+
+                if used_stamp:
+                    stamp_detections.append(used_stamp)
+
+                    
 
         # Tatxadures/censures extra independents
         if self.censorship_paths and random.random() < CONFIG["EXTRA_CENSORSHIP_PROB"]:
