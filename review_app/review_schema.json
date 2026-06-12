@@ -10,6 +10,7 @@
   ],
   "bbox_quality": [
     "good",
+    "minor_partial",
     "partial",
     "too_large",
     "bad_location",
@@ -38,6 +39,11 @@
     "handwritten_on_stamp",
     "numeric_annotation",
     "margin_note",
-    "long_note"
+    "long_note",
+    "mixed",
+    "typewritten",
+    "handwritten",
+    "stamp",
+    "table"
   ]
 }

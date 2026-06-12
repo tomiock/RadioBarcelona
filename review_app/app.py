@@ -98,6 +98,11 @@ def load_review_schema():
             "fragmented",
             "rotated",
             "background_noise",
+            "mixed",
+            "typewritten",
+            "handwritten",
+            "stamp",
+            "table",    
         ],
     }
 
@@ -105,7 +110,16 @@ def load_review_schema():
         return default_schema
 
     with REVIEW_SCHEMA_PATH.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        schema = json.load(f)
+
+    # Compatibility: older review_schema.json files may not include newer generic flags.
+    # mixed = the crop contains more than one relevant visual/textual phenomenon
+    # and cannot be described cleanly by a single attribute.
+    schema.setdefault("attributes", [])
+    if "mixed" not in schema["attributes"]:
+        schema["attributes"].append("mixed")
+
+    return schema
 
 
 
@@ -553,13 +567,17 @@ def compute_review_stats():
     - review_log.jsonl conté les decisions humanes.
     - Si un crop s'ha revisat més d'una vegada, load_review_entries()
       ja retorna només l'última decisió per crop_id.
+
+    Criteri explícit:
+    - Reviewed = accepted + rejected. Skip no compta com reviewed net.
+    - Exportable assets = accepted + bbox_quality good + classe exportable.
+    - False positives = rejected o reviewed_type false_positive.
+      Això fa que el crop principal i els similar crops tinguin una lògica coherent.
     """
     items = load_items()
     reviewed_entries = load_review_entries()
 
     total_crops = len(items)
-    reviewed_total = len(reviewed_entries)
-    pending_total = max(0, total_crops - reviewed_total)
 
     decisions = {}
     reviewed_types = {}
@@ -574,8 +592,13 @@ def compute_review_stats():
         "table_fragment",
     }
 
+    accepted_total = 0
+    rejected_total = 0
+    skipped_total = 0
+    reviewed_total = 0
     exportable_candidates = 0
     false_positives = 0
+    accepted_not_exportable = 0
 
     for entry in reviewed_entries.values():
         decision = entry.get("decision") or "unknown"
@@ -589,28 +612,51 @@ def compute_review_stats():
         for attr in entry.get("attributes", []) or []:
             attributes[attr] = attributes.get(attr, 0) + 1
 
-        if reviewed_type == "false_positive":
+        if decision == "accepted":
+            accepted_total += 1
+        elif decision == "rejected":
+            rejected_total += 1
+        elif decision == "skipped":
+            skipped_total += 1
+
+        if decision in {"accepted", "rejected"}:
+            reviewed_total += 1
+
+        # Rebutjar un crop vol dir que no és un asset aprofitable.
+        # Si a més la classe humana és false_positive, també queda explícit.
+        if decision == "rejected" or reviewed_type == "false_positive":
             false_positives += 1
 
-        if (
+        is_exportable = (
             decision == "accepted"
             and bbox_quality == "good"
             and reviewed_type in exportable_types
-        ):
+        )
+
+        if is_exportable:
             exportable_candidates += 1
+        elif decision == "accepted":
+            accepted_not_exportable += 1
+
+    # Pending = crops que encara no tenen una decisió final accept/reject.
+    # Els skipped continuen sense ser assets finals, però ja apareixen separats.
+    pending_total = max(0, total_crops - reviewed_total)
 
     return {
         "total_crops": total_crops,
         "reviewed_total": reviewed_total,
         "pending_total": pending_total,
+        "accepted_total": accepted_total,
+        "rejected_total": rejected_total,
+        "skipped_total": skipped_total,
         "decisions": decisions,
         "reviewed_types": reviewed_types,
         "bbox_qualities": bbox_qualities,
         "attributes": attributes,
         "exportable_candidates": exportable_candidates,
+        "accepted_not_exportable": accepted_not_exportable,
         "false_positives": false_positives,
     }
-
 
 
 
@@ -732,15 +778,17 @@ def index():
                     font-family: Arial, sans-serif;
                     margin: 24px;
                     background: #f5f5f5;
+                    color: #111;
                 }
                 .topbar {
                     margin-bottom: 18px;
                 }
                 .container {
                     display: grid;
-                    grid-template-columns: 300px 720px 420px 340px;
-                    gap: 16px;
+                    grid-template-columns: minmax(320px, 0.85fr) minmax(560px, 1.65fr) minmax(360px, 1fr) minmax(340px, 0.95fr);
+                    gap: 18px;
                     align-items: start;
+                    max-width: 1900px;
                 }                
 
                 .left-panel,
@@ -786,35 +834,26 @@ def index():
 
                 .page-img {
                     width: 100%;
-                    max-width: 700px;
-                    max-height: 820px;
+                    max-width: 100%;
+                    max-height: 82vh;
                     object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
                 }
 
                 input,
-                select {
+                select,
+                textarea {
                     padding: 8px;
                     font-size: 15px;
                     margin-bottom: 10px;
                     width: 100%;
-                    max-width: 260px;
+                    max-width: 100%;
                 }
 
-                @media (max-width: 1800px) {
+                @media (max-width: 1650px) {
                     .container {
-                        grid-template-columns: 300px 620px 400px 320px;
-                    }
-
-                    .page-img {
-                        max-width: 600px;
-                    }
-                }
-
-                @media (max-width: 1400px) {
-                    .container {
-                        grid-template-columns: 300px 1fr 380px;
+                        grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.5fr) minmax(340px, 1fr);
                     }
 
                     .right-panel {
@@ -822,9 +861,17 @@ def index():
                     }
                 }
 
-                @media (max-width: 1000px) {
+                @media (max-width: 1150px) {
+                    body {
+                        margin: 14px;
+                    }
+
                     .container {
                         grid-template-columns: 1fr;
+                    }
+
+                    .page-img {
+                        max-height: none;
                     }
                 }
 
@@ -864,11 +911,12 @@ def index():
                     background: #34495e;
                     color: white;
                 }
-                input, select {
+                input, select, textarea {
                     padding: 8px;
                     font-size: 15px;
                     margin-bottom: 10px;
-                    width: 260px;
+                    width: 100%;
+                    max-width: 100%;
                 }
                 .status {
                     padding: 10px;
@@ -878,19 +926,20 @@ def index():
                 }
                 .attributes-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 6px 12px;
+                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    gap: 8px 12px;
                     margin: 8px 0 14px 0;
                     max-width: 100%;
                 }
 
                 .attribute-item {
                     display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 13px;
-                    line-height: 1.2;
-                    word-break: break-word;
+                    align-items: flex-start;
+                    gap: 7px;
+                    font-size: 14px;
+                    line-height: 1.25;
+                    overflow-wrap: anywhere;
+                    hyphens: auto;
                 }
 
                 .attribute-item input {
@@ -906,7 +955,8 @@ def index():
                 }
 
                 .similar-img {
-                    max-width: 260px;
+                    width: 100%;
+                    max-width: 100%;
                     max-height: 180px;
                     border: 1px solid #333;
                     display: block;
@@ -920,6 +970,11 @@ def index():
                     border-radius: 4px;
                     font-weight: bold;
                 }
+
+                .review-status {
+                    border-left: 6px solid #999;
+                    font-weight: 600;
+                    color: #555;}
 
                 .review-accepted {
                     background: #d8f5df;
@@ -999,6 +1054,44 @@ def index():
                     margin-top: 4px;
                 }
 
+
+
+                .stat-subtext {
+                    display: block;
+                    margin-top: 2px;
+                    font-size: 12px;
+                    color: #555;
+                    font-weight: normal;
+                }
+
+                .instructions {
+                    margin-top: 16px;
+                    background: #fffdf4;
+                    border-left: 5px solid #f1c40f;
+                }
+
+                .instructions h3 {
+                    margin-top: 0;
+                }
+
+                .instructions-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                    gap: 12px;
+                }
+
+                .instructions ul {
+                    margin-top: 6px;
+                    padding-left: 18px;
+                }
+
+                .similar-list {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                    gap: 12px;
+                }
+
+
                 @media (max-width: 1000px) {
                     .stats-columns {
                         grid-template-columns: 1fr 1fr;
@@ -1036,6 +1129,17 @@ def index():
                 <div class="stat-card">
                     <b>Reviewed</b><br>
                     {{ review_stats.reviewed_total }}
+                    <span class="stat-subtext">accepted + rejected</span>
+                </div>
+
+                <div class="stat-card">
+                    <b>Accepted</b><br>
+                    {{ review_stats.accepted_total }}
+                </div>
+
+                <div class="stat-card">
+                    <b>Rejected</b><br>
+                    {{ review_stats.rejected_total }}
                 </div>
 
                 <div class="stat-card">
@@ -1051,10 +1155,17 @@ def index():
                 <div class="stat-card good-stat">
                     <b>Exportable assets</b><br>
                     {{ review_stats.exportable_candidates }}
+                    <span class="stat-subtext">accepted + good bbox</span>
+                </div>
+
+                <div class="stat-card">
+                    <b>Accepted, not exportable</b><br>
+                    {{ review_stats.accepted_not_exportable }}
+                    <span class="stat-subtext">partial/unsure/bad bbox</span>
                 </div>
 
                 <div class="stat-card bad-stat">
-                    <b>False positives</b><br>
+                    <b>Rejected / false positives</b><br>
                     {{ review_stats.false_positives }}
                 </div>
             </div>
@@ -1118,7 +1229,7 @@ def index():
                     <h2>Crop</h2>
                     <img class="crop-img" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
                     {% if previous_review %}
-                    <div class="status">
+                    <div class="status review-status review-{{ previous_review.get('decision') }}">
                         <b>Already reviewed:</b>
                         {{ previous_review.get("decision") }}
                         as {{ previous_review.get("reviewed_type") }}
@@ -1201,12 +1312,11 @@ def index():
                         </div>
 
                         <label>Notes:</label><br>
-                        <input
-                            type="text"
+                        <textarea
                             name="notes"
-                            value="{{ current_notes }}"
+                            rows="3"
                             placeholder="bbox partial, too large, false positive..."
-                        >
+                        >{{ current_notes }}</textarea>
 
                         <br><br>
 
@@ -1223,6 +1333,44 @@ def index():
                 <div class="card page-panel">
                     <h2>Full page with bbox</h2>
                     <img class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
+
+                    <div class="card instructions">
+                        <h3>Review instructions</h3>
+                        <div class="instructions-grid">
+                            <div>
+                                <b>Main crop</b>
+                                <ul>
+                                    <li><b>Accept</b> only if the class is correct and the bbox is useful.</li>
+                                    <li><b>Reject</b> if it is a false positive, a bad/huge bbox, or a mixed region that cannot be reused.</li>
+                                    <li><b>Skip</b> if you are not sure and want to decide later.</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <b>Export logic</b>
+                                <ul>
+                                    <li><b>Exportable</b> = accepted + bbox_quality <code>good</code> + valid class.</li>
+                                    <li>Accepted crops with <code>partial</code>, <code>too_large</code> or <code>unsure</code> are reviewed but not clean export assets.</li>
+                                    <li>Rejected crops count as rejected/false positives.</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <b>Attributes</b>
+                                <ul>
+                                    <li>Use visual flags such as <code>faded</code>, <code>low_contrast</code>, <code>rotated</code>, <code>stain</code> or <code>background_noise</code>.</li>
+                                    <li>Use <code>mixed</code> when several phenomena overlap and no single attribute explains the crop well.</li>
+                                    <li>Use notes for the reason: bbox partial, too large, false positive, mixed content, etc.</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <b>Similar crops</b>
+                                <ul>
+                                    <li>They are quick binary reviews from visual retrieval.</li>
+                                    <li>Accept similar creates a clean medium-confidence accepted example.</li>
+                                    <li>Reject similar marks it directly as false positive.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- COLUMN 3: JSONs -->
@@ -1237,11 +1385,12 @@ def index():
                 </div>
 
 
-                <!-- COLUMN 3: similar crops -->
+                <!-- COLUMN 4: similar crops -->
                 <div class="card right-panel">
                     <h2>Similar crops</h2>
 
                     {% if similar_items %}
+                        <div class="similar-list">
                         {% for sim in similar_items %}
                             <div class="similar-card">
                                 <p>
@@ -1254,23 +1403,27 @@ def index():
                                     <br>
                                     crop={{ sim.get("crop_id") }}
                                     <br>
-                                    conf={{ sim.get("confidence") }}
-
-                                    {% if sim.previous_review %}
-                                    <br>
-                                    <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
-                                        Reviewed: {{ sim.previous_review.get("decision") }}
-                                        {% if sim.previous_review.get("reviewed_type") %}
-                                            as {{ sim.previous_review.get("reviewed_type") }}
-                                        {% endif %}
-                                    </span>
-                                    {% endif %}
+                                    conf={{ sim.get("confidence") }}                                    
                                 </p>
 
                                 <img
                                     class="similar-img"
                                     src="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}"
                                 >
+
+                                {% if sim.previous_review %}
+                                    
+                                <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
+                                    Reviewed: {{ sim.previous_review.get("decision") }}
+                                    {% if sim.previous_review.get("reviewed_type") %}
+                                        as {{ sim.previous_review.get("reviewed_type") }}
+                                    {% endif %}
+                                </span>
+                                <br>
+                                <br>
+                                {% endif %}
+
+                                
 
                                 <form method="post" action="{{ url_for('review_similar') }}">
                                     <input type="hidden" name="faiss_id" value="{{ sim.faiss_id }}">
@@ -1291,6 +1444,7 @@ def index():
                                 </form>
                             </div>
                         {% endfor %}
+                        </div>
                     {% else %}
                         <p>No FAISS similar results available.</p>
                     {% endif %}
