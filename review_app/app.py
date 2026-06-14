@@ -1,5 +1,7 @@
 import json
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 from flask import Flask, redirect, render_template_string, request, url_for, send_file
@@ -45,6 +47,22 @@ REVIEW_LOG = PROJECT_ROOT / "outputs/review_logs/review_log.jsonl"
 PAGE_PREVIEW_DIR = PROJECT_ROOT / "outputs/review_page_previews"
 # Configuració editable de classes, qualitat de bbox i atributs.
 REVIEW_SCHEMA_PATH = PROJECT_ROOT / "review_app/review_schema.json"
+
+# Índexs JSONL generats per review_tools/build_review_indexes.py.
+# Són opcionals: si no existeixen, els filtres funcionen igual en mode dinàmic.
+INDEX_DIR = PROJECT_ROOT / "outputs/index"
+BUILD_INDEX_SCRIPT = PROJECT_ROOT / "review_tools/build_review_indexes.py"
+
+FILTERS = {
+    "all": "All",
+    "pending": "Pending",
+    "reviewed": "Reviewed",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "skipped": "Skipped",
+    "exportable": "Exportable",
+    "accepted_not_exportable": "Accepted but not exportable",
+}
 
 
 # faiss 
@@ -629,7 +647,7 @@ def compute_review_stats():
 
         is_exportable = (
             decision == "accepted"
-            and bbox_quality == "good"
+            and bbox_quality in {"good", "minor_partial"}
             and reviewed_type in exportable_types
         )
 
@@ -662,6 +680,147 @@ def compute_review_stats():
 
 
 # ============================================================
+# Filtres i export package
+# ============================================================
+
+def is_exportable_review_entry(entry):
+    """Mateix criteri que compute_review_stats(), reutilitzat pels filtres."""
+    exportable_types = {
+        "stamp",
+        "handwritten_text",
+        "typewritten_line",
+        "crossout",
+        "censorship_block",
+        "table_fragment",
+    }
+    return (
+        entry.get("decision") == "accepted"
+        and entry.get("bbox_quality") in {"good", "minor_partial"}
+        and entry.get("reviewed_type") in exportable_types
+    )
+
+
+def filter_index_path(filter_name):
+    """Retorna el JSONL filtrat si build_review_indexes.py ja l'ha generat."""
+    mapping = {
+        "all": INDEX_DIR / "all.jsonl",
+        "pending": INDEX_DIR / "by_status/pending.jsonl",
+        "reviewed": INDEX_DIR / "by_status/reviewed.jsonl",
+        "accepted": INDEX_DIR / "by_status/accepted.jsonl",
+        "rejected": INDEX_DIR / "by_status/rejected.jsonl",
+        "skipped": INDEX_DIR / "by_status/skipped.jsonl",
+        "exportable": INDEX_DIR / "by_status/exportable.jsonl",
+        "accepted_not_exportable": INDEX_DIR / "by_status/accepted_not_exportable.jsonl",
+    }
+    return mapping.get(filter_name, mapping["all"])
+
+
+def load_jsonl_item_by_index(path, index):
+    """Carrega només una línia d'un JSONL per índex.
+
+    Per milions d'elements, el pas següent seria afegir byte-offset indexes (.idx).
+    """
+    if not path.exists():
+        return None, 0
+
+    item = None
+    total = 0
+    with path.open("r", encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            if not line.strip():
+                continue
+            if i == index:
+                item = json.loads(line)
+            total += 1
+
+    if total == 0:
+        return None, 0
+
+    if item is None:
+        index = max(0, min(index, total - 1))
+        with path.open("r", encoding="utf-8") as f:
+            for i, line in enumerate(f):
+                if i == index and line.strip():
+                    item = json.loads(line)
+                    break
+
+    return item, total
+
+
+def enrich_item_for_filter(item, reviewed_entries):
+    crop_id = item.get("crop_id")
+    review = reviewed_entries.get(crop_id)
+    row = dict(item)
+    row["predicted_type"] = item.get("type")
+
+    if review:
+        row.update({
+            "decision": review.get("decision"),
+            "reviewed_type": review.get("reviewed_type"),
+            "bbox_quality": review.get("bbox_quality"),
+            "human_confidence": review.get("human_confidence"),
+            "attributes": review.get("attributes", []),
+        })
+    else:
+        row.update({
+            "decision": None,
+            "reviewed_type": None,
+            "bbox_quality": None,
+            "human_confidence": None,
+            "attributes": [],
+        })
+
+    row["effective_type"] = row.get("reviewed_type") or row.get("type")
+    row["is_exportable"] = is_exportable_review_entry(row)
+    row["is_accepted_not_exportable"] = row.get("decision") == "accepted" and not row["is_exportable"]
+    return row
+
+
+def item_matches_filter(row, filter_name):
+    decision = row.get("decision")
+    if filter_name == "all":
+        return True
+    if filter_name == "pending":
+        return decision is None
+    if filter_name == "reviewed":
+        return decision in {"accepted", "rejected"}
+    if filter_name == "accepted":
+        return decision == "accepted"
+    if filter_name == "rejected":
+        return decision == "rejected"
+    if filter_name == "skipped":
+        return decision == "skipped"
+    if filter_name == "exportable":
+        return row.get("is_exportable")
+    if filter_name == "accepted_not_exportable":
+        return row.get("is_accepted_not_exportable")
+    return True
+
+
+def get_filtered_item_by_index(index, filter_name):
+    """Retorna un item filtrat, preservant el comportament antic si no hi ha índexs."""
+    filter_name = filter_name if filter_name in FILTERS else "all"
+    # Mode dinàmic: la UI reflecteix immediatament accept/reject/skip.
+    # Els JSONL precomputats continuen servint per export/package i escala offline,
+    # però no els usem aquí per evitar filtres desactualitzats mentre revisem.
+    items = load_items()
+    reviewed_entries = load_review_entries()
+    filtered = []
+
+    for item in items:
+        row = enrich_item_for_filter(item, reviewed_entries)
+        if item_matches_filter(row, filter_name):
+            filtered.append(item)
+
+    if not filtered:
+        return None, 0
+
+    index = max(0, min(index, len(filtered) - 1))
+    return filtered[index], len(filtered)
+
+
+
+# ============================================================
 # Rutes Flask
 # ============================================================
 
@@ -679,13 +838,16 @@ def index():
         - anar endavant/enrere.
     """
     requested_index = request.args.get("idx")
+    filter_name = request.args.get("filter", "all")
+    if filter_name not in FILTERS:
+        filter_name = "all"
 
     if requested_index is None:
-        idx = get_first_unreviewed_index()
+        idx = 0 if filter_name != "all" else get_first_unreviewed_index()
     else:
         idx = int(requested_index)
 
-    item, total = get_item_by_index(idx)
+    item, total = get_filtered_item_by_index(idx, filter_name)
 
     if item is None:
         return """
@@ -971,6 +1133,32 @@ def index():
                     font-weight: bold;
                 }
 
+                .meta-badge,
+                .decision-badge {
+                    display: inline-block;
+                    padding: 3px 7px;
+                    border-radius: 999px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    border: 1px solid rgba(0,0,0,0.15);
+                    background: #eee;
+                    color: #222;
+                }
+
+                .type-stamp { background: #e3f2fd; color: #0d47a1; border-color: #64b5f6; }
+                .type-handwritten_text { background: #f3e5f5; color: #6a1b9a; border-color: #ba68c8; }
+                .type-typewritten_line { background: #eceff1; color: #263238; border-color: #90a4ae; }
+                .type-crossout { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
+                .type-censorship_block { background: #ede7f6; color: #311b92; border-color: #9575cd; }
+                .type-table_fragment { background: #e8f5e9; color: #1b5e20; border-color: #81c784; }
+                .type-false_positive { background: #212121; color: white; border-color: #000; }
+                .type-unknown { background: #fff3e0; color: #e65100; border-color: #ffb74d; }
+
+                .decision-accepted { background: #d8f5df; color: #176b2c; border-color: #2ecc71; }
+                .decision-rejected { background: #fde0dc; color: #9f241b; border-color: #e74c3c; }
+                .decision-skipped { background: #fff1cc; color: #8a5a00; border-color: #f39c12; }
+                .decision-unknown { background: #eef; color: #333; border-color: #99f; }
+
                 .review-status {
                     border-left: 6px solid #999;
                     font-weight: 600;
@@ -1020,6 +1208,76 @@ def index():
                     min-width: 120px;
                     box-shadow: 0 1px 5px rgba(0,0,0,0.15);
                     text-align: center;
+                }
+
+                .stat-link {
+                    text-decoration: none;
+                    color: inherit;
+                    display: block;
+                }
+
+                .stat-link:hover {
+                    outline: 2px solid #34495e;
+                }
+
+                .active-filter {
+                    background: #1abc9c !important;
+                    color: white !important;
+                    font-weight: bold;
+                }
+
+                .filter-panel {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                }
+
+                .filter-panel form {
+                    display: inline-flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    margin: 0 0 0 8px;
+                }
+
+                .stat-action {
+                    border: none;
+                    font: inherit;
+                }
+
+                .stat-action-button {
+                    background: transparent;
+                    color: inherit;
+                    border: none;
+                    font-weight: 800;
+                    font-size: 15px;
+                    cursor: pointer;
+                    padding: 0;
+                    margin: 0;
+                    width: 100%;
+                }
+
+                .zoomable {
+                    cursor: zoom-in;
+                }
+
+                .mini-link {
+                    display: inline-block;
+                    margin: 6px 0 8px 0;
+                    font-size: 13px;
+                    color: #34495e;
+                    font-weight: 700;
+                }
+
+                .similar-card .button-row {
+                    flex-wrap: wrap;
+                }
+
+                .similar-card .button-row button {
+                    flex: 1 1 90px;
+                    padding-left: 8px;
+                    padding-right: 8px;
                 }
 
                 .good-stat {
@@ -1121,53 +1379,68 @@ def index():
             
 
             <div class="stats-bar">
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'all' %}active-filter{% endif %}" href="{{ url_for('index', filter='all', idx=0) }}">
                     <b>Total crops</b><br>
                     {{ review_stats.total_crops }}
-                </div>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'reviewed' %}active-filter{% endif %}" href="{{ url_for('index', filter='reviewed', idx=0) }}">
                     <b>Reviewed</b><br>
                     {{ review_stats.reviewed_total }}
                     <span class="stat-subtext">accepted + rejected</span>
-                </div>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'accepted' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted', idx=0) }}">
                     <b>Accepted</b><br>
                     {{ review_stats.accepted_total }}
-                </div>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0) }}">
                     <b>Rejected</b><br>
                     {{ review_stats.rejected_total }}
-                </div>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'skipped' %}active-filter{% endif %}" href="{{ url_for('index', filter='skipped', idx=0) }}">
+                    <b>Skipped</b><br>
+                    {{ review_stats.skipped_total }}
+                </a>
+
+                <a class="stat-card stat-link {% if filter_name == 'pending' %}active-filter{% endif %}" href="{{ url_for('index', filter='pending', idx=0) }}">
                     <b>Pending</b><br>
                     {{ review_stats.pending_total }}
-                </div>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link" href="{{ url_for('index', filter='all', idx=0) }}">
                     <b>Progress</b><br>
                     {{ "%.1f"|format((review_stats.reviewed_total / review_stats.total_crops * 100) if review_stats.total_crops else 0) }}%
-                </div>
+                </a>
 
-                <div class="stat-card good-stat">
+                <a class="stat-card stat-link good-stat {% if filter_name == 'exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='exportable', idx=0) }}">
                     <b>Exportable assets</b><br>
                     {{ review_stats.exportable_candidates }}
-                    <span class="stat-subtext">accepted + good bbox</span>
-                </div>
+                    <span class="stat-subtext">accepted + good/minor bbox</span>
+                </a>
 
-                <div class="stat-card">
+                <a class="stat-card stat-link {% if filter_name == 'accepted_not_exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted_not_exportable', idx=0) }}">
                     <b>Accepted, not exportable</b><br>
                     {{ review_stats.accepted_not_exportable }}
                     <span class="stat-subtext">partial/unsure/bad bbox</span>
-                </div>
+                </a>
 
-                <div class="stat-card bad-stat">
+                <a class="stat-card stat-link bad-stat {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0) }}">
                     <b>Rejected / false positives</b><br>
                     {{ review_stats.false_positives }}
-                </div>
+                </a>
+
+                <form class="stat-card stat-action" method="post" action="{{ url_for('build_review_indexes_route') }}">
+                    <button class="stat-action-button" type="submit" name="export_package" value="0">Rebuild indexes</button>
+                    <span class="stat-subtext">save filtered JSONL</span>
+                </form>
+
+                <form class="stat-card stat-action good-stat" method="post" action="{{ url_for('build_review_indexes_route') }}">
+                    <button class="stat-action-button" type="submit" name="export_package" value="1">Export package</button>
+                    <span class="stat-subtext">save retraining package</span>
+                </form>
             </div>
 
             <div class="stats-details">
@@ -1214,10 +1487,11 @@ def index():
                 </details>
             </div>
 
+
             <div class="topbar">
-                <a class="navlink" href="{{ url_for('index', idx=prev_idx) }}">← Previous</a>
-                <a class="navlink" href="{{ url_for('index', idx=next_idx) }}">Next →</a>
-                <span>Item {{ idx + 1 }} / {{ total }}</span>
+                <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name) }}">← Previous</a>
+                <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name) }}">Next →</a>
+                <span>Item {{ idx + 1 }} / {{ total }} · Filter: {{ filters[filter_name] }}</span>
             </div>
 
       
@@ -1227,7 +1501,9 @@ def index():
                 <div class="card left-panel">                    
                 
                     <h2>Crop</h2>
-                    <img class="crop-img" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
+                    <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" target="_blank" title="Open crop full size">
+                        <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
+                    </a>
                     {% if previous_review %}
                     <div class="status review-status review-{{ previous_review.get('decision') }}">
                         <b>Already reviewed:</b>
@@ -1239,11 +1515,11 @@ def index():
 
                     <h2>Metadata</h2>
                     <p><b>Crop ID:</b> {{ item.get("crop_id") }}</p>
-                    <p><b>Predicted type:</b> {{ item.get("type") }}</p>
+                    <p><b>Predicted type:</b> <span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></p>
 
                     {% if previous_review %}
-                    <p><b>Review decision:</b> {{ previous_review.get("decision") }}</p>
-                    <p><b>Reviewed type:</b> {{ previous_review.get("reviewed_type") }}</p>
+                    <p><b>Review decision:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></p>
+                    <p><b>Reviewed type:</b> <span class="meta-badge type-{{ previous_review.get('reviewed_type') or 'unknown' }}">{{ previous_review.get("reviewed_type") }}</span></p>
                     <p><b>BBox quality:</b> {{ previous_review.get("bbox_quality") }}</p>
                     <p><b>Human confidence:</b> {{ previous_review.get("human_confidence") }}</p>
 
@@ -1252,7 +1528,7 @@ def index():
                     {% endif %}
                     {% endif %}
 
-                    <p><b>Effective type:</b> {{ current_type }}</p>
+                    <p><b>Effective type:</b> <span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></p>
                     <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
                     <p><b>Document:</b> {{ item.get("document_id") }}</p>
                     <p><b>BBox:</b> {{ item.get("bbox") }}</p>
@@ -1260,6 +1536,7 @@ def index():
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
+                        <input type="hidden" name="filter" value="{{ filter_name }}">
 
                         <label>Correct class:</label><br>
                         <select name="new_type">
@@ -1332,7 +1609,9 @@ def index():
                 <!-- COLUMN 2: full page -->
                 <div class="card page-panel">
                     <h2>Full page with bbox</h2>
-                    <img class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
+                    <a href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank" title="Open full page preview">
+                        <img class="page-img zoomable" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
+                    </a>
 
                     <div class="card instructions">
                         <h3>Review instructions</h3>
@@ -1348,7 +1627,7 @@ def index():
                             <div>
                                 <b>Export logic</b>
                                 <ul>
-                                    <li><b>Exportable</b> = accepted + bbox_quality <code>good</code> + valid class.</li>
+                                    <li><b>Exportable</b> = accepted + bbox_quality <code>good</code>/<code>minor_partial</code> + valid class.</li>
                                     <li>Accepted crops with <code>partial</code>, <code>too_large</code> or <code>unsure</code> are reviewed but not clean export assets.</li>
                                     <li>Rejected crops count as rejected/false positives.</li>
                                 </ul>
@@ -1365,8 +1644,9 @@ def index():
                                 <b>Similar crops</b>
                                 <ul>
                                     <li>They are quick binary reviews from visual retrieval.</li>
-                                    <li>Accept similar creates a clean medium-confidence accepted example.</li>
+                                    <li>Accept similar is a weak review from crop-only context; it is saved with bbox_quality <code>unsure</code>.</li>
                                     <li>Reject similar marks it directly as false positive.</li>
+                                    <li>Use <b>Open page context</b> or Skip similar when the crop needs full-page context.</li>
                                 </ul>
                             </div>
                         </div>
@@ -1397,19 +1677,22 @@ def index():
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
                                     <br>
-                                    <b>Predicted:</b> {{ sim.get("type") }}
+                                    <b>Predicted:</b> <span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span>
                                     <br>
-                                    <b>Effective:</b> {{ sim.get("effective_type") }}
+                                    <b>Effective:</b> <span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span>
                                     <br>
                                     crop={{ sim.get("crop_id") }}
                                     <br>
                                     conf={{ sim.get("confidence") }}                                    
                                 </p>
 
-                                <img
-                                    class="similar-img"
-                                    src="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}"
-                                >
+                                <a href="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}" target="_blank" title="Open similar crop full size">
+                                    <img
+                                        class="similar-img zoomable"
+                                        src="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}"
+                                    >
+                                </a>
+                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" target="_blank">Open page context</a>
 
                                 {% if sim.previous_review %}
                                     
@@ -1428,6 +1711,7 @@ def index():
                                 <form method="post" action="{{ url_for('review_similar') }}">
                                     <input type="hidden" name="faiss_id" value="{{ sim.faiss_id }}">
                                     <input type="hidden" name="idx" value="{{ idx }}">
+                                    <input type="hidden" name="filter" value="{{ filter_name }}">
                                     <label>Class:</label><br>
                                     <select name="new_type">
                                         {% for cls in review_schema.classes %}
@@ -1437,9 +1721,12 @@ def index():
                                         {% endfor %}
                                     </select>
 
+                                    <input type="hidden" name="bbox_quality" value="unsure">
+
                                     <div class="button-row">
                                         <button class="accept" name="decision" value="accepted">Accept similar</button>
                                         <button class="reject" name="decision" value="rejected">Reject similar</button>
+                                        <button class="skip" name="decision" value="skipped">Skip similar</button>
                                     </div>
                                 </form>
                             </div>
@@ -1471,6 +1758,8 @@ def index():
         current_notes=current_notes,
         current_attributes=current_attributes,
         review_stats=review_stats,
+        filter_name=filter_name,
+        filters=FILTERS,
     )
 
 
@@ -1521,6 +1810,7 @@ def review():
     bbox_quality = request.form.get("bbox_quality")
     attributes = request.form.getlist("attributes")
     idx = int(request.form.get("idx", 0))
+    filter_name = request.form.get("filter", "all")
 
     items = load_items()
 
@@ -1544,8 +1834,10 @@ def review():
         attributes=attributes,
     )
 
-    # Després de decidir, anem al següent.
-    return redirect(url_for("index", idx=idx + 1))
+    # Després de decidir, mantenim el filtre. En filtres dinàmics, quedar-se al mateix
+    # índex evita saltar un element quan el crop revisat surt del filtre actual.
+    next_idx_after_review = idx + 1 if filter_name == "all" else idx
+    return redirect(url_for("index", idx=next_idx_after_review, filter=filter_name))
 
 
 
@@ -1579,7 +1871,9 @@ def review_similar():
     faiss_id = int(request.form.get("faiss_id"))
     decision = request.form.get("decision")
     new_type = request.form.get("new_type")
+    bbox_quality_selected = request.form.get("bbox_quality") or "good"
     idx = int(request.form.get("idx", 0))
+    filter_name = request.form.get("filter", "all")
 
     metadata = load_faiss_metadata()
 
@@ -1589,16 +1883,21 @@ def review_similar():
     item = metadata[faiss_id]
     crop_id = item.get("crop_id", "unknown")
 
-    # Si acceptem, guardem la classe seleccionada.
+    # Si acceptem, guardem la classe i la qualitat seleccionades.
     # Si rebutgem, ho marquem com a false_positive per no exportar-ho com asset bo.
+    # Si fem skip, no el comptem com a exportable i el podem revisar més endavant.
     if decision == "rejected":
         reviewed_type = "false_positive"
         bbox_quality = "bad_location"
         msg = f"Similar crop {crop_id} rejected. Predicted type was {item.get('type')}"
+    elif decision == "skipped":
+        reviewed_type = new_type
+        bbox_quality = bbox_quality_selected
+        msg = f"Similar crop {crop_id} skipped for later review"
     else:
         reviewed_type = new_type
-        bbox_quality = "good"
-        msg = f"Similar crop {crop_id} accepted as {reviewed_type}"
+        bbox_quality = bbox_quality_selected
+        msg = f"Similar crop {crop_id} accepted as {reviewed_type} with bbox_quality={bbox_quality}"
 
     save_review(
         item=item,
@@ -1611,10 +1910,51 @@ def review_similar():
     )
 
     # Tornem al mateix crop principal, però amb missatge visible.
-    return redirect(url_for("index", idx=idx, msg=msg))
+    return redirect(url_for("index", idx=idx, filter=filter_name, msg=msg))
 
 
+@app.route("/build_review_indexes", methods=["POST"])
+def build_review_indexes_route():
+    """Genera índexs JSONL filtrats i opcionalment un export package."""
+    export_package = request.form.get("export_package") == "1"
 
+    if not BUILD_INDEX_SCRIPT.exists():
+        msg = "review_tools/build_review_indexes.py not found. Copy the review_tools folder into the project root."
+        return redirect(url_for("index", msg=msg))
+
+    cmd = [
+        sys.executable,
+        str(BUILD_INDEX_SCRIPT),
+        "--project-root",
+        str(PROJECT_ROOT),
+    ]
+    if export_package:
+        cmd.append("--export-package")
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(PROJECT_ROOT),
+            text=True,
+            capture_output=True,
+            timeout=300,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        msg = "Index/export process timed out after 300 seconds. Run it from terminal for very large datasets."
+        return redirect(url_for("index", msg=msg))
+
+    if result.returncode != 0:
+        msg = "Index/export failed. Check terminal logs or run review_tools/build_review_indexes.py manually."
+    else:
+        stdout_lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        saved_lines = [line for line in stdout_lines if "written to:" in line]
+        if export_package:
+            msg = "Export package created. " + " | ".join(saved_lines[-2:])
+        else:
+            msg = "Review indexes rebuilt. " + " | ".join(saved_lines[-1:])
+
+    return redirect(url_for("index", msg=msg))
 
 
 
