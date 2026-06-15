@@ -149,13 +149,13 @@ Effective type filters: stamp, false_positive, handwritten_text, crossout, etc.
 Build JSONL indexes only:
 
 ```bash
-python review_tools/build_review_indexes.py --project-root .
+python tools/review_tools/build_review_indexes.py --project-root .
 ```
 
 Build indexes and create an export package:
 
 ```bash
-python review_tools/build_review_indexes.py --project-root . --export-package
+python tools/review_tools/build_review_indexes.py --project-root . --export-package
 ```
 
 Store the latest export path:
@@ -194,7 +194,7 @@ Expected current example after reviewing more stamps:
 ## 5. Export reviewed crops to YOLO format
 
 ```bash
-python review_tools/export_review_to_yolo.py \
+python tools/review_tools/export_review_to_yolo.py \
   --project-root . \
   --export-dir "$EXPORT_DIR" \
   --output-dir outputs/review_yolo_dataset_v2 \
@@ -457,11 +457,11 @@ source .venv/bin/activate
 python review_app/app.py
 
 # Export reviewed labels
-python review_tools/build_review_indexes.py --project-root . --export-package
+python tools/review_tools/build_review_indexes.py --project-root . --export-package
 EXPORT_DIR=$(ls -td outputs/review_exports/export_* | head -1)
 
 # Convert to YOLO
-python review_tools/export_review_to_yolo.py \
+python tools/review_tools/export_review_to_yolo.py \
   --project-root . \
   --export-dir "$EXPORT_DIR" \
   --output-dir outputs/review_yolo_dataset_v2 \

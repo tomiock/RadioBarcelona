@@ -52,10 +52,10 @@ PAGE_PREVIEW_DIR = PROJECT_ROOT / "outputs/review_page_previews"
 # Configuració editable de classes, qualitat de bbox i atributs.
 REVIEW_SCHEMA_PATH = PROJECT_ROOT / "review_app/review_schema.json"
 
-# Índexs JSONL generats per review_tools/build_review_indexes.py.
+# Índexs JSONL generats per tools/review_tools/build_review_indexes.py.
 # Són opcionals: si no existeixen, els filtres funcionen igual en mode dinàmic.
 INDEX_DIR = PROJECT_ROOT / "outputs/index"
-BUILD_INDEX_SCRIPT = PROJECT_ROOT / "review_tools/build_review_indexes.py"
+BUILD_INDEX_SCRIPT = PROJECT_ROOT / "tools/review_tools/build_review_indexes.py"
 
 FILTERS = {
     "all": "All",
@@ -2896,7 +2896,7 @@ def build_review_indexes_route():
     export_package = request.form.get("export_package") == "1"
 
     if not BUILD_INDEX_SCRIPT.exists():
-        msg = "review_tools/build_review_indexes.py not found. Copy the review_tools folder into the project root."
+        msg = "tools/review_tools/build_review_indexes.py not found. Ensure tools/review_tools exists in the project root."
         return redirect(url_for("index", msg=msg))
 
     cmd = [
@@ -2922,7 +2922,7 @@ def build_review_indexes_route():
         return redirect(url_for("index", msg=msg))
 
     if result.returncode != 0:
-        msg = "Index/export failed. Check terminal logs or run review_tools/build_review_indexes.py manually."
+        msg = "Index/export failed. Check terminal logs or run tools/review_tools/build_review_indexes.py manually."
     else:
         stdout_lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
         saved_lines = [line for line in stdout_lines if "written to:" in line]

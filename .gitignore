@@ -77,7 +77,7 @@ shared_experiments/
 _archive_local/
 assets_real_reviewed/
 data/ddd_random/
-review_tools/migrations/
+tools/review_tools/migrations/
 
 # Generated outputs
 outputs/

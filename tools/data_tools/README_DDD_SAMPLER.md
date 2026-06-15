@@ -12,13 +12,13 @@ sudo apt install poppler-utils
 ## Dry run
 
 ```bash
-python data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --dry-run
+python tools/data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --dry-run
 ```
 
 ## Real run
 
 ```bash
-python data_tools/sample_ddd_random_pages.py \
+python tools/data_tools/sample_ddd_random_pages.py \
   --num-records 3 \
   --pages-per-record 5 \
   --seed 42 \

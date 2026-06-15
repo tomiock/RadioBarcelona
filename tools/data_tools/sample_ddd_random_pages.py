@@ -14,10 +14,10 @@ Requirements:
     sudo apt install poppler-utils
 
 Typical use:
-    python data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --seed 42
+    python tools/data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --seed 42
 
 Dry run:
-    python data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --dry-run
+    python tools/data_tools/sample_ddd_random_pages.py --num-records 3 --pages-per-record 5 --dry-run
 """
 
 from __future__ import annotations
