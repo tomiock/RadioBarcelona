@@ -44,6 +44,8 @@
     "typewritten",
     "handwritten",
     "stamp",
-    "table"
+    "table",
+    "word",
+    "line, underline"
   ]
 }
