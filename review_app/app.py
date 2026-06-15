@@ -599,6 +599,8 @@ def compute_review_stats():
 
     decisions = {}
     reviewed_types = {}
+    predicted_types = {}
+    effective_types = {}
     bbox_qualities = {}
     attributes = {}
 
@@ -617,6 +619,14 @@ def compute_review_stats():
     exportable_candidates = 0
     false_positives = 0
     accepted_not_exportable = 0
+
+    for item in items:
+        predicted_type = item.get("type") or "unknown"
+        crop_id = item.get("crop_id")
+        review = reviewed_entries.get(crop_id) if crop_id else None
+        effective_type = (review.get("reviewed_type") if review and review.get("reviewed_type") else predicted_type)
+        predicted_types[predicted_type] = predicted_types.get(predicted_type, 0) + 1
+        effective_types[effective_type] = effective_types.get(effective_type, 0) + 1
 
     for entry in reviewed_entries.values():
         decision = entry.get("decision") or "unknown"
@@ -669,6 +679,8 @@ def compute_review_stats():
         "skipped_total": skipped_total,
         "decisions": decisions,
         "reviewed_types": reviewed_types,
+        "predicted_types": predicted_types,
+        "effective_types": effective_types,
         "bbox_qualities": bbox_qualities,
         "attributes": attributes,
         "exportable_candidates": exportable_candidates,
@@ -776,28 +788,41 @@ def enrich_item_for_filter(item, reviewed_entries):
     return row
 
 
-def item_matches_filter(row, filter_name):
+def item_matches_filter(row, filter_name, type_field=None, type_value=None):
     decision = row.get("decision")
+
     if filter_name == "all":
-        return True
-    if filter_name == "pending":
-        return decision is None
-    if filter_name == "reviewed":
-        return decision in {"accepted", "rejected"}
-    if filter_name == "accepted":
-        return decision == "accepted"
-    if filter_name == "rejected":
-        return decision == "rejected"
-    if filter_name == "skipped":
-        return decision == "skipped"
-    if filter_name == "exportable":
-        return row.get("is_exportable")
-    if filter_name == "accepted_not_exportable":
-        return row.get("is_accepted_not_exportable")
+        status_ok = True
+    elif filter_name == "pending":
+        status_ok = decision is None
+    elif filter_name == "reviewed":
+        status_ok = decision in {"accepted", "rejected"}
+    elif filter_name == "accepted":
+        status_ok = decision == "accepted"
+    elif filter_name == "rejected":
+        status_ok = decision == "rejected"
+    elif filter_name == "skipped":
+        status_ok = decision == "skipped"
+    elif filter_name == "exportable":
+        status_ok = bool(row.get("is_exportable"))
+    elif filter_name == "accepted_not_exportable":
+        status_ok = bool(row.get("is_accepted_not_exportable"))
+    else:
+        status_ok = True
+
+    if not status_ok:
+        return False
+
+    if type_value:
+        if type_field == "predicted":
+            return (row.get("predicted_type") or row.get("type")) == type_value
+        if type_field == "effective":
+            return (row.get("effective_type") or row.get("reviewed_type") or row.get("type")) == type_value
+
     return True
 
 
-def get_filtered_item_by_index(index, filter_name):
+def get_filtered_item_by_index(index, filter_name, type_field=None, type_value=None):
     """Retorna un item filtrat, preservant el comportament antic si no hi ha índexs."""
     filter_name = filter_name if filter_name in FILTERS else "all"
     # Mode dinàmic: la UI reflecteix immediatament accept/reject/skip.
@@ -809,7 +834,7 @@ def get_filtered_item_by_index(index, filter_name):
 
     for item in items:
         row = enrich_item_for_filter(item, reviewed_entries)
-        if item_matches_filter(row, filter_name):
+        if item_matches_filter(row, filter_name, type_field=type_field, type_value=type_value):
             filtered.append(item)
 
     if not filtered:
@@ -842,12 +867,18 @@ def index():
     if filter_name not in FILTERS:
         filter_name = "all"
 
+    type_field = request.args.get("type_field") or ""
+    type_value = request.args.get("type_value") or ""
+    if type_field not in {"", "predicted", "effective"}:
+        type_field = ""
+        type_value = ""
+
     if requested_index is None:
         idx = 0 if filter_name != "all" else get_first_unreviewed_index()
     else:
         idx = int(requested_index)
 
-    item, total = get_filtered_item_by_index(idx, filter_name)
+    item, total = get_filtered_item_by_index(idx, filter_name, type_field=type_field, type_value=type_value)
 
     if item is None:
         return """
@@ -1270,6 +1301,22 @@ def index():
                     font-weight: 700;
                 }
 
+                .badge-link {
+                    text-decoration: none;
+                }
+
+                .type-filter-panel {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    align-items: center;
+                }
+
+                .type-filter-title {
+                    font-weight: 800;
+                    margin-right: 4px;
+                }
+
                 .similar-card .button-row {
                     flex-wrap: wrap;
                 }
@@ -1379,55 +1426,55 @@ def index():
             
 
             <div class="stats-bar">
-                <a class="stat-card stat-link {% if filter_name == 'all' %}active-filter{% endif %}" href="{{ url_for('index', filter='all', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'all' %}active-filter{% endif %}" href="{{ url_for('index', filter='all', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Total crops</b><br>
                     {{ review_stats.total_crops }}
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'reviewed' %}active-filter{% endif %}" href="{{ url_for('index', filter='reviewed', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'reviewed' %}active-filter{% endif %}" href="{{ url_for('index', filter='reviewed', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Reviewed</b><br>
                     {{ review_stats.reviewed_total }}
                     <span class="stat-subtext">accepted + rejected</span>
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'accepted' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'accepted' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Accepted</b><br>
                     {{ review_stats.accepted_total }}
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Rejected</b><br>
                     {{ review_stats.rejected_total }}
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'skipped' %}active-filter{% endif %}" href="{{ url_for('index', filter='skipped', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'skipped' %}active-filter{% endif %}" href="{{ url_for('index', filter='skipped', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Skipped</b><br>
                     {{ review_stats.skipped_total }}
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'pending' %}active-filter{% endif %}" href="{{ url_for('index', filter='pending', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'pending' %}active-filter{% endif %}" href="{{ url_for('index', filter='pending', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Pending</b><br>
                     {{ review_stats.pending_total }}
                 </a>
 
-                <a class="stat-card stat-link" href="{{ url_for('index', filter='all', idx=0) }}">
+                <a class="stat-card stat-link" href="{{ url_for('index', filter='all', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Progress</b><br>
                     {{ "%.1f"|format((review_stats.reviewed_total / review_stats.total_crops * 100) if review_stats.total_crops else 0) }}%
                 </a>
 
-                <a class="stat-card stat-link good-stat {% if filter_name == 'exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='exportable', idx=0) }}">
+                <a class="stat-card stat-link good-stat {% if filter_name == 'exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Exportable assets</b><br>
                     {{ review_stats.exportable_candidates }}
                     <span class="stat-subtext">accepted + good/minor bbox</span>
                 </a>
 
-                <a class="stat-card stat-link {% if filter_name == 'accepted_not_exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted_not_exportable', idx=0) }}">
+                <a class="stat-card stat-link {% if filter_name == 'accepted_not_exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted_not_exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Accepted, not exportable</b><br>
                     {{ review_stats.accepted_not_exportable }}
                     <span class="stat-subtext">partial/unsure/bad bbox</span>
                 </a>
 
-                <a class="stat-card stat-link bad-stat {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0) }}">
+                <a class="stat-card stat-link bad-stat {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Rejected / false positives</b><br>
                     {{ review_stats.false_positives }}
                 </a>
@@ -1441,6 +1488,24 @@ def index():
                     <button class="stat-action-button" type="submit" name="export_package" value="1">Export package</button>
                     <span class="stat-subtext">save retraining package</span>
                 </form>
+            </div>
+
+            <div class="stats-details type-filter-panel">
+                <span class="type-filter-title">Predicted types:</span>
+                {% for key, value in review_stats.predicted_types.items() %}
+                    <a class="navlink {% if type_field == 'predicted' and type_value == key %}active-filter{% endif %}"
+                       href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                {% endfor %}
+
+                <span class="type-filter-title">Effective types:</span>
+                {% for key, value in review_stats.effective_types.items() %}
+                    <a class="navlink {% if type_field == 'effective' and type_value == key %}active-filter{% endif %}"
+                       href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                {% endfor %}
+
+                {% if type_value %}
+                    <a class="navlink" href="{{ url_for('index', filter=filter_name, idx=0) }}">Clear type filter</a>
+                {% endif %}
             </div>
 
             <div class="stats-details">
@@ -1489,8 +1554,8 @@ def index():
 
 
             <div class="topbar">
-                <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name) }}">← Previous</a>
-                <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name) }}">Next →</a>
+                <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous</a>
+                <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next →</a>
                 <span>Item {{ idx + 1 }} / {{ total }} · Filter: {{ filters[filter_name] }}</span>
             </div>
 
@@ -1515,7 +1580,7 @@ def index():
 
                     <h2>Metadata</h2>
                     <p><b>Crop ID:</b> {{ item.get("crop_id") }}</p>
-                    <p><b>Predicted type:</b> <span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></p>
+                    <p><b>Predicted type:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></p>
 
                     {% if previous_review %}
                     <p><b>Review decision:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></p>
@@ -1528,7 +1593,7 @@ def index():
                     {% endif %}
                     {% endif %}
 
-                    <p><b>Effective type:</b> <span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></p>
+                    <p><b>Effective type:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></p>
                     <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
                     <p><b>Document:</b> {{ item.get("document_id") }}</p>
                     <p><b>BBox:</b> {{ item.get("bbox") }}</p>
@@ -1537,6 +1602,8 @@ def index():
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
                         <input type="hidden" name="filter" value="{{ filter_name }}">
+                        <input type="hidden" name="type_field" value="{{ type_field }}">
+                        <input type="hidden" name="type_value" value="{{ type_value }}">
 
                         <label>Correct class:</label><br>
                         <select name="new_type">
@@ -1677,9 +1744,9 @@ def index():
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
                                     <br>
-                                    <b>Predicted:</b> <span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span>
+                                    <b>Predicted:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a>
                                     <br>
-                                    <b>Effective:</b> <span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span>
+                                    <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
                                     <br>
                                     crop={{ sim.get("crop_id") }}
                                     <br>
@@ -1712,6 +1779,8 @@ def index():
                                     <input type="hidden" name="faiss_id" value="{{ sim.faiss_id }}">
                                     <input type="hidden" name="idx" value="{{ idx }}">
                                     <input type="hidden" name="filter" value="{{ filter_name }}">
+                                    <input type="hidden" name="type_field" value="{{ type_field }}">
+                                    <input type="hidden" name="type_value" value="{{ type_value }}">
                                     <label>Class:</label><br>
                                     <select name="new_type">
                                         {% for cls in review_schema.classes %}
@@ -1760,6 +1829,8 @@ def index():
         review_stats=review_stats,
         filter_name=filter_name,
         filters=FILTERS,
+        type_field=type_field,
+        type_value=type_value,
     )
 
 
@@ -1811,6 +1882,8 @@ def review():
     attributes = request.form.getlist("attributes")
     idx = int(request.form.get("idx", 0))
     filter_name = request.form.get("filter", "all")
+    type_field = request.form.get("type_field", "")
+    type_value = request.form.get("type_value", "")
 
     items = load_items()
 
@@ -1837,7 +1910,7 @@ def review():
     # Després de decidir, mantenim el filtre. En filtres dinàmics, quedar-se al mateix
     # índex evita saltar un element quan el crop revisat surt del filtre actual.
     next_idx_after_review = idx + 1 if filter_name == "all" else idx
-    return redirect(url_for("index", idx=next_idx_after_review, filter=filter_name))
+    return redirect(url_for("index", idx=next_idx_after_review, filter=filter_name, type_field=type_field, type_value=type_value))
 
 
 
@@ -1871,9 +1944,11 @@ def review_similar():
     faiss_id = int(request.form.get("faiss_id"))
     decision = request.form.get("decision")
     new_type = request.form.get("new_type")
-    bbox_quality_selected = request.form.get("bbox_quality") or "good"
+    bbox_quality_selected = request.form.get("bbox_quality") or "unsure"
     idx = int(request.form.get("idx", 0))
     filter_name = request.form.get("filter", "all")
+    type_field = request.form.get("type_field", "")
+    type_value = request.form.get("type_value", "")
 
     metadata = load_faiss_metadata()
 
@@ -1910,7 +1985,7 @@ def review_similar():
     )
 
     # Tornem al mateix crop principal, però amb missatge visible.
-    return redirect(url_for("index", idx=idx, filter=filter_name, msg=msg))
+    return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
 
 
 @app.route("/build_review_indexes", methods=["POST"])
