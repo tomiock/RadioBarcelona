@@ -65,10 +65,28 @@ FILTERS = {
 }
 
 
-# faiss 
+# FAISS simple visual search
 FAISS_INDEX_PATH = PROJECT_ROOT / "outputs/faiss/current/visual_index.faiss"
 FAISS_METADATA_PATH = PROJECT_ROOT / "outputs/faiss/current/metadata.jsonl"
+
+# VAE + FAISS visual search. This is built by:
+# python visual_search/build_vae_faiss.py --project-root . --metadata outputs/object_crops_raw/metadata.jsonl --review-log outputs/review_logs/review_log.jsonl --model outputs/vae/vae_best.pt --output-dir outputs/faiss/vae/global --by-type
+VAE_FAISS_GLOBAL_INDEX_PATH = PROJECT_ROOT / "outputs/faiss/vae/global/visual_index.faiss"
+VAE_FAISS_GLOBAL_METADATA_PATH = PROJECT_ROOT / "outputs/faiss/vae/global/metadata.jsonl"
+VAE_FAISS_BY_TYPE_DIR = PROJECT_ROOT / "outputs/faiss/vae/by_type"
+
 SIMILARITY_TOP_K = 5
+
+# Directori d'assets reals revisats que pot llegir generator.py.
+GENERATOR_ASSETS_DIR = PROJECT_ROOT / "assets_real_reviewed"
+GENERATOR_ASSET_TARGETS = {
+    "stamp": "stamps",
+    "handwritten_text": "handwriting",
+    "crossout": "crossouts",
+    "censorship_block": "censorship",
+    "table_fragment": "tables",
+}
+GENERATOR_ASSET_MANIFEST = GENERATOR_ASSETS_DIR / "manifest_review_app_assets.jsonl"
 
 
 
@@ -475,23 +493,207 @@ def image_to_embedding(image_path, thumbnail_size=64, edge_size=32, hist_bins=16
     return l2_normalize(embedding)
 
 
-def load_faiss_metadata():
+def load_faiss_metadata(metadata_path=None):
     """
-    Carrega el metadata associat a l'índex FAISS.
+    Carrega el metadata associat a un índex FAISS.
 
-    L'ordre del metadata ha de coincidir amb l'ordre dels vectors de l'índex.
+    Per defecte carrega l'índex FAISS simple antic.
+    Si es passa metadata_path, pot carregar també metadata VAE global o by_type.
     """
-    if not FAISS_METADATA_PATH.exists():
+    path = Path(metadata_path) if metadata_path else FAISS_METADATA_PATH
+
+    if not path.exists():
         return []
 
     items = []
 
-    with FAISS_METADATA_PATH.open("r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 items.append(json.loads(line))
 
     return items
+
+
+def find_item_by_crop_id(crop_id):
+    """Busca un crop_id dins el metadata raw principal."""
+    if not crop_id:
+        return None
+
+    for item in load_items():
+        if item.get("crop_id") == crop_id:
+            return item
+
+    return None
+
+
+def copy_crop_to_generator_assets(item, asset_type, previous_review=None):
+    """
+    Copia el crop actual a assets_real_reviewed/<folder>/ i afegeix una línia al manifest.
+
+    És una acció explícita de curació: no substitueix Accept/Reject, sinó que marca
+    aquest crop com a asset útil per generar futurs documents sintètics.
+    """
+    if asset_type not in GENERATOR_ASSET_TARGETS:
+        raise ValueError(f"Unsupported generator asset type: {asset_type}")
+
+    crop_path_raw = item.get("crop_path")
+    if not crop_path_raw:
+        raise FileNotFoundError("Crop has no crop_path")
+
+    src = project_path(crop_path_raw)
+    if not src.exists():
+        raise FileNotFoundError(f"Crop file not found: {src}")
+
+    target_dir = GENERATOR_ASSETS_DIR / GENERATOR_ASSET_TARGETS[asset_type]
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    crop_id = item.get("crop_id", "crop")
+    suffix = src.suffix or ".jpg"
+    dst = target_dir / f"{asset_type}_{crop_id}{suffix}"
+
+    # Si ja existeix, no dupliquem el fitxer; el manifest pot registrar múltiples decisions.
+    if not dst.exists():
+        shutil.copy2(src, dst)
+
+    GENERATOR_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    manifest_row = {
+        "crop_id": crop_id,
+        "asset_type": asset_type,
+        "asset_path": str(dst.relative_to(PROJECT_ROOT)),
+        "source_crop_path": crop_path_raw,
+        "document_id": item.get("document_id"),
+        "image": item.get("image"),
+        "image_path": item.get("image_path"),
+        "bbox": item.get("bbox"),
+        "predicted_type": item.get("type"),
+        "decision": previous_review.get("decision") if previous_review else None,
+        "reviewed_type": previous_review.get("reviewed_type") if previous_review else None,
+        "bbox_quality": previous_review.get("bbox_quality") if previous_review else None,
+        "source": "review_app_send_to_generator_assets",
+    }
+
+    with GENERATOR_ASSET_MANIFEST.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(manifest_row, ensure_ascii=False) + "\n")
+
+    return dst
+
+
+def enrich_similar_items_with_review(similar_items, reviewed_entries):
+    """Afegeix previous_review i effective_type als resultats de similitud."""
+    for sim in similar_items:
+        sim_crop_id = sim.get("crop_id")
+        sim_previous_review = reviewed_entries.get(sim_crop_id)
+        sim["previous_review"] = sim_previous_review
+        sim["effective_type"] = (
+            sim_previous_review.get("reviewed_type")
+            if sim_previous_review and sim_previous_review.get("reviewed_type")
+            else sim.get("type")
+        )
+    return similar_items
+
+
+def resolve_vae_index_paths_for_item(item):
+    """
+    Prioritza l'índex VAE per tipus quan existeix.
+    Si no hi ha índex per aquell tipus, cau al VAE global.
+    """
+    crop_type = (
+        item.get("effective_type")
+        or item.get("reviewed_type")
+        or item.get("type")
+    )
+
+    if crop_type:
+        type_dir = VAE_FAISS_BY_TYPE_DIR / crop_type
+        type_index = type_dir / "visual_index.faiss"
+        type_metadata = type_dir / "metadata.jsonl"
+        if type_index.exists() and type_metadata.exists():
+            return type_index, type_metadata, f"vae_by_type:{crop_type}"
+
+    return VAE_FAISS_GLOBAL_INDEX_PATH, VAE_FAISS_GLOBAL_METADATA_PATH, "vae_global"
+
+
+def find_similar_items_from_existing_faiss_vector(item, index_path, metadata_path, top_k=5, source_label="vae"):
+    """
+    Cerca similars en un índex FAISS ja construït usant el vector existent del query.
+
+    Això evita carregar el model VAE dins Flask: l'índex VAE ja conté vectors per crop_id.
+    Si el crop no és dins l'índex per tipus, es retorna [] i l'app continua funcionant.
+    """
+    if faiss is None:
+        return []
+
+    index_path = Path(index_path)
+    metadata_path = Path(metadata_path)
+
+    if not index_path.exists() or not metadata_path.exists():
+        return []
+
+    metadata = load_faiss_metadata(metadata_path)
+    if not metadata:
+        return []
+
+    index = faiss.read_index(str(index_path))
+
+    if len(metadata) != index.ntotal:
+        return []
+
+    current_crop_id = item.get("crop_id")
+    query_idx = None
+
+    for i, candidate in enumerate(metadata):
+        if candidate.get("crop_id") == current_crop_id:
+            query_idx = i
+            break
+
+    if query_idx is None:
+        return []
+
+    try:
+        query_embedding = index.reconstruct(int(query_idx)).reshape(1, -1).astype(np.float32)
+    except Exception:
+        return []
+
+    search_k = min(index.ntotal, top_k + 10)
+    scores, ids = index.search(query_embedding, search_k)
+
+    results = []
+
+    for score, idx in zip(scores[0], ids[0]):
+        if idx < 0:
+            continue
+
+        candidate = metadata[idx]
+        candidate_crop_id = candidate.get("crop_id")
+
+        if candidate_crop_id == current_crop_id:
+            continue
+
+        result = dict(candidate)
+        result["rank"] = len(results) + 1
+        result["score"] = float(score)
+        result["faiss_id"] = int(idx)
+        result["similarity_source"] = source_label
+
+        results.append(result)
+
+        if len(results) >= top_k:
+            break
+
+    return results
+
+
+def find_vae_similar_items(item, top_k=5):
+    """Retorna similars VAE, preferentment dins el mateix tipus efectiu."""
+    index_path, metadata_path, source_label = resolve_vae_index_paths_for_item(item)
+    return find_similar_items_from_existing_faiss_vector(
+        item=item,
+        index_path=index_path,
+        metadata_path=metadata_path,
+        top_k=top_k,
+        source_label=source_label,
+    )
 
 
 def find_similar_items(item, top_k=5):
@@ -881,9 +1083,19 @@ def index():
     item, total = get_filtered_item_by_index(idx, filter_name, type_field=type_field, type_value=type_value)
 
     if item is None:
-        return """
-        <h1>No metadata found</h1>
-        <p>Expected metadata at outputs/object_crops_raw/metadata.jsonl</p>
+        if not METADATA_PATH.exists():
+            return f"""
+            <h1>No metadata found</h1>
+            <p>Expected metadata at {METADATA_PATH}</p>
+            """
+
+        clear_url = url_for("index", filter="all", idx=0)
+        return f"""
+        <h1>No crops match the current filter</h1>
+        <p><b>Filter:</b> {filter_name}</p>
+        <p><b>Type filter:</b> {type_field or '-'} = {type_value or '-'}</p>
+        <p>This usually means that a status filter and a type filter are being combined and the intersection is empty.</p>
+        <p><a href="{clear_url}">Clear filters and return to all crops</a></p>
         """
 
     reviewed_entries = load_review_entries()
@@ -938,20 +1150,18 @@ def index():
             ensure_ascii=False,
         )
 
-    similar_items = find_similar_items(item, top_k=SIMILARITY_TOP_K)
+    item_for_similarity = dict(item)
+    item_for_similarity["effective_type"] = current_type
 
-    for sim in similar_items:
-        sim_crop_id = sim.get("crop_id")
-        sim_previous_review = reviewed_entries.get(sim_crop_id)
-        sim["previous_review"] = sim_previous_review
+    similar_items = enrich_similar_items_with_review(
+        find_similar_items(item_for_similarity, top_k=SIMILARITY_TOP_K),
+        reviewed_entries,
+    )
 
-        # Classe efectiva del similar:
-        # revisió humana si existeix; si no, predicció original.
-        sim["effective_type"] = (
-            sim_previous_review.get("reviewed_type")
-            if sim_previous_review and sim_previous_review.get("reviewed_type")
-            else sim.get("type")
-        )
+    vae_similar_items = enrich_similar_items_with_review(
+        find_vae_similar_items(item_for_similarity, top_k=SIMILARITY_TOP_K),
+        reviewed_entries,
+    )
 
     prev_idx = max(0, idx - 1)
     next_idx = min(total - 1, idx + 1)
@@ -978,16 +1188,17 @@ def index():
                 }
                 .container {
                     display: grid;
-                    grid-template-columns: minmax(320px, 0.85fr) minmax(560px, 1.65fr) minmax(360px, 1fr) minmax(340px, 0.95fr);
+                    grid-template-columns: minmax(300px, 0.75fr) minmax(520px, 1.30fr) minmax(320px, 0.85fr) minmax(300px, 0.75fr) minmax(300px, 0.75fr);
                     gap: 18px;
                     align-items: start;
-                    max-width: 1900px;
+                    max-width: 2400px;
                 }                
 
                 .left-panel,
                 .page-panel,
                 .json-panel,
-                .right-panel {
+                .right-panel,
+                .vae-panel {
                     min-width: 0;
                 }
 
@@ -1396,6 +1607,23 @@ def index():
                     gap: 12px;
                 }
 
+                .vae-note {
+                    margin-top: -4px;
+                    color: #555;
+                    font-size: 13px;
+                    line-height: 1.35;
+                }
+
+                @media (max-width: 1650px) {
+                    .container {
+                        grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.5fr) minmax(340px, 1fr);
+                    }
+                    .right-panel,
+                    .vae-panel {
+                        grid-column: 1 / -1;
+                    }
+                }
+
 
                 @media (max-width: 1000px) {
                     .stats-columns {
@@ -1494,13 +1722,13 @@ def index():
                 <span class="type-filter-title">Predicted types:</span>
                 {% for key, value in review_stats.predicted_types.items() %}
                     <a class="navlink {% if type_field == 'predicted' and type_value == key %}active-filter{% endif %}"
-                       href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                       href="{{ url_for('index', filter='all', type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
                 {% endfor %}
 
                 <span class="type-filter-title">Effective types:</span>
                 {% for key, value in review_stats.effective_types.items() %}
                     <a class="navlink {% if type_field == 'effective' and type_value == key %}active-filter{% endif %}"
-                       href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                       href="{{ url_for('index', filter='all', type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
                 {% endfor %}
 
                 {% if type_value %}
@@ -1670,6 +1898,31 @@ def index():
                             <button class="skip" name="decision" value="skipped">Skip</button>
                         </div>
                     </form>
+
+                    <hr>
+                    <h3>Generator assets</h3>
+                    <p class="vae-note">
+                        Copy this crop into <code>assets_real_reviewed/</code> so <code>generator.py</code> can reuse it
+                        when creating future synthetic documents. This does not change the review decision.
+                    </p>
+                    <form method="post" action="{{ url_for('send_to_generator_assets') }}">
+                        <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
+                        <input type="hidden" name="idx" value="{{ idx }}">
+                        <input type="hidden" name="filter" value="{{ filter_name }}">
+                        <input type="hidden" name="type_field" value="{{ type_field }}">
+                        <input type="hidden" name="type_value" value="{{ type_value }}">
+
+                        <label>Send as asset type:</label><br>
+                        <select name="asset_type">
+                            {% for asset_type, folder in generator_asset_targets.items() %}
+                                <option value="{{ asset_type }}" {% if asset_type == current_type %}selected{% endif %}>
+                                    {{ asset_type }} → assets_real_reviewed/{{ folder }}/
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <button class="navlink" type="submit">Send to generator assets</button>
+                    </form>
                 </div>
 
 
@@ -1806,6 +2059,85 @@ def index():
                     {% endif %}
                 </div>
 
+
+                <!-- COLUMN 5: VAE similar crops -->
+                <div class="card vae-panel">
+                    <h2>VAE similar crops</h2>
+                    <p class="vae-note">
+                        Uses the trained VAE latent space + FAISS. When available, it searches in the by-type index
+                        first, so this column is useful to compare against the simple visual FAISS column.
+                    </p>
+
+                    {% if vae_similar_items %}
+                        <div class="similar-list">
+                        {% for sim in vae_similar_items %}
+                            <div class="similar-card">
+                                <p>
+                                    <b>#{{ sim.rank }}</b>
+                                    score={{ "%.4f"|format(sim.score) }}
+                                    <br>
+                                    <small>{{ sim.get("similarity_source") }}</small>
+                                    <br>
+                                    <b>Predicted:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a>
+                                    <br>
+                                    <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
+                                    <br>
+                                    crop={{ sim.get("crop_id") }}
+                                    <br>
+                                    conf={{ sim.get("confidence") }}
+                                </p>
+
+                                <a href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" target="_blank" title="Open VAE similar crop full size">
+                                    <img
+                                        class="similar-img zoomable"
+                                        src="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}"
+                                    >
+                                </a>
+                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" target="_blank">Open page context</a>
+
+                                {% if sim.previous_review %}
+                                <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
+                                    Reviewed: {{ sim.previous_review.get("decision") }}
+                                    {% if sim.previous_review.get("reviewed_type") %}
+                                        as {{ sim.previous_review.get("reviewed_type") }}
+                                    {% endif %}
+                                </span>
+                                <br>
+                                <br>
+                                {% endif %}
+
+                                <form method="post" action="{{ url_for('review_similar_crop') }}">
+                                    <input type="hidden" name="crop_id" value="{{ sim.get('crop_id') }}">
+                                    <input type="hidden" name="idx" value="{{ idx }}">
+                                    <input type="hidden" name="filter" value="{{ filter_name }}">
+                                    <input type="hidden" name="type_field" value="{{ type_field }}">
+                                    <input type="hidden" name="type_value" value="{{ type_value }}">
+                                    <label>Class:</label><br>
+                                    <select name="new_type">
+                                        {% for cls in review_schema.classes %}
+                                            <option value="{{ cls }}" {% if cls == sim.get("effective_type") %}selected{% endif %}>
+                                                {{ cls }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+
+                                    <input type="hidden" name="bbox_quality" value="unsure">
+
+                                    <div class="button-row">
+                                        <button class="accept" name="decision" value="accepted">Accept VAE</button>
+                                        <button class="reject" name="decision" value="rejected">Reject VAE</button>
+                                        <button class="skip" name="decision" value="skipped">Skip VAE</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>No VAE FAISS similar results available.</p>
+                        <p class="vae-note">Run <code>visual_search/build_vae_faiss.py</code> first.</p>
+                    {% endif %}
+                </div>
+
             </div>
         </body>
         </html>
@@ -1820,8 +2152,10 @@ def index():
         next_idx=next_idx,
         previous_review=previous_review,
         similar_items=similar_items,
+        vae_similar_items=vae_similar_items,
         message=message,
         review_schema=review_schema,
+        generator_asset_targets=GENERATOR_ASSET_TARGETS,
         current_human_confidence=current_human_confidence,
         current_bbox_quality=current_bbox_quality,
         current_notes=current_notes,
@@ -1913,6 +2247,59 @@ def review():
     return redirect(url_for("index", idx=next_idx_after_review, filter=filter_name, type_field=type_field, type_value=type_value))
 
 
+@app.route("/send_to_generator_assets", methods=["POST"])
+def send_to_generator_assets():
+    """Copia un crop revisat/manual a assets_real_reviewed/ per al generator.py."""
+    crop_id = request.form.get("crop_id")
+    asset_type = request.form.get("asset_type")
+    idx = int(request.form.get("idx", 0))
+    filter_name = request.form.get("filter", "all")
+    type_field = request.form.get("type_field", "")
+    type_value = request.form.get("type_value", "")
+
+    item = find_item_by_crop_id(crop_id)
+    if item is None:
+        return f"Crop not found: {crop_id}", 404
+
+    previous_review = load_review_entries().get(crop_id)
+
+    try:
+        dst = copy_crop_to_generator_assets(item, asset_type, previous_review=previous_review)
+    except Exception as e:
+        msg = f"Could not send crop {crop_id} to generator assets: {type(e).__name__}: {e}"
+        return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
+
+    msg = f"Crop {crop_id} copied to generator assets: {dst.relative_to(PROJECT_ROOT)}"
+    return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
+
+
+
+@app.route("/crop_by_id/<crop_id>")
+def crop_image_by_id(crop_id):
+    """Serveix qualsevol crop pel seu crop_id, útil per resultats VAE."""
+    item = find_item_by_crop_id(crop_id)
+
+    # Fallback: alguns resultats poden venir directament del metadata VAE.
+    if item is None:
+        for candidate in load_faiss_metadata(VAE_FAISS_GLOBAL_METADATA_PATH):
+            if candidate.get("crop_id") == crop_id:
+                item = candidate
+                break
+
+    if item is None:
+        return "Crop not found", 404
+
+    crop_path_raw = item.get("crop_path")
+    if not crop_path_raw:
+        return "Crop path not found", 404
+
+    crop_path = project_path(crop_path_raw)
+
+    if crop_path.exists():
+        return send_file(crop_path)
+
+    return "Crop file not found", 404
+
 
 @app.route("/similar_crop/<int:faiss_id>")
 def similar_crop_image(faiss_id):
@@ -1985,6 +2372,52 @@ def review_similar():
     )
 
     # Tornem al mateix crop principal, però amb missatge visible.
+    return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
+
+
+@app.route("/review_similar_crop", methods=["POST"])
+def review_similar_crop():
+    """
+    Permet acceptar/rebutjar/skip d'un crop similar identificat per crop_id.
+    S'utilitza sobretot per resultats VAE, on el faiss_id depèn de l'índex by_type/global.
+    """
+    crop_id = request.form.get("crop_id")
+    decision = request.form.get("decision")
+    new_type = request.form.get("new_type")
+    bbox_quality_selected = request.form.get("bbox_quality") or "unsure"
+    idx = int(request.form.get("idx", 0))
+    filter_name = request.form.get("filter", "all")
+    type_field = request.form.get("type_field", "")
+    type_value = request.form.get("type_value", "")
+
+    item = find_item_by_crop_id(crop_id)
+
+    if item is None:
+        return f"Crop not found: {crop_id}", 404
+
+    if decision == "rejected":
+        reviewed_type = "false_positive"
+        bbox_quality = "bad_location"
+        msg = f"VAE similar crop {crop_id} rejected. Predicted type was {item.get('type')}"
+    elif decision == "skipped":
+        reviewed_type = new_type
+        bbox_quality = bbox_quality_selected
+        msg = f"VAE similar crop {crop_id} skipped for later review"
+    else:
+        reviewed_type = new_type
+        bbox_quality = bbox_quality_selected
+        msg = f"VAE similar crop {crop_id} accepted as {reviewed_type} with bbox_quality={bbox_quality}"
+
+    save_review(
+        item=item,
+        decision=decision,
+        new_type=reviewed_type,
+        notes="reviewed from VAE similar crop suggestion",
+        human_confidence="medium",
+        bbox_quality=bbox_quality,
+        attributes=["vae_similar_review"],
+    )
+
     return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
 
 
