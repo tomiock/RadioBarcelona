@@ -130,22 +130,37 @@ def find_pdf_url(record: Record) -> Record:
     if not record.year:
         record.year = guess_year(title_text)
 
-    # Prefer direct PDF links.
+    # Prefer real DDD document PDFs.
+    # IMPORTANT: DDD record pages also include footer/logo links to external PDF files
+    # such as Recolecta/Fecyt repository certificates. We must ignore those.
+    record_host = urlparse(record.record_url).netloc
     pdf_candidates = []
+
     for a in soup.find_all("a", href=True):
         href = a["href"]
-        text = a.get_text(" ", strip=True).lower()
-        if href.lower().endswith(".pdf") or ".pdf" in href.lower() or "pdf" in text:
-            pdf_candidates.append(urljoin(record.record_url, href))
+        full_url = urljoin(record.record_url, href).split("#", 1)[0]
+        parsed = urlparse(full_url)
+        lowered = full_url.lower()
 
-    # DDD file URLs often contain /files/.
-    pdf_candidates = sorted(
-        set(pdf_candidates),
-        key=lambda u: ("/files/" not in u, len(u)),
-    )
+        if not lowered.endswith(".pdf") and ".pdf" not in lowered:
+            continue
+
+        # Keep only PDFs hosted by ddd.uab.cat, not external footer links.
+        if parsed.netloc != record_host:
+            continue
+
+        # Guions de Ràdio Barcelona PDFs are normally under /pub/guiradbcn/.
+        # Keep this as a strong preference/filter to avoid unrelated site PDFs.
+        if "/pub/" not in parsed.path:
+            continue
+
+        pdf_candidates.append(full_url)
+
+    pdf_candidates = sorted(set(pdf_candidates))
 
     if pdf_candidates:
-        record.pdf_url = pdf_candidates[0]
+        # Random but reproducible because main() sets random.seed().
+        record.pdf_url = random.choice(pdf_candidates)
 
     return record
 
