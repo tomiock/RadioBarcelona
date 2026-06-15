@@ -28,7 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 # Configuració de rutes
 # ============================================================
 
-# Metadata generat per visual_retrieval/crop_objects_from_layout.py.
+# Metadata generat per processing/crop_objects_from_layout.py.
 METADATA_PATH = PROJECT_ROOT / "outputs/object_crops_raw/metadata.jsonl"
 
 # Carpeta amb crops acceptats.
@@ -504,7 +504,7 @@ def image_to_embedding(image_path, thumbnail_size=64, edge_size=32, hist_bins=16
     Converteix un crop en el mateix embedding visual simple que build_embeddings.py.
 
     IMPORTANT:
-    Aquesta funció ha de coincidir amb visual_retrieval/build_embeddings.py.
+    Aquesta funció ha de coincidir amb visual_search/build_embeddings.py.
     Si canviem l'embedding allà, també l'hem de canviar aquí.
     """
     with Image.open(image_path).convert("RGB") as img:

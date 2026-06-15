@@ -72,3 +72,15 @@ Update Generator.pdf
 # Real scraped/downloaded data
 synthetic_docs_aran/data/
 shared_experiments/
+
+# Local/generated project data
+_archive_local/
+assets_real_reviewed/
+data/ddd_random/
+review_tools/migrations/
+
+# Generated outputs
+outputs/
+runs/
+__pycache__/
+*.tar.gz

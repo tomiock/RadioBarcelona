@@ -434,7 +434,7 @@ def main():
     # 8. Crop predicted objects
     # ------------------------------------------------------------------
     run([
-        "python", "visual_retrieval/crop_objects_from_layout.py",
+        "python", "processing/crop_objects_from_layout.py",
         "--layouts", "outputs/real_predicted_layouts",
         "--images", str(real_test_dir),
         "--output", "outputs/object_crops_raw",
@@ -484,7 +484,7 @@ def main():
     # 9. Build embeddings
     # ------------------------------------------------------------------
     run([
-        "python", "visual_retrieval/build_embeddings.py",
+        "python", "visual_search/build_embeddings.py",
         "--input-crops", "outputs/object_crops_raw",
         "--output-dir", str(embeddings_dir),
         "--metadata", "outputs/object_crops_raw/metadata.jsonl",
@@ -495,7 +495,7 @@ def main():
     # 10. Build FAISS index
     # ------------------------------------------------------------------
     run([
-        "python", "visual_retrieval/build_faiss_index.py",
+        "python", "visual_search/build_faiss_index.py",
         "--embeddings", str(embeddings_dir / "embeddings.npy"),
         "--metadata", str(embeddings_dir / "metadata.jsonl"),
         "--output-dir", str(faiss_dir),
@@ -510,7 +510,7 @@ def main():
 
     if stamp_crops:
         run([
-            "python", "visual_retrieval/search_similar.py",
+            "python", "visual_search/search_similar_classic.py",
             "--query", str(stamp_crops[0]),
             "--index", str(faiss_dir / "visual_index.faiss"),
             "--metadata", str(faiss_dir / "metadata.jsonl"),
