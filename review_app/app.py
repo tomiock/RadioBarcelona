@@ -40,6 +40,10 @@ REJECTED_DIR = PROJECT_ROOT / "outputs/object_crops_rejected"
 # Carpeta per decisions de skip.
 SKIPPED_DIR = PROJECT_ROOT / "outputs/object_crops_skipped"
 
+# Crops creats manualment des del selector bbox de la review app.
+MANUAL_CROPS_DIR = PROJECT_ROOT / "outputs/object_crops_manual"
+MANUAL_METADATA_PATH = MANUAL_CROPS_DIR / "metadata.jsonl"
+
 # Log de decisions humanes.
 REVIEW_LOG = PROJECT_ROOT / "outputs/review_logs/review_log.jsonl"
 
@@ -64,6 +68,17 @@ FILTERS = {
     "accepted_not_exportable": "Accepted but not exportable",
 }
 
+# Compatibility aliases after renaming typewritten_line -> typewritten_text.
+CLASS_ALIASES = {
+    "typewritten_line": "typewritten_text",
+}
+
+
+def normalize_class_name(class_name):
+    if not class_name:
+        return class_name
+    return CLASS_ALIASES.get(class_name, class_name)
+
 
 # FAISS simple visual search
 FAISS_INDEX_PATH = PROJECT_ROOT / "outputs/faiss/current/visual_index.faiss"
@@ -82,6 +97,7 @@ GENERATOR_ASSETS_DIR = PROJECT_ROOT / "assets_real_reviewed"
 GENERATOR_ASSET_TARGETS = {
     "stamp": "stamps",
     "handwritten_text": "handwriting",
+    "typewritten_text": "typewriting",
     "crossout": "crossouts",
     "censorship_block": "censorship",
     "table_fragment": "tables",
@@ -108,6 +124,7 @@ def load_review_schema():
         "classes": [
             "stamp",
             "handwritten_text",
+            "typewritten_text",
             "crossout",
             "censorship_block",
             "table_fragment",
@@ -115,6 +132,7 @@ def load_review_schema():
         ],
         "bbox_quality": [
             "good",
+            "minor_partial",
             "partial",
             "too_large",
             "bad_location",
@@ -151,6 +169,11 @@ def load_review_schema():
     # Compatibility: older review_schema.json files may not include newer generic flags.
     # mixed = the crop contains more than one relevant visual/textual phenomenon
     # and cannot be described cleanly by a single attribute.
+    schema.setdefault("classes", [])
+    schema["classes"] = [normalize_class_name(cls) for cls in schema["classes"]]
+    # De-duplicate while preserving order.
+    schema["classes"] = list(dict.fromkeys(schema["classes"]))
+
     schema.setdefault("attributes", [])
     if "mixed" not in schema["attributes"]:
         schema["attributes"].append("mixed")
@@ -184,9 +207,33 @@ def load_items():
                 continue
 
             item = json.loads(line)
+            if "type" in item:
+                item["type"] = normalize_class_name(item.get("type"))
+            if "reviewed_type" in item:
+                item["reviewed_type"] = normalize_class_name(item.get("reviewed_type"))
             item["_idx"] = idx
             items.append(item)
 
+    return items
+
+
+def load_manual_items():
+    """Carrega només els crops creats manualment des del selector bbox."""
+    items = []
+    if not MANUAL_METADATA_PATH.exists():
+        return items
+
+    with MANUAL_METADATA_PATH.open("r", encoding="utf-8") as f:
+        for idx, line in enumerate(f):
+            if not line.strip():
+                continue
+            item = json.loads(line)
+            if "type" in item:
+                item["type"] = normalize_class_name(item.get("type"))
+            if "reviewed_type" in item:
+                item["reviewed_type"] = normalize_class_name(item.get("reviewed_type"))
+            item["_manual_idx"] = idx
+            items.append(item)
     return items
 
 
@@ -210,6 +257,10 @@ def load_review_entries():
                 continue
 
             entry = json.loads(line)
+            if "type" in entry:
+                entry["type"] = normalize_class_name(entry.get("type"))
+            if "reviewed_type" in entry:
+                entry["reviewed_type"] = normalize_class_name(entry.get("reviewed_type"))
             crop_id = entry.get("crop_id")
 
             if crop_id:
@@ -320,7 +371,7 @@ def save_review(
     """
     REVIEW_LOG.parent.mkdir(parents=True, exist_ok=True)
 
-    obj_type = new_type or item.get("type", "unknown")
+    obj_type = normalize_class_name(new_type or item.get("type", "unknown"))
 
     if decision == "accepted":
         target_crop_path = safe_copy_crop(item, REVIEWED_DIR, obj_type)
@@ -579,6 +630,101 @@ def copy_crop_to_generator_assets(item, asset_type, previous_review=None):
     return dst
 
 
+def append_jsonl(path, row):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def make_manual_crop_id(asset_type):
+    safe_type = asset_type.replace("/", "_")
+    existing = 0
+    if MANUAL_METADATA_PATH.exists():
+        with MANUAL_METADATA_PATH.open("r", encoding="utf-8") as f:
+            existing = sum(1 for line in f if line.strip())
+    return f"manual_{safe_type}_{existing:06d}"
+
+
+def create_manual_crop_from_bbox(source_item, bbox, manual_type, notes=""):
+    manual_type = normalize_class_name(manual_type)
+    """
+    Retalla una bbox manual sobre la pàgina original, guarda crop i metadata.
+
+    Per compatibilitat amb el pipeline actual, la metadata també s'afegeix a
+    outputs/object_crops_raw/metadata.jsonl amb source=manual_bbox_review_app.
+    També es guarda una còpia neta a outputs/object_crops_manual/metadata.jsonl.
+    """
+    image_path_raw = source_item.get("image_path")
+    if not image_path_raw:
+        raise FileNotFoundError("Current item has no image_path")
+
+    image_path = project_path(image_path_raw)
+    if not image_path.exists():
+        raise FileNotFoundError(f"Source page image not found: {image_path}")
+
+    img = Image.open(image_path).convert("RGB")
+    width, height = img.size
+
+    x1 = int(round(min(float(bbox["x1"]), float(bbox["x2"]))))
+    y1 = int(round(min(float(bbox["y1"]), float(bbox["y2"]))))
+    x2 = int(round(max(float(bbox["x1"]), float(bbox["x2"]))))
+    y2 = int(round(max(float(bbox["y1"]), float(bbox["y2"]))))
+
+    x1 = max(0, min(x1, width - 1))
+    y1 = max(0, min(y1, height - 1))
+    x2 = max(1, min(x2, width))
+    y2 = max(1, min(y2, height))
+
+    if x2 <= x1 or y2 <= y1 or (x2 - x1) < 2 or (y2 - y1) < 2:
+        raise ValueError(f"Invalid manual bbox: {(x1, y1, x2, y2)}")
+
+    crop = img.crop((x1, y1, x2, y2))
+
+    crop_id = make_manual_crop_id(manual_type)
+    out_dir = MANUAL_CROPS_DIR / manual_type
+    out_dir.mkdir(parents=True, exist_ok=True)
+    crop_path = out_dir / f"{crop_id}.jpg"
+    crop.save(crop_path, quality=95)
+
+    row = {
+        "crop_id": crop_id,
+        "type": manual_type,
+        "subtype": "manual_bbox",
+        "document_id": source_item.get("document_id"),
+        "image": source_item.get("image"),
+        "image_path": source_item.get("image_path"),
+        "layout_path": source_item.get("layout_path"),
+        "crop_path": str(crop_path.relative_to(PROJECT_ROOT)),
+        "bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
+        "original_bbox": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
+        "confidence": 1.0,
+        "source": "manual_bbox_review_app",
+        "source_crop_id": source_item.get("crop_id"),
+        "reviewed": True,
+        "decision": "accepted",
+        "reviewed_type": manual_type,
+        "bbox_quality": "good",
+        "human_confidence": "high",
+        "review_notes": notes or "manual bbox crop created in review app",
+        "attributes": ["manual_bbox"],
+    }
+
+    append_jsonl(MANUAL_METADATA_PATH, row)
+    append_jsonl(METADATA_PATH, row)
+
+    save_review(
+        item=row,
+        decision="accepted",
+        new_type=manual_type,
+        notes=notes or "manual bbox crop created in review app",
+        human_confidence="high",
+        bbox_quality="good",
+        attributes=["manual_bbox"],
+    )
+
+    return row, crop_path
+
+
 def enrich_similar_items_with_review(similar_items, reviewed_entries):
     """Afegeix previous_review i effective_type als resultats de similitud."""
     for sim in similar_items:
@@ -809,6 +955,7 @@ def compute_review_stats():
     exportable_types = {
         "stamp",
         "handwritten_text",
+        "typewritten_text",
         "crossout",
         "censorship_block",
         "table_fragment",
@@ -902,7 +1049,7 @@ def is_exportable_review_entry(entry):
     exportable_types = {
         "stamp",
         "handwritten_text",
-        "typewritten_line",
+        "typewritten_text",
         "crossout",
         "censorship_block",
         "table_fragment",
@@ -1106,7 +1253,7 @@ def index():
     # Classe efectiva mostrada al formulari:
     # si ja hi ha revisió humana, usem reviewed_type;
     # si no, usem la predicció original.
-    current_type = (
+    current_type = normalize_class_name(
         previous_review.get("reviewed_type")
         if previous_review and previous_review.get("reviewed_type")
         else item.get("type")
@@ -1167,6 +1314,9 @@ def index():
     next_idx = min(total - 1, idx + 1)
 
     message = request.args.get("msg")
+
+    last_manual_crop_id = request.args.get("last_manual_crop_id")
+    last_manual_crop = find_item_by_crop_id(last_manual_crop_id) if last_manual_crop_id else None
 
 
 
@@ -1390,6 +1540,7 @@ def index():
                 .type-stamp { background: #e3f2fd; color: #0d47a1; border-color: #64b5f6; }
                 .type-handwritten_text { background: #f3e5f5; color: #6a1b9a; border-color: #ba68c8; }
                 .type-typewritten_line { background: #eceff1; color: #263238; border-color: #90a4ae; }
+                .type-typewritten_text { background: #eceff1; color: #263238; border-color: #90a4ae; }
                 .type-crossout { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
                 .type-censorship_block { background: #ede7f6; color: #311b92; border-color: #9575cd; }
                 .type-table_fragment { background: #e8f5e9; color: #1b5e20; border-color: #81c784; }
@@ -1498,6 +1649,42 @@ def index():
                     padding: 0;
                     margin: 0;
                     width: 100%;
+                }
+
+                .manual-page-wrap {
+                    position: relative;
+                    display: inline-block;
+                    max-width: 100%;
+                }
+
+                .manual-page-wrap img {
+                    user-select: none;
+                    -webkit-user-drag: none;
+                }
+
+                .manual-selection-box {
+                    position: absolute;
+                    border: 3px solid #00a8ff;
+                    background: rgba(0, 168, 255, 0.16);
+                    pointer-events: none;
+                    display: none;
+                    z-index: 10;
+                }
+
+                .manual-crop-panel {
+                    margin-top: 14px;
+                    background: #f4fbff;
+                    border-left: 5px solid #00a8ff;
+                }
+
+                .coord-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(60px, 1fr));
+                    gap: 8px;
+                }
+
+                .coord-grid input {
+                    font-size: 13px;
                 }
 
                 .zoomable {
@@ -1929,9 +2116,72 @@ def index():
                 <!-- COLUMN 2: full page -->
                 <div class="card page-panel">
                     <h2>Full page with bbox</h2>
-                    <a href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank" title="Open full page preview">
-                        <img class="page-img zoomable" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
-                    </a>
+                    <p class="vae-note">Draw a rectangle on the page to create a manual crop/bbox.</p>
+                    <div class="manual-page-wrap" id="manual-page-wrap">
+                        <img id="manual-page-img" class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
+                        <div id="manual-selection-box" class="manual-selection-box"></div>
+                    </div>
+                    <br>
+                    <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a>
+
+                    <div class="card manual-crop-panel">
+                        <h3>Manual bbox / crop selector</h3>
+                        <p class="vae-note">
+                            Drag over the page image, choose a class, then save. The crop is saved as accepted/good and can optionally be copied to generator assets.
+                        </p>
+                        <form method="post" action="{{ url_for('save_manual_crop') }}" id="manual-crop-form">
+                            <input type="hidden" name="source_crop_id" value="{{ item.get('crop_id') }}">
+                            <input type="hidden" name="idx" value="{{ idx }}">
+                            <input type="hidden" name="filter" value="{{ filter_name }}">
+                            <input type="hidden" name="type_field" value="{{ type_field }}">
+                            <input type="hidden" name="type_value" value="{{ type_value }}">
+
+                            <div class="coord-grid">
+                                <label>x1<input id="manual-x1" name="x1" readonly></label>
+                                <label>y1<input id="manual-y1" name="y1" readonly></label>
+                                <label>x2<input id="manual-x2" name="x2" readonly></label>
+                                <label>y2<input id="manual-y2" name="y2" readonly></label>
+                            </div>
+
+                            <label>Manual class:</label><br>
+                            <select name="manual_type">
+                                {% for cls in review_schema.classes %}
+                                    {% if cls != "false_positive" %}
+                                    <option value="{{ cls }}" {% if cls == current_type %}selected{% endif %}>{{ cls }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+
+                            <label>Notes:</label><br>
+                            <textarea name="notes" rows="2" placeholder="manual bbox; clean stamp; block of typewritten text...">manual bbox from review app</textarea>
+
+                            <label class="attribute-item">
+                                <input type="checkbox" name="send_to_assets" value="1">
+                                <span>Also send to generator assets</span>
+                            </label>
+
+                            <div class="button-row">
+                                <button class="accept" type="submit">Save manual crop</button>
+                                <button class="skip" type="button" id="manual-clear-selection">Clear selection</button>
+                            </div>
+                        </form>
+
+                        <p>
+                            <a class="mini-link" href="{{ url_for('manual_crops_gallery') }}" target="_blank">Open manual crops gallery</a>
+                            · folder: <code>outputs/object_crops_manual/</code>
+                        </p>
+
+                        {% if last_manual_crop %}
+                        <div class="similar-card">
+                            <h4>Last manual crop created</h4>
+                            <a href="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}" target="_blank">
+                                <img class="similar-img" src="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}">
+                            </a>
+                            <p><b>{{ last_manual_crop.get('crop_id') }}</b></p>
+                            <p>{{ last_manual_crop.get('type') }} · {{ last_manual_crop.get('crop_path') }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
 
                     <div class="card instructions">
                         <h3>Review instructions</h3>
@@ -2139,6 +2389,101 @@ def index():
                 </div>
 
             </div>
+            <script>
+            (function() {
+                const img = document.getElementById('manual-page-img');
+                const wrap = document.getElementById('manual-page-wrap');
+                const box = document.getElementById('manual-selection-box');
+                const clearBtn = document.getElementById('manual-clear-selection');
+                const form = document.getElementById('manual-crop-form');
+                const x1Input = document.getElementById('manual-x1');
+                const y1Input = document.getElementById('manual-y1');
+                const x2Input = document.getElementById('manual-x2');
+                const y2Input = document.getElementById('manual-y2');
+
+                if (!img || !wrap || !box || !form) return;
+
+                let dragging = false;
+                let start = null;
+
+                function pointFromEvent(ev) {
+                    const rect = img.getBoundingClientRect();
+                    const clientX = ev.clientX;
+                    const clientY = ev.clientY;
+                    const xCss = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                    const yCss = Math.max(0, Math.min(clientY - rect.top, rect.height));
+                    const scaleX = img.naturalWidth / rect.width;
+                    const scaleY = img.naturalHeight / rect.height;
+                    return {
+                        cssX: xCss,
+                        cssY: yCss,
+                        x: Math.round(xCss * scaleX),
+                        y: Math.round(yCss * scaleY)
+                    };
+                }
+
+                function drawBox(a, b) {
+                    const left = Math.min(a.cssX, b.cssX);
+                    const top = Math.min(a.cssY, b.cssY);
+                    const width = Math.abs(a.cssX - b.cssX);
+                    const height = Math.abs(a.cssY - b.cssY);
+                    box.style.left = left + 'px';
+                    box.style.top = top + 'px';
+                    box.style.width = width + 'px';
+                    box.style.height = height + 'px';
+                    box.style.display = 'block';
+                }
+
+                function setInputs(a, b) {
+                    x1Input.value = Math.min(a.x, b.x);
+                    y1Input.value = Math.min(a.y, b.y);
+                    x2Input.value = Math.max(a.x, b.x);
+                    y2Input.value = Math.max(a.y, b.y);
+                }
+
+                img.addEventListener('pointerdown', function(ev) {
+                    ev.preventDefault();
+                    dragging = true;
+                    start = pointFromEvent(ev);
+                    drawBox(start, start);
+                    img.setPointerCapture(ev.pointerId);
+                });
+
+                img.addEventListener('pointermove', function(ev) {
+                    if (!dragging || !start) return;
+                    ev.preventDefault();
+                    const current = pointFromEvent(ev);
+                    drawBox(start, current);
+                    setInputs(start, current);
+                });
+
+                img.addEventListener('pointerup', function(ev) {
+                    if (!dragging || !start) return;
+                    ev.preventDefault();
+                    const end = pointFromEvent(ev);
+                    drawBox(start, end);
+                    setInputs(start, end);
+                    dragging = false;
+                    start = null;
+                    try { img.releasePointerCapture(ev.pointerId); } catch(e) {}
+                });
+
+                clearBtn.addEventListener('click', function() {
+                    box.style.display = 'none';
+                    x1Input.value = '';
+                    y1Input.value = '';
+                    x2Input.value = '';
+                    y2Input.value = '';
+                });
+
+                form.addEventListener('submit', function(ev) {
+                    if (!x1Input.value || !y1Input.value || !x2Input.value || !y2Input.value) {
+                        ev.preventDefault();
+                        alert('Draw a bbox on the page before saving a manual crop.');
+                    }
+                });
+            })();
+            </script>
         </body>
         </html>
         """,
@@ -2156,6 +2501,7 @@ def index():
         message=message,
         review_schema=review_schema,
         generator_asset_targets=GENERATOR_ASSET_TARGETS,
+        last_manual_crop=last_manual_crop,
         current_human_confidence=current_human_confidence,
         current_bbox_quality=current_bbox_quality,
         current_notes=current_notes,
@@ -2185,6 +2531,76 @@ def crop_image(crop_id):
     return "Crop not found", 404
 
 
+@app.route("/manual_crops")
+def manual_crops_gallery():
+    """Galeria simple dels crops creats manualment."""
+    selected_type = request.args.get("type") or ""
+    items = load_manual_items()
+    if selected_type:
+        items = [item for item in items if item.get("type") == selected_type]
+
+    types = sorted({item.get("type", "unknown") for item in load_manual_items()})
+
+    return render_template_string(
+        """
+        <!doctype html>
+        <html>
+        <head>
+            <title>Manual crops gallery</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 24px; background: #f5f5f5; color: #111; }
+                .topbar { margin-bottom: 16px; }
+                .navlink { background: #34495e; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block; margin: 4px; }
+                .active { background: #1abc9c; font-weight: bold; }
+                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+                .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.14); }
+                img { width: 100%; max-height: 190px; object-fit: contain; background: #ddd; border: 1px solid #333; }
+                code { background: #eee; padding: 2px 4px; }
+                .small { font-size: 12px; color: #555; word-break: break-all; }
+            </style>
+        </head>
+        <body>
+            <h1>Manual crops gallery</h1>
+            <p><b>Folder:</b> <code>{{ manual_dir }}</code></p>
+            <p><b>Metadata:</b> <code>{{ metadata_path }}</code></p>
+
+            <div class="topbar">
+                <a class="navlink" href="{{ url_for('index') }}">← Back to review app</a>
+                <a class="navlink {% if not selected_type %}active{% endif %}" href="{{ url_for('manual_crops_gallery') }}">All ({{ all_count }})</a>
+                {% for t in types %}
+                    <a class="navlink {% if selected_type == t %}active{% endif %}" href="{{ url_for('manual_crops_gallery', type=t) }}">{{ t }}</a>
+                {% endfor %}
+            </div>
+
+            {% if items %}
+            <div class="grid">
+                {% for item in items|reverse %}
+                <div class="card">
+                    <a href="{{ url_for('crop_image_by_id', crop_id=item.get('crop_id')) }}" target="_blank">
+                        <img src="{{ url_for('crop_image_by_id', crop_id=item.get('crop_id')) }}">
+                    </a>
+                    <p><b>{{ item.get('crop_id') }}</b></p>
+                    <p>{{ item.get('type') }} · bbox={{ item.get('bbox') }}</p>
+                    <p class="small">{{ item.get('crop_path') }}</p>
+                    <a class="navlink" href="{{ url_for('page_preview', crop_id=item.get('crop_id')) }}" target="_blank">Open page context</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <p>No manual crops yet.</p>
+            {% endif %}
+        </body>
+        </html>
+        """,
+        items=items,
+        types=types,
+        selected_type=selected_type,
+        all_count=len(load_manual_items()),
+        manual_dir=str(MANUAL_CROPS_DIR.relative_to(PROJECT_ROOT)),
+        metadata_path=str(MANUAL_METADATA_PATH.relative_to(PROJECT_ROOT)),
+    )
+
+
 @app.route("/page/<crop_id>")
 def page_preview(crop_id):
     """
@@ -2209,7 +2625,7 @@ def review():
     """
     crop_id = request.form.get("crop_id")
     decision = request.form.get("decision")
-    new_type = request.form.get("new_type")
+    new_type = normalize_class_name(request.form.get("new_type"))
     notes = request.form.get("notes")
     human_confidence = request.form.get("human_confidence")
     bbox_quality = request.form.get("bbox_quality")
@@ -2271,6 +2687,59 @@ def send_to_generator_assets():
 
     msg = f"Crop {crop_id} copied to generator assets: {dst.relative_to(PROJECT_ROOT)}"
     return redirect(url_for("index", idx=idx, filter=filter_name, type_field=type_field, type_value=type_value, msg=msg))
+
+
+@app.route("/save_manual_crop", methods=["POST"])
+def save_manual_crop():
+    """Crea un crop manual a partir d'una bbox dibuixada sobre la pàgina."""
+    source_crop_id = request.form.get("source_crop_id")
+    manual_type = normalize_class_name(request.form.get("manual_type"))
+    notes = request.form.get("notes") or "manual bbox from review app"
+    send_to_assets = request.form.get("send_to_assets") == "1"
+    idx = int(request.form.get("idx", 0))
+    filter_name = request.form.get("filter", "all")
+    type_field = request.form.get("type_field", "")
+    type_value = request.form.get("type_value", "")
+
+    source_item = find_item_by_crop_id(source_crop_id)
+    if source_item is None:
+        return f"Source crop not found: {source_crop_id}", 404
+
+    try:
+        bbox = {
+            "x1": request.form.get("x1"),
+            "y1": request.form.get("y1"),
+            "x2": request.form.get("x2"),
+            "y2": request.form.get("y2"),
+        }
+        manual_item, crop_path = create_manual_crop_from_bbox(
+            source_item=source_item,
+            bbox=bbox,
+            manual_type=manual_type,
+            notes=notes,
+        )
+
+        asset_msg = ""
+        if send_to_assets and manual_type in GENERATOR_ASSET_TARGETS:
+            dst = copy_crop_to_generator_assets(manual_item, manual_type, previous_review=manual_item)
+            asset_msg = f" | sent to generator assets: {dst.relative_to(PROJECT_ROOT)}"
+
+        msg = f"Manual crop created: {manual_item.get('crop_id')} → {crop_path.relative_to(PROJECT_ROOT)}{asset_msg}"
+
+    except Exception as e:
+        msg = f"Could not create manual crop: {type(e).__name__}: {e}"
+
+    kwargs = {
+        "idx": idx,
+        "filter": filter_name,
+        "type_field": type_field,
+        "type_value": type_value,
+        "msg": msg,
+    }
+    if "manual_item" in locals() and manual_item:
+        kwargs["last_manual_crop_id"] = manual_item.get("crop_id")
+
+    return redirect(url_for("index", **kwargs))
 
 
 
