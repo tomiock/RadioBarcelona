@@ -84,3 +84,9 @@ outputs/
 runs/
 __pycache__/
 *.tar.gz
+
+# Local source archives / large data
+data/source_archives/
+data/real_pages/
+data/synthetic_generated/
+data/local_pages/
