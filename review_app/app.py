@@ -1539,7 +1539,7 @@ def index():
 
                 .type-stamp { background: #e3f2fd; color: #0d47a1; border-color: #64b5f6; }
                 .type-handwritten_text { background: #f3e5f5; color: #6a1b9a; border-color: #ba68c8; }
-                .type-typewritten_line { background: #eceff1; color: #263238; border-color: #90a4ae; }
+                .type-typewritten_text { background: #eceff1; color: #263238; border-color: #90a4ae; }
                 .type-typewritten_text { background: #eceff1; color: #263238; border-color: #90a4ae; }
                 .type-crossout { background: #ffebee; color: #b71c1c; border-color: #ef9a9a; }
                 .type-censorship_block { background: #ede7f6; color: #311b92; border-color: #9575cd; }

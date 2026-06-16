@@ -90,3 +90,7 @@ data/source_archives/
 data/real_pages/
 data/synthetic_generated/
 data/local_pages/
+
+# Local audit snapshots
+docs/current_tree.txt
+docs/current_data_tree.txt

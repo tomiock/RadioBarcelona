@@ -125,7 +125,7 @@ També:
 ```text
 iam_samples/          → handwritten_text, subtype: iam_sample
 fonts/                → handwritten_text, subtype: procedural_font
-typewriter_fonts/     → typewritten_word i typewritten_line
+typewriter_fonts/     → typewritten_word i typewritten_text
 ```
 
 Nota: si els assets d’`erasures/` són tatxadures o guixades, els tractem com `crossout`. Si algun dia hi ha corrector blanc o raspats reals, es podrien tractar com `erasure` o `occlusion`, però ara no és prioritari.
@@ -195,7 +195,7 @@ Classes actuals:
 
 ```text
 typewritten_word
-typewritten_line
+typewritten_text
 handwritten_text
 stamp
 crossout
@@ -347,7 +347,7 @@ Tot i que el script es diu `train_yolo_stamps.py`, ara també pot entrenar detec
 El format ajuda l’OCR perquè indica quines zones són:
 
 ```text
-typewritten_line      text mecanografiat, útil per OCR principal
+typewritten_text      text mecanografiat, útil per OCR principal
 handwritten_text      text manuscrit, pot requerir OCR separat
 stamp                 segell, pot ignorar-se o processar-se separat
 crossout              zona tatxada, OCR no fiable

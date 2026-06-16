@@ -177,7 +177,7 @@ Count exportable labels by class:
 grep '"reviewed_type": "stamp"' "$EXPORT_DIR/exportable_metadata.jsonl" | wc -l
 grep '"reviewed_type": "handwritten_text"' "$EXPORT_DIR/exportable_metadata.jsonl" | wc -l
 grep '"reviewed_type": "crossout"' "$EXPORT_DIR/exportable_metadata.jsonl" | wc -l
-grep '"reviewed_type": "typewritten_line"' "$EXPORT_DIR/exportable_metadata.jsonl" | wc -l
+grep '"reviewed_type": "typewritten_text"' "$EXPORT_DIR/exportable_metadata.jsonl" | wc -l
 ```
 
 Expected current example after reviewing more stamps:
@@ -310,7 +310,7 @@ outputs/faiss/vae/by_type/
 ├── handwritten_text/
 ├── crossout/
 ├── false_positive/
-└── typewritten_line/
+└── typewritten_text/
 ```
 
 Example current counts:
@@ -320,7 +320,7 @@ stamp: 71 vectors
 false_positive: 29 vectors
 handwritten_text: 524 vectors
 crossout: 114 vectors
-typewritten_line: 1 vector
+typewritten_text: 1 vector
 ```
 
 ---

@@ -35,7 +35,7 @@ from PIL import Image
 DEFAULT_CLASSES = [
     "stamp",
     "handwritten_text",
-    "typewritten_line",
+    "typewritten_text",
     "crossout",
     "censorship_block",
     "table_fragment",

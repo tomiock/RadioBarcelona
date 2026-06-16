@@ -18,7 +18,7 @@ from typing import Dict, Iterable, Iterator, List, Optional
 EXPORTABLE_TYPES = {
     "stamp",
     "handwritten_text",
-    "typewritten_line",
+    "typewritten_text",
     "crossout",
     "censorship_block",
     "table_fragment",

@@ -236,8 +236,8 @@ def build_typewritten_objects(word_boxes, sample_id, line_y_tolerance=12):
 
         objects.append(
             make_layout_object(
-                obj_id=f"typewritten_line_{sample_id:04d}_{line_idx:04d}",
-                obj_type="typewritten_line",
+                obj_id=f"typewritten_text_{sample_id:04d}_{line_idx:04d}",
+                obj_type="typewritten_text",
                 bbox=union_bbox(boxes),
                 text=text,
                 layer="layer0_clean",
