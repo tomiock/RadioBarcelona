@@ -93,7 +93,7 @@ VAE_FAISS_BY_TYPE_DIR = PROJECT_ROOT / "outputs/faiss/vae/by_type"
 SIMILARITY_TOP_K = 5
 
 # Directori d'assets reals revisats que pot llegir generator.py.
-GENERATOR_ASSETS_DIR = PROJECT_ROOT / "assets_real_reviewed"
+GENERATOR_ASSETS_DIR = PROJECT_ROOT / "synthetic_docs_aran/assets_real_reviewed"
 GENERATOR_ASSET_TARGETS = {
     "stamp": "stamps",
     "handwritten_text": "handwriting",
