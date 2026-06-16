@@ -496,3 +496,15 @@ python visual_search/build_vae_faiss.py \
   --output-dir outputs/faiss/vae/global \
   --by-type
 ```
+
+## Review app with custom metadata
+
+By default, the review app loads:
+
+    outputs/object_crops_raw/metadata.jsonl
+
+To review another metadata file without overwriting the default one:
+
+    REVIEW_METADATA=outputs/object_crops_manual/metadata.jsonl python review_app/app.py
+
+This is useful for reviewing alternative crop sets, manual crops, DDD experiments, or temporary metadata files.

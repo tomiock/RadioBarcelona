@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -29,7 +30,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 # ============================================================
 
 # Metadata generat per processing/crop_objects_from_layout.py.
-METADATA_PATH = PROJECT_ROOT / "outputs/object_crops_raw/metadata.jsonl"
+DEFAULT_METADATA_PATH = PROJECT_ROOT / "outputs/object_crops_raw/metadata.jsonl"
+METADATA_PATH = Path(os.environ.get("REVIEW_METADATA", str(DEFAULT_METADATA_PATH))).expanduser()
+if not METADATA_PATH.is_absolute():
+    METADATA_PATH = (PROJECT_ROOT / METADATA_PATH).resolve()
 
 # Carpeta amb crops acceptats.
 REVIEWED_DIR = PROJECT_ROOT / "outputs/object_crops_reviewed"
