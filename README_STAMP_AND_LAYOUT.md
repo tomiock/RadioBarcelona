@@ -28,7 +28,7 @@ Durant la generació sabem on és cada element perquè el generador l’ha col·
 RadioBarcelona-main/
 ├── synthetic_docs_aran/
 ├── annotation_tools/
-├── stamp_detection_module/
+├── detection/
 ├── visual_marks_dataset/       # generat, no pujar normalment
 ├── stamp_dataset_layout/       # generat, no pujar normalment
 ├── stamp_dataset/              # generat, pipeline antiga de stamps
@@ -311,13 +311,13 @@ Classes YOLO actuals:
 Script:
 
 ```text
-stamp_detection_module/stamp_detection/train_yolo_stamps.py
+detection/stamp_detection/train_yolo_stamps.py
 ```
 
 Ordre:
 
 ```bash
-python stamp_detection_module/stamp_detection/train_yolo_stamps.py \
+python detection/stamp_detection/train_yolo_stamps.py \
   --data visual_marks_dataset/data.yaml \
   --model yolo11n.pt \
   --epochs 30 \
@@ -406,7 +406,7 @@ El Git hauria de contenir principalment:
 ```text
 synthetic_docs_aran/generator.py
 annotation_tools/
-stamp_detection_module/
+detection/
 .gitignore
 README.md
 README_STAMP_AND_LAYOUT.md

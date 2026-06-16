@@ -228,7 +228,7 @@ outputs/review_yolo_dataset_v2/
 ## 6. Train YOLO from reviewed crops
 
 ```bash
-python stamp_detection_module/stamp_detection/train_yolo_stamps.py \
+python detection/stamp_detection/train_yolo_stamps.py \
   --data outputs/review_yolo_dataset_v2/data.yaml \
   --model yolo11n.pt \
   --epochs 30 \
@@ -468,7 +468,7 @@ python tools/review_tools/export_review_to_yolo.py \
   --val-ratio 0.2
 
 # Train YOLO
-python stamp_detection_module/stamp_detection/train_yolo_stamps.py \
+python detection/stamp_detection/train_yolo_stamps.py \
   --data outputs/review_yolo_dataset_v2/data.yaml \
   --model yolo11n.pt \
   --epochs 30 \

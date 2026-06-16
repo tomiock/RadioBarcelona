@@ -359,7 +359,7 @@ def main():
     # ------------------------------------------------------------------
     if not args.skip_train:
         run([
-            "python", "stamp_detection_module/stamp_detection/train_yolo_stamps.py",
+            "python", "detection/stamp_detection/train_yolo_stamps.py",
             "--data", str(yolo_dataset / "data.yaml"),
             "--model", "yolo11n.pt",
             "--epochs", str(args.epochs),
@@ -421,7 +421,7 @@ def main():
     # 7. Run YOLO inference on real pages and export predicted_layout.json
     # ------------------------------------------------------------------
     run([
-        "python", "stamp_detection_module/stamp_detection/infer_yolo_layout_json.py",
+        "python", "detection/stamp_detection/infer_yolo_layout_json.py",
         "--weights", args.weights,
         "--input", str(real_test_dir),
         "--output", "outputs/real_predicted_layouts",
