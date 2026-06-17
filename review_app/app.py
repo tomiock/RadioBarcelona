@@ -2270,7 +2270,7 @@ def index():
                                 </ul>
                             </div>
                             <div>
-                                <b>Similar crops</b>
+                                <b>FAISS similar detector crops</b>
                                 <ul>
                                     <li>They are quick binary reviews from visual retrieval.</li>
                                     <li>Accept similar is a weak review from crop-only context; it is saved with bbox_quality <code>unsure</code>.</li>
@@ -2296,7 +2296,7 @@ def index():
 
                 <!-- COLUMN 4: similar crops -->
                 <div class="card right-panel">
-                    <h2>Similar crops</h2>
+                    <h2>FAISS similar detector crops</h2>
 
                     {% if similar_items %}
                         <div class="similar-list">
@@ -2369,9 +2369,9 @@ def index():
                 </div>
 
 
-                <!-- COLUMN 5: VAE similar crops -->
+                <!-- COLUMN 5: VAE similar detector crops -->
                 <div class="card vae-panel">
-                    <h2>VAE similar crops</h2>
+                    <h2>VAE similar detector crops</h2>
                     <p class="vae-note">
                         Uses the trained VAE latent space + FAISS. When available, it searches in the by-type index
                         first, so this column is useful to compare against the simple visual FAISS column.
