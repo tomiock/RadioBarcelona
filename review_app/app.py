@@ -2590,6 +2590,31 @@ def crop_image(crop_id):
     return "Crop not found", 404
 
 
+
+@app.route("/manual_crop_image/<crop_id>")
+def manual_crop_image(crop_id):
+    """
+    Serve a manual crop image directly from manual crop metadata.
+
+    This avoids depending on the active REVIEW_METADATA, because manual
+    crops live in outputs/object_crops_manual/metadata.jsonl.
+    """
+    for item in load_manual_items():
+        if item.get("crop_id") == crop_id:
+            crop_path_raw = item.get("crop_path")
+            if not crop_path_raw:
+                return "Manual crop has no crop_path", 404
+
+            crop_path = project_path(crop_path_raw)
+
+            if crop_path.exists():
+                return send_file(crop_path)
+
+            return "Manual crop file not found", 404
+
+    return "Manual crop not found", 404
+
+
 @app.route("/manual_crops")
 def manual_crops_gallery():
     """Galeria simple dels crops creats manualment."""
@@ -2635,8 +2660,8 @@ def manual_crops_gallery():
             <div class="grid">
                 {% for item in items|reverse %}
                 <div class="card">
-                    <a href="{{ url_for('crop_image_by_id', crop_id=item.get('crop_id')) }}" target="_blank">
-                        <img src="{{ url_for('crop_image_by_id', crop_id=item.get('crop_id')) }}">
+                    <a href="{{ url_for('manual_crop_image', crop_id=item.get('crop_id')) }}" target="_blank">
+                        <img src="{{ url_for('manual_crop_image', crop_id=item.get('crop_id')) }}">
                     </a>
                     <p><b>{{ item.get('crop_id') }}</b></p>
                     <p>{{ item.get('type') }} · bbox={{ item.get('bbox') }}</p>
@@ -2664,15 +2689,16 @@ def manual_crops_gallery():
 def page_preview(crop_id):
     """
     Serveix la pàgina completa amb bbox dibuixat.
+
+    Supports both normal review crops and manual crops.
     """
-    items = load_items()
+    item = find_item_by_crop_id(crop_id)
 
-    for item in items:
-        if item.get("crop_id") == crop_id:
-            preview_path = make_page_preview(item)
+    if item:
+        preview_path = make_page_preview(item)
 
-            if preview_path and preview_path.exists():
-                return send_file(preview_path)
+        if preview_path and preview_path.exists():
+            return send_file(preview_path)
 
     return "Page preview not found", 404
 
@@ -2805,18 +2831,26 @@ def save_manual_crop():
 
 @app.route("/crop_by_id/<crop_id>")
 def crop_image_by_id(crop_id):
-    """Serveix qualsevol crop pel seu crop_id, útil per resultats VAE."""
+    """
+    Serve crop image by crop_id.
+
+    Supports both active review metadata and manual crop metadata.
+    """
     item = find_item_by_crop_id(crop_id)
 
-    # Fallback: alguns resultats poden venir directament del metadata VAE.
-    if item is None:
-        for candidate in load_faiss_metadata(VAE_FAISS_GLOBAL_METADATA_PATH):
-            if candidate.get("crop_id") == crop_id:
-                item = candidate
-                break
-
-    if item is None:
+    if not item:
         return "Crop not found", 404
+
+    crop_path_raw = item.get("crop_path")
+    if not crop_path_raw:
+        return "Crop has no crop_path", 404
+
+    crop_path = project_path(crop_path_raw)
+
+    if crop_path.exists():
+        return send_file(crop_path)
+
+    return "Crop file not found", 404
 
     crop_path_raw = item.get("crop_path")
     if not crop_path_raw:
