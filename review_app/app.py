@@ -340,6 +340,40 @@ def safe_copy_crop(item, target_root, obj_type):
     return target_crop_path
 
 
+
+def parse_corrected_bbox_from_form(form):
+    """
+    Parse optional corrected bbox fields from the review form.
+
+    If all fields are empty, returns None.
+    If some fields are filled but invalid, returns None to avoid breaking review.
+    """
+    keys = ["corrected_x1", "corrected_y1", "corrected_x2", "corrected_y2"]
+    values = [form.get(k, "").strip() for k in keys]
+
+    if not any(values):
+        return None
+
+    if not all(values):
+        return None
+
+    try:
+        x1 = int(round(float(values[0])))
+        y1 = int(round(float(values[1])))
+        x2 = int(round(float(values[2])))
+        y2 = int(round(float(values[3])))
+    except ValueError:
+        return None
+
+    x1, x2 = sorted([x1, x2])
+    y1, y2 = sorted([y1, y2])
+
+    if x2 <= x1 or y2 <= y1:
+        return None
+
+    return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+
 # ============================================================
 # Guardar revisió
 # ============================================================
@@ -352,6 +386,7 @@ def save_review(
     human_confidence=None,
     bbox_quality=None,
     attributes=None,
+    corrected_bbox=None,
 ):
     """
     Guarda una decisió humana.
@@ -397,6 +432,8 @@ def save_review(
     entry["human_confidence"] = human_confidence
     entry["bbox_quality"] = bbox_quality
     entry["attributes"] = attributes
+    if corrected_bbox:
+        entry["corrected_bbox"] = corrected_bbox
     entry["reviewed_crop_path"] = str(target_crop_path.relative_to(PROJECT_ROOT))
 
     # Guardem paths relatius perquè el review_log.jsonl sigui portable
@@ -2016,6 +2053,24 @@ def index():
                     <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
                     <p><b>Document:</b> {{ item.get("document_id") }}</p>
                     <p><b>BBox:</b> {{ item.get("bbox") }}</p>
+                    {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
+                    {% if corrected_bbox %}
+                    <p><b>Corrected BBox:</b> {{ corrected_bbox }}</p>
+                    {% endif %}
+
+                    <details class="manual-crop-panel">
+                        <summary>Optional corrected bbox for YOLO export</summary>
+                        <p class="vae-note">
+                            Fill these only if the original bbox should be replaced during YOLO export.
+                            Empty fields keep the original bbox.
+                        </p>
+                        <div class="manual-bbox-fields">
+                            <label>x1<input name="corrected_x1" value="{{ corrected_bbox.get('x1', '') if corrected_bbox else '' }}"></label>
+                            <label>y1<input name="corrected_y1" value="{{ corrected_bbox.get('y1', '') if corrected_bbox else '' }}"></label>
+                            <label>x2<input name="corrected_x2" value="{{ corrected_bbox.get('x2', '') if corrected_bbox else '' }}"></label>
+                            <label>y2<input name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}"></label>
+                        </div>
+                    </details>
 
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
@@ -2659,6 +2714,7 @@ def review():
         human_confidence=human_confidence,
         bbox_quality=bbox_quality,
         attributes=attributes,
+        corrected_bbox=parse_corrected_bbox_from_form(request.form),
     )
 
     # Després de decidir, mantenim el filtre. En filtres dinàmics, quedar-se al mateix

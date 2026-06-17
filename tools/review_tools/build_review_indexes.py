@@ -75,6 +75,7 @@ def enrich_item(item: dict, review: Optional[dict]) -> dict:
         row["attributes"] = review.get("attributes", [])
         row["review_notes"] = review.get("review_notes")
         row["reviewed_crop_path"] = review.get("reviewed_crop_path")
+        row["corrected_bbox"] = review.get("corrected_bbox")
     else:
         row["decision"] = None
         row["reviewed_type"] = None
@@ -83,6 +84,7 @@ def enrich_item(item: dict, review: Optional[dict]) -> dict:
         row["attributes"] = []
         row["review_notes"] = None
         row["reviewed_crop_path"] = None
+        row["corrected_bbox"] = None
 
     row["effective_type"] = row.get("reviewed_type") or row.get("type")
     row["is_reviewed"] = row.get("decision") in {"accepted", "rejected"}

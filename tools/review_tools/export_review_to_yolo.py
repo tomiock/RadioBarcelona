@@ -74,7 +74,7 @@ def safe_image_name(image_path: Path, index: int) -> str:
 
 
 def parse_bbox(row: dict) -> Tuple[float, float, float, float] | None:
-    bbox = row.get("bbox")
+    bbox = row.get("corrected_bbox") or row.get("bbox")
     if isinstance(bbox, dict):
         try:
             x1 = float(bbox["x1"])

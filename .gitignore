@@ -94,3 +94,15 @@ data/local_pages/
 # Local audit snapshots
 docs/current_tree.txt
 docs/current_data_tree.txt
+
+# Local real test page folders
+real_test_current_pages_50/
+real_test_test_random_pages_10/
+
+# Local real document pages
+/data/real_pages/pages/
+/data/real_pages/raw_pdfs/
+
+# Local real document cache
+/data/real_documents/raw_pdfs/
+/data/real_documents/jpg_pages/
