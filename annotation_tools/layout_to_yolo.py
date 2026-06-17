@@ -6,6 +6,56 @@ from pathlib import Path
 from PIL import Image
 
 
+# ============================================================
+# Detector class policy
+# ============================================================
+# This file is DETECTOR-side: it converts generator annotations
+# into YOLO labels. The generator may create more annotation
+# types than the detector should learn.
+#
+# Example:
+#   - typewritten_word can be useful for OCR/word metadata.
+#   - typewritten_text is the region/line-level class we want
+#     the YOLO layout detector to learn.
+DEFAULT_DETECTOR_CLASSES = [
+    "stamp",
+    "handwritten_text",
+    "crossout",
+    "typewritten_text",
+]
+
+# Compatibility aliases for old or generator-specific names.
+TYPE_ALIASES = {
+    "typewritten_line": "typewritten_text",
+    "typed_line": "typewritten_text",
+    "typed_text": "typewritten_text",
+    "official_stamp": "stamp",
+    "synthetic_stamp": "stamp",
+}
+
+# These annotation types should not become YOLO boxes.
+# Word-level boxes are too dense for the visual layout detector
+# and are better handled by OCR/line-specific pipelines.
+IGNORE_TYPES = {
+    "typewritten_word",
+    "word",
+    "text_word",
+}
+
+
+def normalize_annotation_type(raw_type):
+    """Map generator annotation types to detector classes."""
+    if not raw_type:
+        return None
+
+    obj_type = TYPE_ALIASES.get(raw_type, raw_type)
+
+    if obj_type in IGNORE_TYPES:
+        return None
+
+    return obj_type
+
+
 def iter_layout_jsons(synthetic_root):
     synthetic_root = Path(synthetic_root)
     for path in sorted(synthetic_root.glob("sample_*/layout_annotations.json")):
@@ -53,9 +103,11 @@ def convert_one(layout_path, synthetic_root, output_dir, split, class_to_id, min
     lines = []
 
     for obj in data.get("objects", []):
-        obj_type = obj.get("type")
+        # Generator-side type, normalized into detector-side class.
+        raw_type = obj.get("type")
+        obj_type = normalize_annotation_type(raw_type)
 
-        if obj_type not in class_to_id:
+        if obj_type is None or obj_type not in class_to_id:
             continue
 
         bbox = obj.get("bbox")
@@ -128,7 +180,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--synthetic-root", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--classes", nargs="+", required=True)
+    parser.add_argument(
+        "--classes",
+        nargs="+",
+        default=DEFAULT_DETECTOR_CLASSES,
+        help="YOLO detector classes to export. Defaults to layout detector classes.",
+    )
     parser.add_argument("--val-ratio", type=float, default=0.1)
     parser.add_argument("--test-ratio", type=float, default=0.1)
     parser.add_argument("--min-box-size", type=int, default=40)
@@ -138,7 +195,15 @@ def main():
     synthetic_root = Path(args.synthetic_root)
     output_dir = Path(args.output)
 
-    class_to_id = {name: idx for idx, name in enumerate(args.classes)}
+    # Normalize requested class names too, so old names like
+    # typewritten_line are mapped to the detector class typewritten_text.
+    classes = []
+    for name in args.classes:
+        norm = normalize_annotation_type(name)
+        if norm and norm not in classes:
+            classes.append(norm)
+
+    class_to_id = {name: idx for idx, name in enumerate(classes)}
 
     layout_paths = list(iter_layout_jsons(synthetic_root))
 
@@ -178,7 +243,7 @@ def main():
             used_images += 1
             total_boxes += n_boxes
 
-    write_data_yaml(output_dir, args.classes)
+    write_data_yaml(output_dir, classes)
 
     print(f"Input layout files: {n}")
     print(f"Used images: {used_images}")

@@ -6,13 +6,51 @@ from PIL import Image
 from ultralytics import YOLO
 
 
+# Fallback detector classes.
+# In normal use, class names should come from model.names,
+# which are saved inside the YOLO weights from data.yaml.
 DEFAULT_CLASS_NAMES = {
     0: "stamp",
-    1: "crossout",
-    2: "censorship_block",
-    3: "handwritten_text",
-    4: "table_fragment",
+    1: "handwritten_text",
+    2: "crossout",
+    3: "typewritten_text",
 }
+
+# Compatibility aliases for older detector/generator names.
+TYPE_ALIASES = {
+    "typewritten_line": "typewritten_text",
+    "typed_line": "typewritten_text",
+    "typed_text": "typewritten_text",
+    "official_stamp": "stamp",
+    "synthetic_stamp": "stamp",
+}
+
+
+def normalize_prediction_type(name):
+    """Normalize predicted class names for downstream review/export."""
+    if name is None:
+        return None
+    name = str(name)
+    return TYPE_ALIASES.get(name, name)
+
+
+def get_model_class_names(model):
+    """
+    Return class names stored in YOLO weights.
+
+    Detector-side rule:
+    - Prefer model.names from the trained model.
+    - Fallback to DEFAULT_CLASS_NAMES only if unavailable.
+    """
+    names = getattr(model, "names", None)
+
+    if isinstance(names, dict) and names:
+        return {int(k): normalize_prediction_type(v) for k, v in names.items()}
+
+    if isinstance(names, list) and names:
+        return {i: normalize_prediction_type(v) for i, v in enumerate(names)}
+
+    return DEFAULT_CLASS_NAMES
 
 
 def image_files(input_path):
@@ -49,6 +87,9 @@ def main():
     args = parser.parse_args()
 
     model = YOLO(args.weights)
+    class_names = get_model_class_names(model)
+    print(f"Model classes: {class_names}")
+
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -78,7 +119,7 @@ def main():
                 conf = float(box.conf[0].item())
                 xyxy = box.xyxy[0].tolist()
 
-                obj_type = DEFAULT_CLASS_NAMES.get(cls_id, f"class_{cls_id}")
+                obj_type = class_names.get(cls_id, f"class_{cls_id}")
 
                 objects.append({
                     "id": f"pred_{img_idx:04d}_{det_idx:04d}",
