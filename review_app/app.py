@@ -2053,31 +2053,27 @@ def index():
                     <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
                     <p><b>Document:</b> {{ item.get("document_id") }}</p>
                     <p><b>BBox:</b> {{ item.get("bbox") }}</p>
-                    {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
-                    {% if corrected_bbox %}
-                    <p><b>Corrected BBox:</b> {{ corrected_bbox }}</p>
-                    {% endif %}
-
-                    <details class="manual-crop-panel">
-                        <summary>Optional corrected bbox for YOLO export</summary>
-                        <p class="vae-note">
-                            Fill these only if the original bbox should be replaced during YOLO export.
-                            Empty fields keep the original bbox.
-                        </p>
-                        <div class="manual-bbox-fields">
-                            <label>x1<input name="corrected_x1" value="{{ corrected_bbox.get('x1', '') if corrected_bbox else '' }}"></label>
-                            <label>y1<input name="corrected_y1" value="{{ corrected_bbox.get('y1', '') if corrected_bbox else '' }}"></label>
-                            <label>x2<input name="corrected_x2" value="{{ corrected_bbox.get('x2', '') if corrected_bbox else '' }}"></label>
-                            <label>y2<input name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}"></label>
-                        </div>
-                    </details>
-
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
                         <input type="hidden" name="filter" value="{{ filter_name }}">
                         <input type="hidden" name="type_field" value="{{ type_field }}">
                         <input type="hidden" name="type_value" value="{{ type_value }}">
+
+                        {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
+                        <div class="vae-note" style="margin-top:8px; padding:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:6px;">
+                            <b>Corrected bbox for YOLO export:</b>
+                            <code id="corrected-bbox-display">none</code>
+                            <button class="skip" type="button" id="clear-corrected-bbox" style="margin-left:8px;">Clear corrected bbox</button>
+                            <p class="small" style="margin:6px 0 0 0;">
+                                Use a selection from the full page to replace the original bbox during YOLO export.
+                            </p>
+                        </div>
+
+                        <input type="hidden" name="corrected_x1" value="{{ corrected_bbox.get('x1', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_y1" value="{{ corrected_bbox.get('y1', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_x2" value="{{ corrected_bbox.get('x2', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}">
 
                         <label>Correct class:</label><br>
                         <select name="new_type">
@@ -2144,12 +2140,14 @@ def index():
                             <button class="skip" name="decision" value="skipped">Skip</button>
                         </div>
                     </form>
-
                     <hr>
-                    <h3>Generator assets</h3>
-                    <p class="vae-note">
+                    <details class="advanced-generator-assets">
+                        <summary><b>Advanced: send current crop to generator assets</b></summary>
+                        <h3>Generator assets</h3>
+                                            <p class="vae-note">
                         Copy this crop into <code>assets_real_reviewed/</code> so <code>generator.py</code> can reuse it
                         when creating future synthetic documents. This does not change the review decision.
+                        Prefer this only for accepted/useful crops, not rejected false positives.
                     </p>
                     <form method="post" action="{{ url_for('send_to_generator_assets') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
@@ -2169,16 +2167,21 @@ def index():
 
                         <button class="navlink" type="submit">Send to generator assets</button>
                     </form>
+                    </details>
                 </div>
 
 
                 <!-- COLUMN 2: full page -->
                 <div class="card page-panel">
                     <h2>Full page with bbox</h2>
-                    <p class="vae-note">Draw a rectangle on the page to create a manual crop/bbox.</p>
+                    <p class="vae-note">Draw a rectangle on the page, then use it either as a corrected bbox for the current crop or as a new manual crop.</p>
                     <div class="manual-page-wrap" id="manual-page-wrap">
                         <img id="manual-page-img" class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
                         <div id="manual-selection-box" class="manual-selection-box"></div>
+                        <div
+                            id="corrected-selection-box" class="manual-selection-box corrected-selection-box" style="display:none; border:3px solid #f59e0b; background:rgba(245,158,11,0.18); z-index:50; pointer-events:none; box-sizing:border-box;"
+                            title="corrected bbox for YOLO export"
+                        ></div>
                     </div>
                     <br>
                     <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a>
@@ -2186,7 +2189,7 @@ def index():
                     <div class="card manual-crop-panel">
                         <h3>Manual bbox / crop selector</h3>
                         <p class="vae-note">
-                            Drag over the page image, choose a class, then save. The crop is saved as accepted/good and can optionally be copied to generator assets.
+                            Drag over the page image. You can use the selection as corrected_bbox for the current crop, or save it as a new manual crop. Manual crops are saved as accepted/good and can optionally be copied to generator assets.
                         </p>
                         <form method="post" action="{{ url_for('save_manual_crop') }}" id="manual-crop-form">
                             <input type="hidden" name="source_crop_id" value="{{ item.get('crop_id') }}">
@@ -2202,7 +2205,10 @@ def index():
                                 <label>y2<input id="manual-y2" name="y2" readonly></label>
                             </div>
 
-                            <label>Manual class:</label><br>
+                            <p class="vae-note">
+                                <b>Selected bbox:</b> <code id="selected-bbox-summary">none</code>
+                            </p>
+<label>Manual class:</label><br>
                             <select name="manual_type">
                                 {% for cls in review_schema.classes %}
                                     {% if cls != "false_positive" %}
@@ -2213,22 +2219,80 @@ def index():
 
                             <label>Notes:</label><br>
                             <textarea name="notes" rows="2" placeholder="manual bbox; clean stamp; block of typewritten text...">manual bbox from review app</textarea>
+<div class="manual-actions" style="display:grid; gap:10px; margin-top:10px;">
+                                <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
+                                    <b>Current crop correction</b><br>
+                                    <button class="navlink" type="button" id="accept-selected-bbox-correction">
+                                        Use selection as corrected bbox
+                                    </button>
+                                </div>
 
-                            <label class="attribute-item">
-                                <input type="checkbox" name="send_to_assets" value="1">
-                                <span>Also send to generator assets</span>
-                            </label>
+                                <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
+                                    <b>New manual crop</b><br>
+                                    <button class="accept" type="submit" name="send_to_assets" value="0">
+                                        Save manual crop
+                                    </button>
+                                    <button class="navlink" type="submit" name="send_to_assets" value="1">
+                                        Save + generator asset
+                                    </button>
+                                </div>
 
-                            <div class="button-row">
-                                <button class="accept" type="submit">Save manual crop</button>
-                                <button class="skip" type="button" id="manual-clear-selection">Clear selection</button>
+                                <div>
+                                    <button class="skip" type="button" id="manual-clear-selection">
+                                        Clear selection
+                                    </button>
+                                </div>
                             </div>
-                        </form>
+</form>
 
                         <p>
                             <a class="mini-link" href="{{ url_for('manual_crops_gallery') }}" target="_blank">Open manual crops gallery</a>
                             · folder: <code>outputs/object_crops_manual/</code>
                         </p>
+
+
+                        <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                            const useAsCorrectedBtn = document.getElementById("manual-use-as-corrected");
+                            const status = document.getElementById("manual-correction-status");
+
+                            function copyManualCoordToCorrected(manualId, correctedName) {
+                                const manualInput = document.getElementById(manualId);
+                                const correctedInput = document.querySelector(`input[name="${correctedName}"]`);
+
+                                if (!manualInput || !correctedInput) {
+                                    return false;
+                                }
+
+                                correctedInput.value = manualInput.value || "";
+                                return Boolean(correctedInput.value);
+                            }
+
+                            if (useAsCorrectedBtn) {
+                                useAsCorrectedBtn.addEventListener("click", function () {
+                                    const ok = [
+                                        copyManualCoordToCorrected("manual-x1", "corrected_x1"),
+                                        copyManualCoordToCorrected("manual-y1", "corrected_y1"),
+                                        copyManualCoordToCorrected("manual-x2", "corrected_x2"),
+                                        copyManualCoordToCorrected("manual-y2", "corrected_y2"),
+                                    ].every(Boolean);
+
+                                    if (status) {
+                                        if (ok) {
+                                            status.textContent = "Selection copied as corrected bbox. Use Accept/Reject/Skip to save the review.";
+                                            status.style.color = "#1a7f37";
+                                        } else {
+                                            status.textContent = "No valid selection yet. Draw a rectangle on the page first.";
+                                            status.style.color = "#b42318";
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                        </script>
+
+
+                        
 
                         {% if last_manual_crop %}
                         <div class="similar-card">
@@ -2460,6 +2524,17 @@ def index():
                 const x2Input = document.getElementById('manual-x2');
                 const y2Input = document.getElementById('manual-y2');
 
+                const correctedBox = document.getElementById('corrected-selection-box');
+                const selectedSummary = document.getElementById('selected-bbox-summary');
+                const correctedDisplay = document.getElementById('corrected-bbox-display');
+                const acceptCorrectionBtn = document.getElementById('accept-selected-bbox-correction');
+                const clearCorrectedBtn = document.getElementById('clear-corrected-bbox');
+
+                const correctedX1Input = document.querySelector('input[name="corrected_x1"]');
+                const correctedY1Input = document.querySelector('input[name="corrected_y1"]');
+                const correctedX2Input = document.querySelector('input[name="corrected_x2"]');
+                const correctedY2Input = document.querySelector('input[name="corrected_y2"]');
+
                 if (!img || !wrap || !box || !form) return;
 
                 let dragging = false;
@@ -2493,12 +2568,123 @@ def index():
                     box.style.display = 'block';
                 }
 
+                function bboxText(x1, y1, x2, y2) {
+                    if (!x1 || !y1 || !x2 || !y2) return 'none';
+                    return `x1=${x1}, y1=${y1}, x2=${x2}, y2=${y2}`;
+                }
+
+                function selectedText() {
+                    return bboxText(x1Input.value, y1Input.value, x2Input.value, y2Input.value);
+                }
+
+                function correctedText() {
+                    return bboxText(
+                        correctedX1Input ? correctedX1Input.value : '',
+                        correctedY1Input ? correctedY1Input.value : '',
+                        correctedX2Input ? correctedX2Input.value : '',
+                        correctedY2Input ? correctedY2Input.value : ''
+                    );
+                }
+
+                function updateBboxDisplays() {
+                    const sText = selectedText();
+                    if (selectedSummary) selectedSummary.textContent = sText;
+
+                    if (clearBtn) {
+                        clearBtn.style.display = (sText === 'none') ? 'none' : 'inline-block';
+                    }
+
+                    const cText = correctedText();
+                    if (correctedDisplay) correctedDisplay.textContent = cText;
+
+                    if (clearCorrectedBtn) {
+                        clearCorrectedBtn.style.display = (cText === 'none') ? 'none' : 'inline-block';
+                    }
+                }
+
+                function setCorrectedValues(x1, y1, x2, y2) {
+                    if (correctedX1Input) correctedX1Input.value = x1 || '';
+                    if (correctedY1Input) correctedY1Input.value = y1 || '';
+                    if (correctedX2Input) correctedX2Input.value = x2 || '';
+                    if (correctedY2Input) correctedY2Input.value = y2 || '';
+
+                    updateBboxDisplays();
+                    drawCorrectedFromFields();
+                }
+
+                function clearCorrectedValues() {
+                    setCorrectedValues('', '', '', '');
+                    if (correctedBox) correctedBox.style.display = 'none';
+                }
+
+                function drawCorrectedFromFields() {
+                    if (!correctedBox || !img || !img.naturalWidth || !img.naturalHeight) {
+                        updateBboxDisplays();
+                        return;
+                    }
+
+                    const x1 = parseFloat(correctedX1Input ? correctedX1Input.value : '');
+                    const y1 = parseFloat(correctedY1Input ? correctedY1Input.value : '');
+                    const x2 = parseFloat(correctedX2Input ? correctedX2Input.value : '');
+                    const y2 = parseFloat(correctedY2Input ? correctedY2Input.value : '');
+
+                    if ([x1, y1, x2, y2].some(v => Number.isNaN(v)) || x2 <= x1 || y2 <= y1) {
+                        correctedBox.style.display = 'none';
+                        updateBboxDisplays();
+                        return;
+                    }
+
+                    const rect = img.getBoundingClientRect();
+                    const scaleX = rect.width / img.naturalWidth;
+                    const scaleY = rect.height / img.naturalHeight;
+
+                    correctedBox.style.left = (x1 * scaleX) + 'px';
+                    correctedBox.style.top = (y1 * scaleY) + 'px';
+                    correctedBox.style.width = Math.max(1, (x2 - x1) * scaleX) + 'px';
+                    correctedBox.style.height = Math.max(1, (y2 - y1) * scaleY) + 'px';
+                    correctedBox.style.display = 'block';
+
+                    updateBboxDisplays();
+                }
+
                 function setInputs(a, b) {
                     x1Input.value = Math.min(a.x, b.x);
                     y1Input.value = Math.min(a.y, b.y);
                     x2Input.value = Math.max(a.x, b.x);
                     y2Input.value = Math.max(a.y, b.y);
+                    updateBboxDisplays();
                 }
+
+                if (acceptCorrectionBtn) {
+                    acceptCorrectionBtn.addEventListener('click', function() {
+                        if (!x1Input.value || !y1Input.value || !x2Input.value || !y2Input.value) {
+                            alert('Draw a bbox on the page first.');
+                            return;
+                        }
+
+                        setCorrectedValues(
+                            x1Input.value,
+                            y1Input.value,
+                            x2Input.value,
+                            y2Input.value
+                        );
+                    });
+                }
+
+                if (clearCorrectedBtn) {
+                    clearCorrectedBtn.addEventListener('click', function() {
+                        clearCorrectedValues();
+                    });
+                }
+
+                if (img.complete) {
+                    drawCorrectedFromFields();
+                } else {
+                    img.addEventListener('load', drawCorrectedFromFields);
+                }
+
+                window.addEventListener('resize', drawCorrectedFromFields);
+                updateBboxDisplays();
 
                 img.addEventListener('pointerdown', function(ev) {
                     ev.preventDefault();
@@ -2533,6 +2719,7 @@ def index():
                     y1Input.value = '';
                     x2Input.value = '';
                     y2Input.value = '';
+                    updateBboxDisplays();
                 });
 
                 form.addEventListener('submit', function(ev) {
