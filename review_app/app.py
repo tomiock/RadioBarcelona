@@ -780,25 +780,42 @@ def enrich_similar_items_with_review(similar_items, reviewed_entries):
     return similar_items
 
 
-def resolve_vae_index_paths_for_item(item):
+def resolve_vae_index_candidates_for_item(item):
     """
-    Prioritza l'índex VAE per tipus quan existeix.
-    Si no hi ha índex per aquell tipus, cau al VAE global.
-    """
-    crop_type = (
-        item.get("effective_type")
-        or item.get("reviewed_type")
-        or item.get("type")
-    )
+    Return possible VAE indexes for this crop.
 
-    if crop_type:
+    Important:
+    - VAE vectors are stored according to the original visual crop type.
+    - Human review may change effective_type/reviewed_type later.
+    - Therefore we try original item["type"] first, then reviewed/effective
+      types, and finally the global VAE index.
+    """
+    candidate_types = []
+    seen = set()
+
+    for crop_type in [
+        item.get("type"),
+        item.get("effective_type"),
+        item.get("reviewed_type"),
+    ]:
+        if crop_type and crop_type not in seen:
+            candidate_types.append(crop_type)
+            seen.add(crop_type)
+
+    candidates = []
+
+    for crop_type in candidate_types:
         type_dir = VAE_FAISS_BY_TYPE_DIR / crop_type
         type_index = type_dir / "visual_index.faiss"
         type_metadata = type_dir / "metadata.jsonl"
-        if type_index.exists() and type_metadata.exists():
-            return type_index, type_metadata, f"vae_by_type:{crop_type}"
 
-    return VAE_FAISS_GLOBAL_INDEX_PATH, VAE_FAISS_GLOBAL_METADATA_PATH, "vae_global"
+        if type_index.exists() and type_metadata.exists():
+            candidates.append((type_index, type_metadata, f"vae_by_type:{crop_type}"))
+
+    if VAE_FAISS_GLOBAL_INDEX_PATH.exists() and VAE_FAISS_GLOBAL_METADATA_PATH.exists():
+        candidates.append((VAE_FAISS_GLOBAL_INDEX_PATH, VAE_FAISS_GLOBAL_METADATA_PATH, "vae_global"))
+
+    return candidates
 
 
 def find_similar_items_from_existing_faiss_vector(item, index_path, metadata_path, top_k=5, source_label="vae"):
@@ -872,15 +889,29 @@ def find_similar_items_from_existing_faiss_vector(item, index_path, metadata_pat
 
 
 def find_vae_similar_items(item, top_k=5):
-    """Retorna similars VAE, preferentment dins el mateix tipus efectiu."""
-    index_path, metadata_path, source_label = resolve_vae_index_paths_for_item(item)
-    return find_similar_items_from_existing_faiss_vector(
-        item=item,
-        index_path=index_path,
-        metadata_path=metadata_path,
-        top_k=top_k,
-        source_label=source_label,
-    )
+    """
+    Return VAE similar items.
+
+    We try several indexes in order:
+    1. original visual crop type, e.g. typewritten_text
+    2. effective/reviewed type, if different
+    3. global VAE index
+
+    This prevents losing VAE results after a human changes the class.
+    """
+    for index_path, metadata_path, source_label in resolve_vae_index_candidates_for_item(item):
+        results = find_similar_items_from_existing_faiss_vector(
+            item=item,
+            index_path=index_path,
+            metadata_path=metadata_path,
+            top_k=top_k,
+            source_label=source_label,
+        )
+
+        if results:
+            return results
+
+    return []
 
 
 def find_similar_items(item, top_k=5):
@@ -2061,7 +2092,7 @@ def index():
                         <input type="hidden" name="type_value" value="{{ type_value }}">
 
                         {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
-                        <div class="vae-note" style="margin-top:8px; padding:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:6px;">
+                        <div id="corrected-bbox-panel" class="vae-note" style="margin-top:8px; padding:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:6px;">
                             <b>Corrected bbox for YOLO export:</b>
                             <code id="corrected-bbox-display">none</code>
                             <button class="skip" type="button" id="clear-corrected-bbox" style="margin-left:8px;">Clear corrected bbox</button>
@@ -2140,34 +2171,7 @@ def index():
                             <button class="skip" name="decision" value="skipped">Skip</button>
                         </div>
                     </form>
-                    <hr>
-                    <details class="advanced-generator-assets">
-                        <summary><b>Advanced: send current crop to generator assets</b></summary>
-                        <h3>Generator assets</h3>
-                                            <p class="vae-note">
-                        Copy this crop into <code>assets_real_reviewed/</code> so <code>generator.py</code> can reuse it
-                        when creating future synthetic documents. This does not change the review decision.
-                        Prefer this only for accepted/useful crops, not rejected false positives.
-                    </p>
-                    <form method="post" action="{{ url_for('send_to_generator_assets') }}">
-                        <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
-                        <input type="hidden" name="idx" value="{{ idx }}">
-                        <input type="hidden" name="filter" value="{{ filter_name }}">
-                        <input type="hidden" name="type_field" value="{{ type_field }}">
-                        <input type="hidden" name="type_value" value="{{ type_value }}">
 
-                        <label>Send as asset type:</label><br>
-                        <select name="asset_type">
-                            {% for asset_type, folder in generator_asset_targets.items() %}
-                                <option value="{{ asset_type }}" {% if asset_type == current_type %}selected{% endif %}>
-                                    {{ asset_type }} → assets_real_reviewed/{{ folder }}/
-                                </option>
-                            {% endfor %}
-                        </select>
-
-                        <button class="navlink" type="submit">Send to generator assets</button>
-                    </form>
-                    </details>
                 </div>
 
 
@@ -2526,6 +2530,7 @@ def index():
 
                 const correctedBox = document.getElementById('corrected-selection-box');
                 const selectedSummary = document.getElementById('selected-bbox-summary');
+                const correctedPanel = document.getElementById('corrected-bbox-panel');
                 const correctedDisplay = document.getElementById('corrected-bbox-display');
                 const acceptCorrectionBtn = document.getElementById('accept-selected-bbox-correction');
                 const clearCorrectedBtn = document.getElementById('clear-corrected-bbox');
@@ -2595,10 +2600,16 @@ def index():
                     }
 
                     const cText = correctedText();
+                    const hasCorrected = cText !== 'none';
+
                     if (correctedDisplay) correctedDisplay.textContent = cText;
 
+                    if (correctedPanel) {
+                        correctedPanel.style.display = hasCorrected ? 'block' : 'none';
+                    }
+
                     if (clearCorrectedBtn) {
-                        clearCorrectedBtn.style.display = (cText === 'none') ? 'none' : 'inline-block';
+                        clearCorrectedBtn.style.display = hasCorrected ? 'inline-block' : 'none';
                     }
                 }
 
