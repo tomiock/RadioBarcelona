@@ -222,23 +222,42 @@ def load_items():
 
 
 def load_manual_items():
-    """Carrega només els crops creats manualment des del selector bbox."""
-    items = []
+    """Carrega només els crops creats manualment des del selector bbox.
+
+    Si hi ha crop_id duplicats al metadata manual, ens quedem amb l'última fila.
+    Això evita targetes repetides a la gallery després de proves o deletes.
+    """
+    items_by_id = {}
+    order = []
+
     if not MANUAL_METADATA_PATH.exists():
-        return items
+        return []
 
     with MANUAL_METADATA_PATH.open("r", encoding="utf-8") as f:
         for idx, line in enumerate(f):
             if not line.strip():
                 continue
+
             item = json.loads(line)
+
             if "type" in item:
                 item["type"] = normalize_class_name(item.get("type"))
             if "reviewed_type" in item:
                 item["reviewed_type"] = normalize_class_name(item.get("reviewed_type"))
+
             item["_manual_idx"] = idx
-            items.append(item)
-    return items
+            crop_id = item.get("crop_id")
+
+            if crop_id:
+                if crop_id not in items_by_id:
+                    order.append(crop_id)
+                items_by_id[crop_id] = item
+            else:
+                fallback_id = f"__no_crop_id_{idx}"
+                order.append(fallback_id)
+                items_by_id[fallback_id] = item
+
+    return [items_by_id[crop_id] for crop_id in order]
 
 
 def load_review_entries():
@@ -687,12 +706,40 @@ def append_jsonl(path, row):
 
 
 def make_manual_crop_id(asset_type):
+    """Crea un ID manual estable i no reutilitzable.
+
+    No fem servir el nombre total de files perquè, després d'esborrar crops
+    o tenir duplicats, això pot repetir IDs existents.
+    """
     safe_type = asset_type.replace("/", "_")
-    existing = 0
+    prefix = f"manual_{safe_type}_"
+    max_suffix = -1
+
     if MANUAL_METADATA_PATH.exists():
         with MANUAL_METADATA_PATH.open("r", encoding="utf-8") as f:
-            existing = sum(1 for line in f if line.strip())
-    return f"manual_{safe_type}_{existing:06d}"
+            for line in f:
+                if not line.strip():
+                    continue
+
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                crop_id = row.get("crop_id", "")
+                if crop_id.startswith(prefix):
+                    suffix = crop_id.rsplit("_", 1)[-1]
+                    if suffix.isdigit():
+                        max_suffix = max(max_suffix, int(suffix))
+
+    next_id = max_suffix + 1
+
+    while True:
+        crop_id = f"{prefix}{next_id:06d}"
+        candidate_path = MANUAL_CROPS_DIR / safe_type / f"{crop_id}.jpg"
+        if not candidate_path.exists():
+            return crop_id
+        next_id += 1
 
 
 def load_generator_asset_crop_ids():
@@ -1931,6 +1978,28 @@ def index():
                     line-height: 1.35;
                 }
 
+                .confidence-track {
+                    width: 100%;
+                    height: 10px;
+                    background: #e5e7eb;
+                    border-radius: 999px;
+                    overflow: hidden;
+                    margin: 4px 0 10px 0;
+                    border: 1px solid rgba(0,0,0,0.08);
+                }
+
+                .confidence-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+                    border-radius: 999px;
+                }
+
+                .manual-bbox-readout {
+                    white-space: nowrap;
+                    overflow-x: auto;
+                    margin: 6px 0 10px 0;
+                }
+
                 @media (max-width: 1650px) {
                     .container {
                         grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.5fr) minmax(340px, 1fr);
@@ -2130,41 +2199,23 @@ def index():
                     {% if previous_review %}
                     <p><b>Review decision:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></p>
                     <p><b>Reviewed type:</b> <span class="meta-badge type-{{ previous_review.get('reviewed_type') or 'unknown' }}">{{ previous_review.get("reviewed_type") }}</span></p>
-                    <p><b>BBox quality:</b> {{ previous_review.get("bbox_quality") }}</p>
-                    <p><b>Human confidence:</b> {{ previous_review.get("human_confidence") }}</p>
-
-                    {% if previous_review.get("review_notes") %}
-                    <p><b>Review notes:</b> {{ previous_review.get("review_notes") }}</p>
-                    {% endif %}
-                    {% endif %}
+{% endif %}
 
                     <p><b>Effective type:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></p>
-                    <p><b>Confidence:</b> {{ item.get("confidence") }}</p>
-                    <p><b>Document:</b> {{ item.get("document_id") }}</p>
-                    <p><b>BBox:</b> {{ item.get("bbox") }}</p>
+                    {% set detector_conf = item.get("confidence")|float %}
+                    <p><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
+                    <div class="confidence-track" title="Detector confidence">
+                        <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
+                    </div>
+                    <p><b>Document / page:</b> {{ item.get("document_id") }}</p>
+                    <p><a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a></p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
                         <input type="hidden" name="filter" value="{{ filter_name }}">
                         <input type="hidden" name="type_field" value="{{ type_field }}">
                         <input type="hidden" name="type_value" value="{{ type_value }}">
-
-                        {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
-                        <div id="corrected-bbox-panel" class="vae-note" style="margin-top:8px; padding:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:6px;">
-                            <b>Corrected bbox for YOLO export:</b>
-                            <code id="corrected-bbox-display">none</code>
-                            <button class="skip" type="button" id="clear-corrected-bbox" style="margin-left:8px;">Clear corrected bbox</button>
-                            <p class="small" style="margin:6px 0 0 0;">
-                                Use a selection from the full page to replace the original bbox during YOLO export.
-                            </p>
-                        </div>
-
-                        <input type="hidden" name="corrected_x1" value="{{ corrected_bbox.get('x1', '') if corrected_bbox else '' }}">
-                        <input type="hidden" name="corrected_y1" value="{{ corrected_bbox.get('y1', '') if corrected_bbox else '' }}">
-                        <input type="hidden" name="corrected_x2" value="{{ corrected_bbox.get('x2', '') if corrected_bbox else '' }}">
-                        <input type="hidden" name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}">
-
-                        <label>Correct class:</label><br>
+<label>Correct class:</label><br>
                         <select name="new_type">
                             {% for cls in review_schema.classes %}
                                 <option value="{{ cls }}" {% if cls == current_type %}selected{% endif %}>
@@ -2174,32 +2225,9 @@ def index():
                         </select>
 
                         <br>
-
-                        <label>Human confidence:</label><br>
-                        <select name="human_confidence">
-                            <option value="" {% if current_human_confidence == "" %}selected{% endif %}>not specified</option>
-                            {% for conf in review_schema.human_confidence %}
-                                <option value="{{ conf }}" {% if conf == current_human_confidence %}selected{% endif %}>
-                                    {{ conf }}
-                                </option>
-                            {% endfor %}
-                        </select>
-
-                        <br>
-
-                        <label>BBox quality:</label><br>
-                        <select name="bbox_quality">
-                            <option value="" {% if current_bbox_quality == "" %}selected{% endif %}>not specified</option>
-                            {% for q in review_schema.bbox_quality %}
-                                <option value="{{ q }}" {% if q == current_bbox_quality %}selected{% endif %}>
-                                    {{ q }}
-                                </option>
-                            {% endfor %}
-                        </select>
-
-                        <br>
-
-                        <label>Attributes:</label><br>
+                        <input type="hidden" name="human_confidence" value="high">
+                        <input type="hidden" name="bbox_quality" value="good">
+<label>Attributes:</label><br>
                         <div class="attributes-grid">
                             {% for attr in review_schema.attributes %}
                                 <label class="attribute-item">
@@ -2213,17 +2241,28 @@ def index():
                                 </label>
                             {% endfor %}
                         </div>
+                        <input type="hidden" name="notes" value="">
 
-                        <label>Notes:</label><br>
-                        <textarea
-                            name="notes"
-                            rows="3"
-                            placeholder="bbox partial, too large, false positive..."
-                        >{{ current_notes }}</textarea>
+                        {% set corrected_bbox = previous_review.get("corrected_bbox") if previous_review else None %}
+                        <div id="corrected-bbox-panel" class="vae-note" style="margin-top:10px; margin-bottom:10px; padding:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:6px;">
+                            <p style="margin:0 0 6px 0;"><b>Original bbox:</b> {{ item.get("bbox") }}</p>
+                            <p style="margin:0 0 6px 0;">
+                                <b>Corrected bbox for YOLO export:</b>
+                                <code id="corrected-bbox-display">none</code>
+                            </p>
+                            <button class="navlink" type="button" id="accept-selected-bbox-correction" style="display:none;">Use selection as corrected bbox</button>
+                            <button class="skip" type="button" id="clear-corrected-bbox" style="display:none; margin-left:8px;">Clear corrected bbox</button>
+                            <p class="small" style="margin:6px 0 0 0;">
+                                Draw a bbox on the full page, use it as corrected bbox, then Accept.
+                            </p>
+                        </div>
 
-                        <br><br>
+                        <input type="hidden" name="corrected_x1" value="{{ corrected_bbox.get('x1', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_y1" value="{{ corrected_bbox.get('y1', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_x2" value="{{ corrected_bbox.get('x2', '') if corrected_bbox else '' }}">
+                        <input type="hidden" name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}">
 
-                        <div class="button-row">
+<div class="button-row">
                             <button class="accept" name="decision" value="accepted">Accept</button>
                             <button class="reject" name="decision" value="rejected">Reject</button>
                             <button class="skip" name="decision" value="skipped">Skip</button>
@@ -2251,7 +2290,7 @@ def index():
                     <div class="card manual-crop-panel">
                         <h3>Manual bbox / crop selector</h3>
                         <p class="vae-note">
-                            Drag over the page image. You can use the selection as corrected_bbox for the current crop, or save it as a new manual crop. Manual crops are saved as accepted/good and can optionally be copied to generator assets.
+                            Drag over the page image to create a new crop from this same page. Use this when the detector missed another object or you need a separate clean example.
                         </p>
                         <form method="post" action="{{ url_for('save_manual_crop') }}" id="manual-crop-form">
                             <input type="hidden" name="source_crop_id" value="{{ item.get('crop_id') }}">
@@ -2260,11 +2299,16 @@ def index():
                             <input type="hidden" name="type_field" value="{{ type_field }}">
                             <input type="hidden" name="type_value" value="{{ type_value }}">
 
-                            <div class="coord-grid">
-                                <label>x1<input id="manual-x1" name="x1" readonly></label>
-                                <label>y1<input id="manual-y1" name="y1" readonly></label>
-                                <label>x2<input id="manual-x2" name="x2" readonly></label>
-                                <label>y2<input id="manual-y2" name="y2" readonly></label>
+                            <input type="hidden" id="manual-x1" name="x1">
+                            <input type="hidden" id="manual-y1" name="y1">
+                            <input type="hidden" id="manual-x2" name="x2">
+                            <input type="hidden" id="manual-y2" name="y2">
+
+                            <div class="manual-bbox-readout">
+                                x1=<code id="manual-x1-text">-</code>,
+                                y1=<code id="manual-y1-text">-</code>,
+                                x2=<code id="manual-x2-text">-</code>,
+                                y2=<code id="manual-y2-text">-</code>
                             </div>
 
                             <p class="vae-note">
@@ -2278,24 +2322,14 @@ def index():
                                     {% endif %}
                                 {% endfor %}
                             </select>
-
-                            <label>Notes:</label><br>
-                            <textarea name="notes" rows="2" placeholder="manual bbox; clean stamp; block of typewritten text...">manual bbox from review app</textarea>
 <div class="manual-actions" style="display:grid; gap:10px; margin-top:10px;">
-                                <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
-                                    <b>Current crop correction</b><br>
-                                    <button class="navlink" type="button" id="accept-selected-bbox-correction">
-                                        Use selection as corrected bbox
-                                    </button>
-                                </div>
-
-                                <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
+<div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
                                     <b>New manual crop</b><br>
                                     <button class="accept" type="submit" name="send_to_assets" value="0">
-                                        Save manual crop
+                                        Save crop for detector
                                     </button>
                                     <button class="navlink" type="submit" name="send_to_assets" value="1">
-                                        Save + generator asset
+                                        Save crop for detector + generator
                                     </button>
                                 </div>
 
@@ -2308,55 +2342,10 @@ def index():
 </form>
 
                         <p>
-                            <a class="mini-link" href="{{ url_for('manual_crops_gallery') }}" target="_blank">Open manual crops gallery</a>
+                            <a class="mini-link" href="{{ url_for('manual_crops_gallery') }}">Open manual crops gallery</a>
                             · folder: <code>outputs/object_crops_manual/</code>
                         </p>
-
-
-                        <script>
-                        document.addEventListener("DOMContentLoaded", function () {
-                            const useAsCorrectedBtn = document.getElementById("manual-use-as-corrected");
-                            const status = document.getElementById("manual-correction-status");
-
-                            function copyManualCoordToCorrected(manualId, correctedName) {
-                                const manualInput = document.getElementById(manualId);
-                                const correctedInput = document.querySelector(`input[name="${correctedName}"]`);
-
-                                if (!manualInput || !correctedInput) {
-                                    return false;
-                                }
-
-                                correctedInput.value = manualInput.value || "";
-                                return Boolean(correctedInput.value);
-                            }
-
-                            if (useAsCorrectedBtn) {
-                                useAsCorrectedBtn.addEventListener("click", function () {
-                                    const ok = [
-                                        copyManualCoordToCorrected("manual-x1", "corrected_x1"),
-                                        copyManualCoordToCorrected("manual-y1", "corrected_y1"),
-                                        copyManualCoordToCorrected("manual-x2", "corrected_x2"),
-                                        copyManualCoordToCorrected("manual-y2", "corrected_y2"),
-                                    ].every(Boolean);
-
-                                    if (status) {
-                                        if (ok) {
-                                            status.textContent = "Selection copied as corrected bbox. Use Accept/Reject/Skip to save the review.";
-                                            status.style.color = "#1a7f37";
-                                        } else {
-                                            status.textContent = "No valid selection yet. Draw a rectangle on the page first.";
-                                            status.style.color = "#b42318";
-                                        }
-                                    }
-                                });
-                            }
-                        });
-                        </script>
-
-
-                        
-
-                        {% if last_manual_crop %}
+{% if last_manual_crop %}
                         <div class="similar-card">
                             <h4>Last manual crop created</h4>
                             <a href="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}" target="_blank">
@@ -2653,8 +2642,23 @@ def index():
                     const sText = selectedText();
                     if (selectedSummary) selectedSummary.textContent = sText;
 
+                    for (const pair of [
+                        ['manual-x1', 'manual-x1-text'],
+                        ['manual-y1', 'manual-y1-text'],
+                        ['manual-x2', 'manual-x2-text'],
+                        ['manual-y2', 'manual-y2-text'],
+                    ]) {
+                        const input = document.getElementById(pair[0]);
+                        const output = document.getElementById(pair[1]);
+                        if (output) {
+                            output.textContent = input && input.value ? input.value : '-';
+                        }
+                    }
+
+                    const hasSelection = sText !== 'none';
+
                     if (clearBtn) {
-                        clearBtn.style.display = (sText === 'none') ? 'none' : 'inline-block';
+                        clearBtn.style.display = hasSelection ? 'inline-block' : 'none';
                     }
 
                     const cText = correctedText();
@@ -2663,7 +2667,11 @@ def index():
                     if (correctedDisplay) correctedDisplay.textContent = cText;
 
                     if (correctedPanel) {
-                        correctedPanel.style.display = hasCorrected ? 'block' : 'none';
+                        correctedPanel.style.display = (hasCorrected || hasSelection) ? 'block' : 'none';
+                    }
+
+                    if (acceptCorrectionBtn) {
+                        acceptCorrectionBtn.style.display = hasSelection ? 'inline-block' : 'none';
                     }
 
                     if (clearCorrectedBtn) {
@@ -3094,9 +3102,22 @@ def review():
     crop_id = request.form.get("crop_id")
     decision = request.form.get("decision")
     new_type = normalize_class_name(request.form.get("new_type"))
-    notes = request.form.get("notes")
-    human_confidence = request.form.get("human_confidence")
-    bbox_quality = request.form.get("bbox_quality")
+    notes = request.form.get("notes") or ""
+    human_confidence = request.form.get("human_confidence") or "high"
+    bbox_quality = request.form.get("bbox_quality") or "good"
+
+    if decision == "rejected":
+        notes = notes or "rejected from review app"
+        human_confidence = "high"
+        bbox_quality = "bad_location"
+    elif decision == "skipped":
+        notes = notes or "skipped from review app"
+        human_confidence = "medium"
+        bbox_quality = "unsure"
+    else:
+        notes = notes or "accepted from review app"
+        human_confidence = "high"
+        bbox_quality = "good"
     attributes = request.form.getlist("attributes")
     idx = int(request.form.get("idx", 0))
     filter_name = request.form.get("filter", "all")
