@@ -1348,9 +1348,10 @@ def item_matches_filter(row, filter_name, type_field=None, type_value=None):
     return True
 
 
-def get_filtered_item_by_index(index, filter_name, type_field=None, type_value=None):
-    """Retorna un item filtrat, preservant el comportament antic si no hi ha índexs."""
+def get_filtered_items(filter_name, type_field=None, type_value=None):
+    """Retorna tots els items que compleixen el filtre actual."""
     filter_name = filter_name if filter_name in FILTERS else "all"
+
     # Mode dinàmic: la UI reflecteix immediatament accept/reject/skip.
     # Els JSONL precomputats continuen servint per export/package i escala offline,
     # però no els usem aquí per evitar filtres desactualitzats mentre revisem.
@@ -1362,6 +1363,13 @@ def get_filtered_item_by_index(index, filter_name, type_field=None, type_value=N
         row = enrich_item_for_filter(item, reviewed_entries)
         if item_matches_filter(row, filter_name, type_field=type_field, type_value=type_value):
             filtered.append(item)
+
+    return filtered
+
+
+def get_filtered_item_by_index(index, filter_name, type_field=None, type_value=None):
+    """Retorna un item filtrat, preservant el comportament antic si no hi ha índexs."""
+    filtered = get_filtered_items(filter_name, type_field=type_field, type_value=type_value)
 
     if not filtered:
         return None, 0
@@ -1389,6 +1397,7 @@ def index():
         - anar endavant/enrere.
     """
     requested_index = request.args.get("idx")
+    goto_index = request.args.get("goto")
     filter_name = request.args.get("filter", "all")
     if filter_name not in FILTERS:
         filter_name = "all"
@@ -1399,12 +1408,25 @@ def index():
         type_field = ""
         type_value = ""
 
-    if requested_index is None:
+    if goto_index is not None and str(goto_index).strip():
+        try:
+            idx = int(goto_index) - 1  # user sees 1-based indexes
+        except ValueError:
+            idx = 0
+    elif requested_index is None:
         idx = 0 if filter_name != "all" else get_first_unreviewed_index()
     else:
         idx = int(requested_index)
 
-    item, total = get_filtered_item_by_index(idx, filter_name, type_field=type_field, type_value=type_value)
+    filtered_items = get_filtered_items(filter_name, type_field=type_field, type_value=type_value)
+
+    if filtered_items:
+        idx = max(0, min(idx, len(filtered_items) - 1))
+        item = filtered_items[idx]
+        total = len(filtered_items)
+    else:
+        item = None
+        total = 0
 
     if item is None:
         if not METADATA_PATH.exists():
@@ -1487,8 +1509,25 @@ def index():
         reviewed_entries,
     )
 
-    prev_idx = max(0, idx - 1)
-    next_idx = min(total - 1, idx + 1)
+    prev_idx = (idx - 1) % total if total else 0
+    next_idx = (idx + 1) % total if total else 0
+
+    def page_key(candidate):
+        return (
+            candidate.get("image_path")
+            or candidate.get("image")
+            or candidate.get("document_id")
+            or candidate.get("crop_id")
+        )
+
+    current_page_key = page_key(item)
+    next_different_page_idx = next_idx
+
+    for step in range(1, total):
+        candidate_idx = (idx + step) % total
+        if page_key(filtered_items[candidate_idx]) != current_page_key:
+            next_different_page_idx = candidate_idx
+            break
 
     message = request.args.get("msg")
 
@@ -1515,10 +1554,11 @@ def index():
                 }
                 .container {
                     display: grid;
-                    grid-template-columns: minmax(300px, 0.75fr) minmax(520px, 1.30fr) minmax(320px, 0.85fr) minmax(300px, 0.75fr) minmax(300px, 0.75fr);
+                    grid-template-columns: minmax(300px, 0.85fr) minmax(720px, 2.1fr) minmax(300px, 0.75fr) minmax(300px, 0.75fr);
                     gap: 18px;
                     align-items: start;
-                    max-width: 2400px;
+                    max-width: none;
+                    width: 100%;
                 }                
 
                 .left-panel,
@@ -1564,9 +1604,11 @@ def index():
                 }
 
                 .page-img {
+                    display: block;
                     width: 100%;
                     max-width: 100%;
-                    max-height: 82vh;
+                    height: auto;
+                    max-height: none;
                     object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
@@ -1584,10 +1626,10 @@ def index():
 
                 @media (max-width: 1650px) {
                     .container {
-                        grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.5fr) minmax(340px, 1fr);
+                        grid-template-columns: minmax(320px, 0.85fr) minmax(620px, 1.8fr) minmax(320px, 0.9fr);
                     }
 
-                    .right-panel {
+                    .vae-panel {
                         grid-column: 1 / -1;
                     }
                 }
@@ -1756,12 +1798,13 @@ def index():
                     display: flex;
                     gap: 8px;
                     align-items: center;
-                    flex-wrap: nowrap;
+                    flex-wrap: wrap;
                 }
 
                 .button-row button {
                     margin-right: 0;
                     white-space: nowrap;
+                    flex: 1 1 130px;
                 }
 
                 .stats-bar {
@@ -1830,11 +1873,14 @@ def index():
 
                 .manual-page-wrap {
                     position: relative;
-                    display: inline-block;
+                    display: block;
+                    width: 100%;
                     max-width: 100%;
                 }
 
                 .manual-page-wrap img {
+                    display: block;
+                    width: 100%;
                     user-select: none;
                     -webkit-user-drag: none;
                 }
@@ -2000,11 +2046,44 @@ def index():
                     margin: 6px 0 10px 0;
                 }
 
+                .helper-note {
+                    font-size: 13px;
+                    line-height: 1.35;
+                    color: #444;
+                    background: #f6f8fa;
+                    border-left: 4px solid #94a3b8;
+                    padding: 8px 10px;
+                    margin: 8px 0 12px 0;
+                    border-radius: 6px;
+                }
+
+                .jump-form {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    margin-left: 8px;
+                    flex-wrap: wrap;
+                }
+
+                .jump-form input[type="number"] {
+                    width: 90px;
+                    margin: 0;
+                    padding: 7px;
+                }
+
+                .nested-json {
+                    margin-top: 14px;
+                    background: #fbfbfb;
+                }
+
+                .nested-json pre {
+                    max-height: 260px;
+                }
+
                 @media (max-width: 1650px) {
                     .container {
-                        grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.5fr) minmax(340px, 1fr);
+                        grid-template-columns: minmax(320px, 0.85fr) minmax(620px, 1.8fr) minmax(320px, 0.9fr);
                     }
-                    .right-panel,
                     .vae-panel {
                         grid-column: 1 / -1;
                     }
@@ -2170,6 +2249,14 @@ def index():
             <div class="topbar">
                 <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next →</a>
+                <a class="navlink" href="{{ url_for('index', idx=next_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next different page</a>
+                <form class="jump-form" method="get" action="{{ url_for('index') }}">
+                    <input type="hidden" name="filter" value="{{ filter_name }}">
+                    <input type="hidden" name="type_field" value="{{ type_field }}">
+                    <input type="hidden" name="type_value" value="{{ type_value }}">
+                    <label>Jump to item <input type="number" name="goto" min="1" max="{{ total }}" value="{{ idx + 1 }}"></label>
+                    <button class="navlink" type="submit">Go</button>
+                </form>
                 <span>Item {{ idx + 1 }} / {{ total }} · Filter: {{ filters[filter_name] }}</span>
             </div>
 
@@ -2179,7 +2266,8 @@ def index():
                 <!-- COLUMN 1: crop + metadata + form -->
                 <div class="card left-panel">                    
                 
-                    <h2>Crop</h2>
+                    <h2>Main detector crop</h2>
+                    <p class="helper-note"><b>Automatic detector output.</b> Accept/reject here changes the reviewed training/export data for the bbox detector. This is not FAISS or VAE.</p>
                     <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" target="_blank" title="Open crop full size">
                         <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
                     </a>
@@ -2263,11 +2351,22 @@ def index():
                         <input type="hidden" name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}">
 
 <div class="button-row">
-                            <button class="accept" name="decision" value="accepted">Accept</button>
-                            <button class="reject" name="decision" value="rejected">Reject</button>
-                            <button class="skip" name="decision" value="skipped">Skip</button>
+                            <button class="accept" name="decision" value="accepted">Accept main crop</button>
+                            <button class="reject" name="decision" value="rejected">Reject main crop</button>
+                            <button class="skip" name="decision" value="skipped">Skip main crop</button>
                         </div>
                     </form>
+
+                <!-- JSON under main crop -->
+                <div class="card json-panel nested-json">
+                    <h2>JSON</h2>
+
+                    <h3>Review JSON</h3>
+                    <pre class="review-json">{{ review_json }}</pre>
+
+                    <h3>Raw prediction JSON</h3>
+                    <pre>{{ raw_json }}</pre>
+                </div>
 
                 </div>
 
@@ -2275,7 +2374,7 @@ def index():
                 <!-- COLUMN 2: full page -->
                 <div class="card page-panel">
                     <h2>Full page with bbox</h2>
-                    <p class="vae-note">Draw a rectangle on the page, then use it either as a corrected bbox for the current crop or as a new manual crop.</p>
+                    <p class="helper-note"><b>Page context.</b> Draw a rectangle here to correct the current detector bbox or to create a new manual crop when the detector missed something.</p>
                     <div class="manual-page-wrap" id="manual-page-wrap">
                         <img id="manual-page-img" class="page-img" src="{{ url_for('page_preview', crop_id=item['crop_id']) }}">
                         <div id="manual-selection-box" class="manual-selection-box"></div>
@@ -2288,10 +2387,8 @@ def index():
                     <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a>
 
                     <div class="card manual-crop-panel">
-                        <h3>Manual bbox / crop selector</h3>
-                        <p class="vae-note">
-                            Drag over the page image to create a new crop from this same page. Use this when the detector missed another object or you need a separate clean example.
-                        </p>
+                        <h3>Manual crops for detector training</h3>
+                        <p class="helper-note"><b>Human-created crop.</b> Use this when the detector missed an object. Saved crops become extra training/retraining examples and can optionally be copied to generator assets.</p>
                         <form method="post" action="{{ url_for('save_manual_crop') }}" id="manual-crop-form">
                             <input type="hidden" name="source_crop_id" value="{{ item.get('crop_id') }}">
                             <input type="hidden" name="idx" value="{{ idx }}">
@@ -2358,10 +2455,10 @@ def index():
                     </div>
 
                     <div class="card instructions">
-                        <h3>Review instructions</h3>
+                        <h3>Review instructions — what each action means</h3>
                         <div class="instructions-grid">
                             <div>
-                                <b>Main crop</b>
+                                <b>Main detector crop</b>
                                 <ul>
                                     <li><b>Accept</b> only if the class is correct and the bbox is useful.</li>
                                     <li><b>Reject</b> if it is a false positive, a bad/huge bbox, or a mixed region that cannot be reused.</li>
@@ -2385,33 +2482,25 @@ def index():
                                 </ul>
                             </div>
                             <div>
-                                <b>FAISS similar detector crops</b>
+                                <b>FAISS similarity helper</b>
                                 <ul>
                                     <li>They are quick binary reviews from visual retrieval.</li>
-                                    <li>Accept similar is a weak review from crop-only context; it is saved with bbox_quality <code>unsure</code>.</li>
-                                    <li>Reject similar marks it directly as false positive.</li>
-                                    <li>Use <b>Open page context</b> or Skip similar when the crop needs full-page context.</li>
+                                    <li>Accept FAISS suggestion is a weak review from crop-only context; it is saved with bbox_quality <code>unsure</code>.</li>
+                                    <li>Reject FAISS suggestion marks it directly as false positive.</li>
+                                    <li>Use <b>Open page context</b> or Skip FAISS suggestion when the crop needs full-page context.</li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- COLUMN 3: JSONs -->
-                <div class="card json-panel">
-                    <h2>JSON</h2>
 
-                    <h3>Review JSON</h3>
-                    <pre class="review-json">{{ review_json }}</pre>
-
-                    <h3>Raw prediction JSON</h3>
-                    <pre>{{ raw_json }}</pre>
-                </div>
 
 
                 <!-- COLUMN 4: similar crops -->
                 <div class="card right-panel">
-                    <h2>FAISS similar detector crops</h2>
+                    <h2>FAISS similarity helper</h2>
+                    <p class="helper-note"><b>Not a detector.</b> FAISS only retrieves crops that look similar to the current crop using simple visual embeddings. Accept/reject here is a quick weak review of a suggested similar crop.</p>
 
                     {% if similar_items %}
                         <div class="similar-list">
@@ -2470,9 +2559,9 @@ def index():
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
                                     <div class="button-row">
-                                        <button class="accept" name="decision" value="accepted">Accept similar</button>
-                                        <button class="reject" name="decision" value="rejected">Reject similar</button>
-                                        <button class="skip" name="decision" value="skipped">Skip similar</button>
+                                        <button class="accept" name="decision" value="accepted">Accept FAISS suggestion</button>
+                                        <button class="reject" name="decision" value="rejected">Reject FAISS suggestion</button>
+                                        <button class="skip" name="decision" value="skipped">Skip FAISS suggestion</button>
                                     </div>
                                 </form>
                             </div>
@@ -2486,11 +2575,8 @@ def index():
 
                 <!-- COLUMN 5: VAE similar detector crops -->
                 <div class="card vae-panel">
-                    <h2>VAE similar detector crops</h2>
-                    <p class="vae-note">
-                        Uses the trained VAE latent space + FAISS. When available, it searches in the by-type index
-                        first, so this column is useful to compare against the simple visual FAISS column.
-                    </p>
+                    <h2>VAE similarity helper</h2>
+                    <p class="helper-note"><b>Not a detector.</b> The VAE has already converted crops into latent embeddings. FAISS searches those VAE vectors to find visually/semantically similar crops.</p>
 
                     {% if vae_similar_items %}
                         <div class="similar-list">
@@ -2548,9 +2634,9 @@ def index():
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
                                     <div class="button-row">
-                                        <button class="accept" name="decision" value="accepted">Accept VAE</button>
-                                        <button class="reject" name="decision" value="rejected">Reject VAE</button>
-                                        <button class="skip" name="decision" value="skipped">Skip VAE</button>
+                                        <button class="accept" name="decision" value="accepted">Accept VAE suggestion</button>
+                                        <button class="reject" name="decision" value="rejected">Reject VAE suggestion</button>
+                                        <button class="skip" name="decision" value="skipped">Skip VAE suggestion</button>
                                     </div>
                                 </form>
                             </div>
@@ -2818,6 +2904,7 @@ def index():
         total=total,
         prev_idx=prev_idx,
         next_idx=next_idx,
+        next_different_page_idx=next_different_page_idx,
         previous_review=previous_review,
         similar_items=similar_items,
         vae_similar_items=vae_similar_items,
