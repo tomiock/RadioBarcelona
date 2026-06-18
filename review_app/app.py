@@ -608,11 +608,20 @@ def load_faiss_metadata(metadata_path=None):
 
 
 def find_item_by_crop_id(crop_id):
-    """Busca un crop_id dins el metadata raw principal."""
+    """
+    Find a crop_id in the active review metadata or manual crop metadata.
+
+    Manual crops live in their own metadata file, but they should still
+    be usable for page preview, crop serving and generator assets.
+    """
     if not crop_id:
         return None
 
     for item in load_items():
+        if item.get("crop_id") == crop_id:
+            return item
+
+    for item in load_manual_items():
         if item.get("crop_id") == crop_id:
             return item
 
@@ -684,6 +693,29 @@ def make_manual_crop_id(asset_type):
         with MANUAL_METADATA_PATH.open("r", encoding="utf-8") as f:
             existing = sum(1 for line in f if line.strip())
     return f"manual_{safe_type}_{existing:06d}"
+
+
+def load_generator_asset_crop_ids():
+    """Return crop_ids already registered in the generator asset manifest."""
+    crop_ids = set()
+
+    if not GENERATOR_ASSET_MANIFEST.exists():
+        return crop_ids
+
+    with GENERATOR_ASSET_MANIFEST.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            crop_id = row.get("crop_id")
+            if crop_id:
+                crop_ids.add(crop_id)
+
+    return crop_ids
 
 
 def create_manual_crop_from_bbox(source_item, bbox, manual_type, notes=""):
@@ -2813,15 +2845,53 @@ def manual_crop_image(crop_id):
     return "Manual crop not found", 404
 
 
+@app.route("/send_manual_crop_to_generator_assets", methods=["POST"])
+def send_manual_crop_to_generator_assets():
+    """Send one manual crop to generator assets and return to manual gallery."""
+    crop_id = request.form.get("crop_id")
+    asset_type = request.form.get("asset_type")
+    selected_type = request.form.get("selected_type", "")
+
+    item = None
+    for candidate in load_manual_items():
+        if candidate.get("crop_id") == crop_id:
+            item = candidate
+            break
+
+    if item is None:
+        msg = f"Manual crop not found: {crop_id}"
+        return redirect(url_for("manual_crops_gallery", type=selected_type, msg=msg))
+
+    asset_type = asset_type or item.get("type")
+
+    if asset_type not in GENERATOR_ASSET_TARGETS:
+        msg = f"Unsupported generator asset type for {crop_id}: {asset_type}"
+        return redirect(url_for("manual_crops_gallery", type=selected_type, msg=msg))
+
+    try:
+        dst = copy_crop_to_generator_assets(item, asset_type, previous_review=item)
+        msg = f"Manual crop {crop_id} sent to generator assets: {dst.relative_to(PROJECT_ROOT)}"
+    except Exception as e:
+        msg = f"Could not send {crop_id} to generator assets: {type(e).__name__}: {e}"
+
+    return redirect(url_for("manual_crops_gallery", type=selected_type, msg=msg))
+
+
+
 @app.route("/manual_crops")
 def manual_crops_gallery():
-    """Galeria simple dels crops creats manualment."""
+    """Gallery for crops created manually from the full-page selector."""
     selected_type = request.args.get("type") or ""
-    items = load_manual_items()
+    message = request.args.get("msg") or ""
+
+    all_items = load_manual_items()
+    items = all_items
+
     if selected_type:
         items = [item for item in items if item.get("type") == selected_type]
 
-    types = sorted({item.get("type", "unknown") for item in load_manual_items()})
+    types = sorted({item.get("type", "unknown") for item in all_items})
+    generator_asset_crop_ids = load_generator_asset_crop_ids()
 
     return render_template_string(
         """
@@ -2832,19 +2902,28 @@ def manual_crops_gallery():
             <style>
                 body { font-family: Arial, sans-serif; margin: 24px; background: #f5f5f5; color: #111; }
                 .topbar { margin-bottom: 16px; }
-                .navlink { background: #34495e; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block; margin: 4px; }
+                .navlink { background: #34495e; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block; margin: 4px; border: 0; cursor: pointer; }
                 .active { background: #1abc9c; font-weight: bold; }
-                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
                 .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.14); }
                 img { width: 100%; max-height: 190px; object-fit: contain; background: #ddd; border: 1px solid #333; }
                 code { background: #eee; padding: 2px 4px; }
                 .small { font-size: 12px; color: #555; word-break: break-all; }
+                .badge { display:inline-block; padding:3px 6px; border-radius:5px; font-size:12px; background:#eaeef2; margin:2px; }
+                .asset-badge { background:#d1fae5; color:#065f46; font-weight:bold; }
+                .msg { background:#eef6ff; border-left:4px solid #3b82f6; padding:10px; margin:10px 0; }
+                form.inline-form { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+                select { max-width: 100%; }
             </style>
         </head>
         <body>
             <h1>Manual crops gallery</h1>
             <p><b>Folder:</b> <code>{{ manual_dir }}</code></p>
             <p><b>Metadata:</b> <code>{{ metadata_path }}</code></p>
+
+            {% if message %}
+                <div class="msg">{{ message }}</div>
+            {% endif %}
 
             <div class="topbar">
                 <a class="navlink" href="{{ url_for('index') }}">← Back to review app</a>
@@ -2857,14 +2936,49 @@ def manual_crops_gallery():
             {% if items %}
             <div class="grid">
                 {% for item in items|reverse %}
+                {% set crop_id = item.get('crop_id') %}
+                {% set crop_type = item.get('type') %}
                 <div class="card">
-                    <a href="{{ url_for('manual_crop_image', crop_id=item.get('crop_id')) }}" target="_blank">
-                        <img src="{{ url_for('manual_crop_image', crop_id=item.get('crop_id')) }}">
+                    <a href="{{ url_for('manual_crop_image', crop_id=crop_id) }}" target="_blank">
+                        <img src="{{ url_for('manual_crop_image', crop_id=crop_id) }}">
                     </a>
-                    <p><b>{{ item.get('crop_id') }}</b></p>
-                    <p>{{ item.get('type') }} · bbox={{ item.get('bbox') }}</p>
-                    <p class="small">{{ item.get('crop_path') }}</p>
-                    <a class="navlink" href="{{ url_for('page_preview', crop_id=item.get('crop_id')) }}" target="_blank">Open page context</a>
+
+                    <p><b>{{ crop_id }}</b></p>
+                    <p>
+                        <span class="badge">{{ crop_type }}</span>
+                        {% if crop_id in generator_asset_crop_ids %}
+                            <span class="badge asset-badge">in generator assets</span>
+                        {% endif %}
+                    </p>
+
+                    <p><b>BBox:</b> {{ item.get('bbox') }}</p>
+                    <p><b>Document:</b> {{ item.get('document_id') }}</p>
+                    <p class="small"><b>Crop:</b> {{ item.get('crop_path') }}</p>
+                    <p class="small"><b>Image:</b> {{ item.get('image_path') }}</p>
+
+                    <a class="navlink" href="{{ url_for('manual_crop_image', crop_id=crop_id) }}" target="_blank">Open crop</a>
+                    <a class="navlink" href="{{ url_for('page_preview', crop_id=crop_id) }}" target="_blank">Open page context</a>
+
+                    {% if crop_type in generator_asset_targets %}
+                    <form class="inline-form" method="post" action="{{ url_for('send_manual_crop_to_generator_assets') }}">
+                        <input type="hidden" name="crop_id" value="{{ crop_id }}">
+                        <input type="hidden" name="selected_type" value="{{ selected_type }}">
+
+                        <label>Send as:</label><br>
+                        <select name="asset_type">
+                            {% for asset_type, folder in generator_asset_targets.items() %}
+                                <option value="{{ asset_type }}" {% if asset_type == crop_type %}selected{% endif %}>
+                                    {{ asset_type }} → assets_real_reviewed/{{ folder }}/
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <br>
+                        <button class="navlink" type="submit">Send to generator assets</button>
+                    </form>
+                    {% else %}
+                        <p class="small">No generator asset target configured for this class.</p>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -2877,9 +2991,12 @@ def manual_crops_gallery():
         items=items,
         types=types,
         selected_type=selected_type,
-        all_count=len(load_manual_items()),
+        all_count=len(all_items),
         manual_dir=str(MANUAL_CROPS_DIR.relative_to(PROJECT_ROOT)),
         metadata_path=str(MANUAL_METADATA_PATH.relative_to(PROJECT_ROOT)),
+        generator_asset_targets=GENERATOR_ASSET_TARGETS,
+        generator_asset_crop_ids=generator_asset_crop_ids,
+        message=message,
     )
 
 
