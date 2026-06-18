@@ -718,6 +718,32 @@ def load_generator_asset_crop_ids():
     return crop_ids
 
 
+def remove_crop_from_jsonl(path, crop_id):
+    """Remove a crop_id from a JSONL metadata file. Returns removed count."""
+    path = Path(path)
+    if not path.exists():
+        return 0
+
+    kept = []
+    removed = 0
+
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("crop_id") == crop_id:
+                removed += 1
+            else:
+                kept.append(row)
+
+    with path.open("w", encoding="utf-8") as f:
+        for row in kept:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    return removed
+
+
 def create_manual_crop_from_bbox(source_item, bbox, manual_type, notes=""):
     manual_type = normalize_class_name(manual_type)
     """
@@ -2878,6 +2904,51 @@ def send_manual_crop_to_generator_assets():
 
 
 
+@app.route("/delete_manual_crop", methods=["POST"])
+def delete_manual_crop():
+    """
+    Delete a manual crop safely.
+
+    The image file is moved to _archive_local/deleted_manual_crops/,
+    and the crop row is removed from manual metadata and active metadata.
+    """
+    from datetime import datetime
+
+    crop_id = request.form.get("crop_id")
+    selected_type = request.form.get("selected_type", "")
+
+    item = None
+    for candidate in load_manual_items():
+        if candidate.get("crop_id") == crop_id:
+            item = candidate
+            break
+
+    if item is None:
+        msg = f"Manual crop not found: {crop_id}"
+        return redirect(url_for("manual_crops_gallery", type=selected_type, msg=msg))
+
+    crop_path_raw = item.get("crop_path")
+    moved_msg = ""
+
+    if crop_path_raw:
+        crop_path = project_path(crop_path_raw)
+        if crop_path.exists():
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            archive_dir = PROJECT_ROOT / "_archive_local" / "deleted_manual_crops" / ts
+            archive_dir.mkdir(parents=True, exist_ok=True)
+
+            archived_path = archive_dir / crop_path.name
+            shutil.move(str(crop_path), str(archived_path))
+            moved_msg = f" moved to {archived_path.relative_to(PROJECT_ROOT)}"
+
+    removed_manual = remove_crop_from_jsonl(MANUAL_METADATA_PATH, crop_id)
+    removed_active = remove_crop_from_jsonl(METADATA_PATH, crop_id)
+
+    msg = f"Deleted manual crop {crop_id}.{moved_msg} Removed manual={removed_manual}, active={removed_active}."
+    return redirect(url_for("manual_crops_gallery", type=selected_type, msg=msg))
+
+
+
 @app.route("/manual_crops")
 def manual_crops_gallery():
     """Gallery for crops created manually from the full-page selector."""
@@ -2902,7 +2973,7 @@ def manual_crops_gallery():
             <style>
                 body { font-family: Arial, sans-serif; margin: 24px; background: #f5f5f5; color: #111; }
                 .topbar { margin-bottom: 16px; }
-                .navlink { background: #34495e; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block; margin: 4px; border: 0; cursor: pointer; }
+                .navlink { background: #34495e; color: white; text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block; margin: 4px; border: 0; cursor: pointer; }\n                .danger { background: #dc2626; }
                 .active { background: #1abc9c; font-weight: bold; }
                 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
                 .card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.14); }
@@ -2964,21 +3035,18 @@ def manual_crops_gallery():
                         <input type="hidden" name="crop_id" value="{{ crop_id }}">
                         <input type="hidden" name="selected_type" value="{{ selected_type }}">
 
-                        <label>Send as:</label><br>
-                        <select name="asset_type">
-                            {% for asset_type, folder in generator_asset_targets.items() %}
-                                <option value="{{ asset_type }}" {% if asset_type == crop_type %}selected{% endif %}>
-                                    {{ asset_type }} → assets_real_reviewed/{{ folder }}/
-                                </option>
-                            {% endfor %}
-                        </select>
-
-                        <br>
+                        <input type="hidden" name="asset_type" value="{{ crop_type }}">
                         <button class="navlink" type="submit">Send to generator assets</button>
                     </form>
                     {% else %}
                         <p class="small">No generator asset target configured for this class.</p>
                     {% endif %}
+
+                    <form class="inline-form" method="post" action="{{ url_for('delete_manual_crop') }}" onsubmit="return confirm('Delete manual crop {{ crop_id }}? The file will be archived, not permanently destroyed.');">
+                        <input type="hidden" name="crop_id" value="{{ crop_id }}">
+                        <input type="hidden" name="selected_type" value="{{ selected_type }}">
+                        <button class="navlink danger" type="submit">Delete crop</button>
+                    </form>
                 </div>
                 {% endfor %}
             </div>
