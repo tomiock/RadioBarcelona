@@ -24,6 +24,15 @@ from PIL import Image, ImageDraw, ImageFilter
 # Per tant, l'arrel del projecte és el directori pare.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
+def resolve_project_path(value, default):
+    """Resolve optional env/config paths relative to PROJECT_ROOT."""
+    if value:
+        p = Path(value)
+        if not p.is_absolute():
+            p = PROJECT_ROOT / p
+        return p
+    return default
+
 
 # ============================================================
 # Configuració de rutes
@@ -49,8 +58,7 @@ MANUAL_CROPS_DIR = PROJECT_ROOT / "outputs/object_crops_manual"
 MANUAL_METADATA_PATH = MANUAL_CROPS_DIR / "metadata.jsonl"
 
 # Log de decisions humanes.
-REVIEW_LOG = PROJECT_ROOT / "outputs/review_logs/review_log.jsonl"
-
+REVIEW_LOG = resolve_project_path(os.environ.get("REVIEW_LOG"), PROJECT_ROOT / "outputs/review_logs/review_log.jsonl")
 # Carpeta temporal per imatges de pàgina amb bbox dibuixat.
 PAGE_PREVIEW_DIR = PROJECT_ROOT / "outputs/review_page_previews"
 # Configuració editable de classes, qualitat de bbox i atributs.
