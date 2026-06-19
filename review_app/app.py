@@ -2301,6 +2301,25 @@ def index():
                 
                     <h2>Main detector crop</h2>
                     <p class="helper-note"><b>Automatic detector output.</b> Accept/reject here changes the reviewed training/export data for the bbox detector. This is not FAISS or VAE.</p>
+
+                    <details class="helper-note">
+                        <summary><b>Review decision guide: what should I do?</b></summary>
+                        <ul>
+                            <li><b>Accept</b>: use this when the predicted object is real and the bbox/type are correct enough for training.</li>
+                            <li><b>Change type + Accept</b>: use this when the bbox is good but the predicted class is wrong. Example: predicted <code>handwritten_text</code> but it is actually <code>crossout</code>.</li>
+                            <li><b>Draw corrected bbox + Accept</b>: use this when the object is real but the bbox is partial, too large, or slightly misplaced. The corrected bbox becomes the useful annotation.</li>
+                            <li><b>Reject</b>: use this for real false positives, such as paper texture, background noise, stains, borders, or detector hallucinations. These are useful for error analysis and hard negatives, but should not become positive YOLO labels.</li>
+                            <li><b>Manual crop</b>: use the full-page selector when the detector missed an object completely. This creates a new annotation candidate from the page context.</li>
+                            <li><b>Skip</b>: use this when the crop is ambiguous and needs later review or page-level context.</li>
+                        </ul>
+                        <p><b>Examples:</b></p>
+                        <ul>
+                            <li>Paper noise detected as <code>handwritten_text</code> → <b>Reject</b>, reviewed type <code>false_positive</code>, bbox quality <code>bad_location</code>.</li>
+                            <li>Good bbox but wrong class → change <b>Reviewed type</b> and <b>Accept</b>.</li>
+                            <li>Object exists but bbox is bad → draw corrected bbox, then <b>Accept</b>.</li>
+                            <li>Detector missed a stamp → create a <b>manual crop</b> from the full page.</li>
+                        </ul>
+                    </details>
                     <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" target="_blank" title="Open crop full size">
                         <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
                     </a>
