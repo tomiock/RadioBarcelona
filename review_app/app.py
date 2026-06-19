@@ -1031,11 +1031,12 @@ def find_similar_items(item, top_k=5):
     """
     Retorna els top-k crops més semblants al crop actual.
 
-    Si no existeix l'índex FAISS, si faiss no està instal·lat,
-    o si el crop no existeix, retorna [] i l'app continua funcionant.
+    Per defecte prioritza resultats del mateix tipus visual que el crop actual:
+    stamp -> stamp
+    handwritten_text -> handwritten_text
+    crossout -> crossout
 
-    També elimina el mateix crop dels resultats, perquè FAISS normalment
-    retorna el query com a primer veí amb score 1.0.
+    Si no hi ha prou resultats del mateix tipus, omple amb resultats globals.
     """
 
     if faiss is None:
@@ -1061,14 +1062,24 @@ def find_similar_items(item, top_k=5):
     if query_embedding.shape[1] != index.d:
         return []
 
-    # Demanem més resultats que top_k perquè segurament el primer serà el mateix crop.
-    search_k = min(index.ntotal, top_k + 10)
-    scores, ids = index.search(query_embedding, search_k)
-
-    results = []
-
     current_crop_id = item.get("crop_id")
     current_crop_path = str(crop_path.resolve())
+
+    current_type = (
+        item.get("effective_type")
+        or item.get("reviewed_type")
+        or item.get("type")
+        or item.get("class")
+        or item.get("label")
+    )
+
+    # Demanem més resultats que top_k per poder filtrar same-type
+    # i encara tenir fallback global.
+    search_k = min(index.ntotal, max(top_k + 10, top_k * 8))
+    scores, ids = index.search(query_embedding, search_k)
+
+    same_type_results = []
+    fallback_results = []
 
     for score, idx in zip(scores[0], ids[0]):
         if idx < 0:
@@ -1093,21 +1104,35 @@ def find_similar_items(item, top_k=5):
             except FileNotFoundError:
                 pass
 
+        candidate_type = (
+            candidate.get("effective_type")
+            or candidate.get("reviewed_type")
+            or candidate.get("type")
+            or candidate.get("class")
+            or candidate.get("label")
+        )
+
         result = dict(candidate)
-        result["rank"] = len(results) + 1
         result["score"] = float(score)
         result["faiss_id"] = int(idx)
 
-        results.append(result)
+        if current_type and candidate_type == current_type:
+            result["similarity_source"] = f"faiss_same_type:{current_type}"
+            same_type_results.append(result)
+        else:
+            result["similarity_source"] = "faiss_global_fallback"
+            fallback_results.append(result)
 
-        if len(results) >= top_k:
-            break
+    results = same_type_results[:top_k]
+
+    if len(results) < top_k:
+        remaining = top_k - len(results)
+        results.extend(fallback_results[:remaining])
+
+    for rank, result in enumerate(results, start=1):
+        result["rank"] = rank
 
     return results
-
-
-
-
 
 def compute_review_stats():
     """
@@ -2508,7 +2533,7 @@ def index():
                 <!-- COLUMN 4: similar crops -->
                 <div class="card right-panel">
                     <h2>FAISS similarity helper</h2>
-                    <p class="helper-note"><b>Not a detector.</b> FAISS only retrieves crops that look similar to the current crop using simple visual embeddings. Accept/reject here is a quick weak review of a suggested similar crop.</p>
+                    <p class="helper-note"><b>Not a detector.</b> FAISS retrieves crops that are visually similar to the current crop using simple visual embeddings, but the Review App prioritizes candidates with the same predicted/reviewed type as the current crop. If there are not enough same-type matches, it falls back to global visual matches. Accept/reject here is a quick weak review based mainly on crop-level similarity; use page context before deciding when the crop is ambiguous.</p>
 
                     {% if similar_items %}
                         <div class="similar-list">
@@ -2584,7 +2609,7 @@ def index():
                 <!-- COLUMN 5: VAE similar detector crops -->
                 <div class="card vae-panel">
                     <h2>VAE similarity helper</h2>
-                    <p class="helper-note"><b>Not a detector.</b> The VAE has already converted crops into latent embeddings. FAISS searches those VAE vectors to find visually/semantically similar crops.</p>
+                    <p class="helper-note"><b>Not a detector.</b> VAE+FAISS retrieves crops that are similar in latent space. The VAE has already converted each crop into a compact representation, and FAISS searches those vectors. When a by-type VAE index is available, the app prioritizes same predicted/reviewed type results and falls back to global VAE matches if needed. Treat these as review suggestions, not model predictions.</p>
 
                     {% if vae_similar_items %}
                         <div class="similar-list">
