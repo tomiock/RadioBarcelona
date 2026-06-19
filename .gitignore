@@ -106,3 +106,8 @@ real_test_test_random_pages_10/
 # Local real document cache
 /data/real_documents/raw_pdfs/
 /data/real_documents/jpg_pages/
+
+# Local review/dev backups
+_backup_before_review_config/
+_handoff_local/
+review_app/_app.py
