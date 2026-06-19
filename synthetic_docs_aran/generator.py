@@ -41,43 +41,70 @@ CONFIG = {
     "OPENAI_MODEL": os.environ.get("OPENAI_MODEL", "gpt-5-mini"),
 
     # Text base mecanografiat
-    "MIN_PROGRAM_LINES": 5, # Número de líneas del programa mecanografiado. Si el prompt de Gemini/OpenAI genera un número diferente, se ignora este rango y se usan las líneas generadas.     
-    "MAX_PROGRAM_LINES": 35, # 
-    "TYPEWRITER_FONT_MIN_SIZE": 14, # Tamaño mínimo de la fuente mecanografiada. Si el prompt de Gemini/OpenAI especifica un tamaño, se ignora este rango y se usa el tamaño generado.
+    "MIN_PROGRAM_LINES": 3, # Número de líneas del programa mecanografiado. Si el prompt de Gemini/OpenAI genera un número diferente, se ignora este rango y se usan las líneas generadas.     
+    "MAX_PROGRAM_LINES": 40, # 
+    "TYPEWRITER_FONT_MIN_SIZE": 12, # Tamaño mínimo de la fuente mecanografiada. Si el prompt de Gemini/OpenAI especifica un tamaño, se ignora este rango y se usa el tamaño generado.
     "TYPEWRITER_FONT_MAX_SIZE": 50,
-    "LINE_HEIGHT_MIN": 12, # Altura mínima entre líneas del texto mecanografiado. Si el prompt de Gemini/OpenAI especifica una altura, se ignora este rango y se usa la altura generada.
-    "LINE_HEIGHT_MAX": 120,
+    "LINE_HEIGHT_MIN": 10, # Altura mínima entre líneas del texto mecanografiado. Si el prompt de Gemini/OpenAI especifica una altura, se ignora este rango y se usa la altura generada.
+    "LINE_HEIGHT_MAX": 150,
 
     # Anotacions generades localment
-    "MIN_ANNOTATIONS": 1,
-    "MAX_ANNOTATIONS": 35,
+    "MIN_ANNOTATIONS": 0,
+    "MAX_ANNOTATIONS": 25,
 
     # Segells i censura forçats
     "MIN_EXTRA_STAMPS": 0,
     "MAX_EXTRA_STAMPS": 4,
     "MIN_EXTRA_CENSORSHIP": 0,
-    "MAX_EXTRA_CENSORSHIP": 3,
+    "MAX_EXTRA_CENSORSHIP": 2,
 
     # Probabilitats d’assets reals
-    "REAL_STAMP_PROB": 0.90, # Probabilitat de posar un segell real en comptes de dibuixar-lo. Si no hi ha assets, ignora aquesta probabilitat i no posa segells.
-    "EXTRA_STAMP_PROB": 0.75, # Probabilitat de posar segells extra addicionals a les anotacions, a part dels que surten al text. Aquests segells extra no tenen perquè estar associats a cap frase concreta, poden estar repartits per la pàgina.
+    "REAL_STAMP_PROB": 0.95, # Probabilitat de posar un segell real en comptes de dibuixar-lo. Si no hi ha assets, ignora aquesta probabilitat i no posa segells.
+    "EXTRA_STAMP_PROB": 0.55, # Probabilitat de posar segells extra addicionals a les anotacions, a part dels que surten al text. Aquests segells extra no tenen perquè estar associats a cap frase concreta, poden estar repartits per la pàgina.
 
-    "EXTRA_CENSORSHIP_PROB": 0.90,
+    "EXTRA_CENSORSHIP_PROB": 0.30,
 
-    "PATCH_PROB": 0.14,
+    "PATCH_PROB": 0.10,
 
-    "ERASURE_PROB": 0.80,
+    "ERASURE_PROB": 0.40,
     "MIN_EXTRA_ERASURES": 0,
-    "MAX_EXTRA_ERASURES": 15,
+    "MAX_EXTRA_ERASURES": 30,
 
-    "TABLE_PROB": 0.45,
+    "TABLE_PROB": 0.25,
 
     "STAIN_PROB": 0.20,
 
     # Concurrència
-    "MAX_CONCURRENT_TASKS": 2,
-    "REQUEST_DELAY": 2.0,
+    "MAX_CONCURRENT_TASKS": 3,
+    "REQUEST_DELAY": 1.5,
 }
+
+
+# ============================================================
+# ASSET DISCOVERY HELPERS
+# ============================================================
+
+ASSET_IMAGE_EXTENSIONS = ("*.png", "*.jpg", "*.jpeg", "*.webp", "*.tif", "*.tiff")
+
+
+def collect_assets_from_dirs(*dirs):
+    """
+    Carrega assets d'imatge des de diverses carpetes.
+
+    Això permet combinar:
+        assets/stamps/
+        assets_real_reviewed/stamps/
+
+    Si una carpeta no existeix o és buida, simplement s'ignora.
+    """
+    paths = []
+
+    for folder in dirs:
+        for pattern in ASSET_IMAGE_EXTENSIONS:
+            paths.extend(glob.glob(os.path.join(folder, pattern)))
+
+    # Eliminem duplicats i mantenim ordre estable.
+    return sorted(set(paths))
 
 
 
@@ -109,7 +136,115 @@ def remove_white_background(img, threshold=235, alpha_strength=0.85):
 
 
 
+def bbox_list_to_dict(box):
+    x1, y1, x2, y2 = box
+    return {
+        "x1": int(x1),
+        "y1": int(y1),
+        "x2": int(x2),
+        "y2": int(y2),
+    }
 
+
+def make_layout_object(
+    obj_id,
+    obj_type,
+    bbox,
+    text=None,
+    layer=None,
+    source="synthetic_generator",
+    confidence=1.0,
+    extra=None,
+):
+    obj = {
+        "id": obj_id,
+        "type": obj_type,
+        "bbox": bbox if isinstance(bbox, dict) else bbox_list_to_dict(bbox),
+        "text": text,
+        "layer": layer,
+        "source": source,
+        "confidence": confidence,
+    }
+
+    if extra:
+        obj.update(extra)
+
+    return obj
+
+
+def union_bbox(boxes):
+    x1 = min(int(b[0]) for b in boxes)
+    y1 = min(int(b[1]) for b in boxes)
+    x2 = max(int(b[2]) for b in boxes)
+    y2 = max(int(b[3]) for b in boxes)
+    return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+
+
+
+
+def build_typewritten_objects(word_boxes, sample_id, line_y_tolerance=12):
+    objects = []
+
+    # 1. Paraules individuals
+    for idx, wb in enumerate(word_boxes, start=1):
+        box = wb.get("box")
+        word = wb.get("word", "")
+
+        if not box or not word.strip():
+            continue
+
+        objects.append(
+            make_layout_object(
+                obj_id=f"typewritten_word_{sample_id:04d}_{idx:06d}",
+                obj_type="typewritten_word",
+                bbox=box,
+                text=word,
+                layer="layer0_clean",
+            )
+        )
+
+    # 2. Agrupació simple en línies segons coordenada Y
+    valid_words = [
+        wb for wb in word_boxes
+        if wb.get("box") and wb.get("word", "").strip()
+    ]
+
+    valid_words.sort(key=lambda wb: (wb["box"][1], wb["box"][0]))
+
+    lines = []
+
+    for wb in valid_words:
+        box = wb["box"]
+        y = int(box[1])
+
+        placed = False
+        for line in lines:
+            if abs(line["y"] - y) <= line_y_tolerance:
+                line["words"].append(wb)
+                line["y"] = int((line["y"] + y) / 2)
+                placed = True
+                break
+
+        if not placed:
+            lines.append({"y": y, "words": [wb]})
+
+    for line_idx, line in enumerate(lines, start=1):
+        words = sorted(line["words"], key=lambda wb: wb["box"][0])
+        boxes = [wb["box"] for wb in words]
+        text = " ".join(wb["word"] for wb in words)
+
+        objects.append(
+            make_layout_object(
+                obj_id=f"typewritten_text_{sample_id:04d}_{line_idx:04d}",
+                obj_type="typewritten_text",
+                bbox=union_bbox(boxes),
+                text=text,
+                layer="layer0_clean",
+            )
+        )
+
+    return objects
 
 class GeminiTextGenerator:
     def __init__(self):
@@ -512,41 +647,61 @@ class LayerRenderer:
         #   pegats, textures, etc.
         #
         # El codi funciona encara que aquestes carpetes estiguin buides.
-        self.iam_images = glob.glob("iam_samples/*.png") + glob.glob("iam_samples/*.tif")
-
-        # Retalls reals de segells escanejats. Idealment PNG/JPG amb fons blanc.
-        self.stamp_paths = (
-            glob.glob("assets/stamps/*.png") +
-            glob.glob("assets/stamps/*.jpg") +
-            glob.glob("assets/stamps/*.jpeg")
+        # Manuscrit genèric:
+        # - iam_samples/ són mostres originals.
+        # - assets_real_reviewed/handwriting/ són crops reals revisats manualment.
+        self.iam_images = collect_assets_from_dirs(
+            "iam_samples",
+            "assets_real_reviewed/handwriting",
         )
 
-        # Retalls reals de tatxadures, línies negres, marques de censura, etc.
-        self.censorship_paths = (
-            glob.glob("assets/censorship/*.png") +
-            glob.glob("assets/censorship/*.jpg") +
-            glob.glob("assets/censorship/*.jpeg")
+        # Segells:
+        # - assets/stamps/ són assets inicials.
+        # - assets_real_reviewed/stamps/ són segells detectats en documents reals i validats.
+        self.stamp_paths = collect_assets_from_dirs(
+            "assets/stamps",
+            "assets_real_reviewed/stamps",
         )
 
-        # Retalls de pegats, trossos de paper enganxat, cinta, reparacions, etc.
-        self.patch_paths = (
-            glob.glob("assets/patches/*.png") +
-            glob.glob("assets/patches/*.jpg") +
-            glob.glob("assets/patches/*.jpeg")
+        # Censura:
+        # - assets/censorship/ són assets inicials.
+        # - assets_real_reviewed/censorship/ són blocs de censura validats.
+        self.censorship_paths = collect_assets_from_dirs(
+            "assets/censorship",
+            "assets_real_reviewed/censorship",
         )
 
-        # Retalls reals d'esborrats, zones raspades, blanc corrector, etc.
-        self.erasure_paths = (
-            glob.glob("assets/erasures/*.png") +
-            glob.glob("assets/erasures/*.jpg") +
-            glob.glob("assets/erasures/*.jpeg")
+        # Pegats:
+        # De moment només usem assets originals. Si més endavant revisem patches,
+        # podem afegir assets_real_reviewed/patches/.
+        self.patch_paths = collect_assets_from_dirs(
+            "assets/patches",
         )
 
-        # Retalls reals de taules, graelles o fragments tabulars.
-        self.table_paths = (
-            glob.glob("assets/tables/*.png") +
-            glob.glob("assets/tables/*.jpg") +
-            glob.glob("assets/tables/*.jpeg")
+        # Esborrats / tatxadures:
+        # Al generator, erasures són visualment crossouts/tatxadures.
+        # Per això barregem assets/erasures amb assets_real_reviewed/crossouts.
+        self.erasure_paths = collect_assets_from_dirs(
+            "assets/erasures",
+            "assets_real_reviewed/crossouts",
+        )
+
+        # Taules:
+        # - assets/tables/ són assets inicials.
+        # - assets_real_reviewed/tables/ són fragments de taules reals revisats.
+        self.table_paths = collect_assets_from_dirs(
+            "assets/tables",
+            "assets_real_reviewed/tables",
+        )
+
+        print(
+            "Assets loaded:",
+            f"iam/handwriting={len(self.iam_images)}",
+            f"stamps={len(self.stamp_paths)}",
+            f"censorship={len(self.censorship_paths)}",
+            f"patches={len(self.patch_paths)}",
+            f"erasures/crossouts={len(self.erasure_paths)}",
+            f"tables={len(self.table_paths)}",
         )
 
 
@@ -613,7 +768,7 @@ class LayerRenderer:
 
     def _paste_asset_random(self, canvas: Image.Image, asset_paths: List[str],
                             min_scale: float = 0.4, max_scale: float = 0.9,
-                            rotation: float = 45.0, margin: int = 100) -> bool:
+                            rotation: float = 45.0, margin: int = 100, asset_class: str = "asset") -> dict | None:
         """
         Enganxa un asset en una posició aleatòria de la capa.
 
@@ -647,8 +802,15 @@ class LayerRenderer:
 
         x = random.randint(margin, self.width - asset.width - margin)
         y = random.randint(margin, self.height - asset.height - margin)
+
         canvas.paste(asset, (x, y), asset)
-        return True
+        return {
+        "class": asset_class,
+        "bbox": {"x1": x, "y1": y, "x2": x + asset.width, "y2": y + asset.height},
+        "confidence": 1.0,
+        "source": "synthetic_generator"
+        }
+    
 
     def _paste_asset_over_box(self, canvas: Image.Image, asset_paths: List[str],
                               box: Tuple[int, int, int, int],
@@ -784,7 +946,8 @@ class LayerRenderer:
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.1, 0.7)))
         return img, word_boxes
 
-    def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]) -> Image.Image:
+    # def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]) -> Image.Image:
+    def render_layer1(self, word_boxes: List[Dict[str, Any]], anotaciones: List[Dict[str, Any]]):
         import textwrap
 
         # Capa 1: anotacions / segells / censura.
@@ -797,6 +960,9 @@ class LayerRenderer:
             (10, 30, 150, 240), (20, 20, 20, 250), (180, 20, 20, 230),
             (20, 100, 30, 220), (90, 40, 140, 200), (80, 90, 100, 210)
         ]
+
+        stamp_detections = []
+        layout_detections = []
 
         for ano in anotaciones:
             if not isinstance(ano, dict):
@@ -886,6 +1052,18 @@ class LayerRenderer:
                         # Hand-drawn ellipse
                         draw.ellipse([x0 - random.randint(5,15), y0 - random.randint(5,10), x1 + random.randint(5,15), y1 + random.randint(5,10)], outline=main_ink, width=random.randint(2, 4))
 
+
+                    # guardar anotació posicional de tachons / censura
+                    if tipo in ["tachon", "censura_bloque"]:
+                        layout_detections.append({
+                            "class": "crossout" if tipo == "tachon" else "censorship_block",
+                            "bbox": {"x1": x0, "y1": y0, "x2": x1, "y2": y1},
+                            "confidence": 1.0,
+                            "source": "synthetic_generator",
+                            "target_text": texto_tachar,
+                        })
+
+
                     # If it's a correction, draw the replacement text above
                     if tipo == "correccion":
                         sub_x = x0
@@ -911,14 +1089,39 @@ class LayerRenderer:
                         y = random.randint(100, max(101, self.height - decal.height - 100))
                         decal = decal.rotate(random.uniform(-15, 15), expand=True, resample=Image.BICUBIC)
                         img.paste(decal, (x, y), decal)
+                        layout_detections.append({
+                            "class": "handwritten_text",
+                            "bbox": {"x1": x, "y1": y, "x2": x + decal.width, "y2": y + decal.height},
+                            "confidence": 1.0,
+                            "source": "synthetic_generator",
+                            "target_text": texto,
+                            "subtype": "iam_sample",
+                        })
                 else:
                     x = random.randint(100, self.width - 400)
                     y = random.randint(100, self.height - 200)
                     font = self.get_random_cursive_font(60, 100)
                     try:
+                        bbox_text = draw.textbbox((x, y), texto_seguro, font=font)
                         draw.text((x, y), texto_seguro, font=font, fill=main_ink)
                     except OSError:
-                        draw.text((x, y), texto_seguro, font=ImageFont.load_default(), fill=main_ink)
+                        font = ImageFont.load_default()
+                        bbox_text = draw.textbbox((x, y), texto_seguro, font=font)
+                        draw.text((x, y), texto_seguro, font=font, fill=main_ink)
+
+                    layout_detections.append({
+                        "class": "handwritten_text",
+                        "bbox": {
+                            "x1": bbox_text[0],
+                            "y1": bbox_text[1],
+                            "x2": bbox_text[2],
+                            "y2": bbox_text[3],
+                        },
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": texto,
+                        "subtype": "procedural_font",
+                    })
 
             # -----------------------------------------------------------------
             # 2.5 NOTAS LARGAS (Buscando espacios en blanco)
@@ -993,6 +1196,20 @@ class LayerRenderer:
                     # Lo pegamos en la imagen final ajustando el offset de la imagen temporal
                     img.paste(txt_img, (x - 50, y - 50), txt_img)
 
+                    layout_detections.append({
+                        "class": "handwritten_text",
+                        "bbox": {
+                            "x1": x - 50,
+                            "y1": y - 50,
+                            "x2": x - 50 + txt_img.width,
+                            "y2": y - 50 + txt_img.height,
+                        },
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": texto,
+                        "subtype": "long_note",
+                    })
+
             # -----------------------------------------------------------------
             # 3. SELLOS / FIRMAS GIGANTES
             # -----------------------------------------------------------------
@@ -1006,9 +1223,11 @@ class LayerRenderer:
                         min_scale=0.35,
                         max_scale=0.85,
                         rotation=45.0,
-                        margin=80
+                        margin=80,
+                        asset_class="official_stamp"
                     )
                     if used_stamp:
+                        stamp_detections.append(used_stamp)
                         continue
 
                 use_iam_for_stamp = self.iam_images and (random.random() > 0.3)
@@ -1058,6 +1277,12 @@ class LayerRenderer:
                     txt_img = txt_img.rotate(random.uniform(-45, 45), expand=1)
                     x, y = int(random.randint(50, self.width - 600)), int(random.randint(100, self.height - 400))
                     img.paste(txt_img, (x, y), txt_img)
+                    stamp_detections.append({
+                        "class": "synthetic_stamp",
+                        "bbox": {"x1": x, "y1": y, "x2": x + txt_img.width, "y2": y + txt_img.height},
+                        "confidence": 1.0,
+                        "source": "synthetic_generator"
+                    })
 
         # Pegats reals opcionals: són independents de les anotacions textuals.
         # Exemple: paper enganxat, cinta, fragments físics. Es posa molt poc sovint
@@ -1077,55 +1302,95 @@ class LayerRenderer:
         # Esborrats reals opcionals
         if self.erasure_paths and random.random() < CONFIG["ERASURE_PROB"]:
             for _ in range(random.randint(CONFIG["MIN_EXTRA_ERASURES"], CONFIG["MAX_EXTRA_ERASURES"])):
-                self._paste_asset_random(
+                used_erasure = self._paste_asset_random(
                     img,
                     self.erasure_paths,
                     min_scale=0.3,
                     max_scale=0.9,
                     rotation=10.0,
-                    margin=80
+                    margin=80,
+                    asset_class="crossout"
                 )
+
+                if used_erasure:
+                    layout_detections.append({
+                        "class": "crossout",
+                        "bbox": used_erasure["bbox"],
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": None,
+                        "subtype": "erasure_asset",
+                    })
 
         # Fragments de taules reals opcionals
         if self.table_paths and random.random() < CONFIG["TABLE_PROB"]:
-            self._paste_asset_random(
+            used_table = self._paste_asset_random(
                 img,
                 self.table_paths,
                 min_scale=0.4,
                 max_scale=1.0,
                 rotation=4.0,
-                margin=120
+                margin=120,
+                asset_class="table_fragment"
             )
+
+            if used_table:
+                layout_detections.append({
+                    "class": "table_fragment",
+                    "bbox": used_table["bbox"],
+                    "confidence": 1.0,
+                    "source": "synthetic_generator",
+                    "target_text": None,
+                    "subtype": "table_asset",
+                })
 
 
 
         # Segells reals extra independents
         if self.stamp_paths and random.random() < CONFIG["EXTRA_STAMP_PROB"]:
             for _ in range(random.randint(1, 3)):
-                self._paste_asset_random(
+                used_stamp = self._paste_asset_random(
                     img,
                     self.stamp_paths,
                     min_scale=0.25,
                     max_scale=0.65,
                     rotation=35.0,
-                    margin=80
+                    margin=80,
+                    asset_class="official_stamp",
                 )
+
+                if used_stamp:
+                    stamp_detections.append(used_stamp)
+
+                    
 
         # Tatxadures/censures extra independents
         if self.censorship_paths and random.random() < CONFIG["EXTRA_CENSORSHIP_PROB"]:
             for _ in range(random.randint(2, 5)):
-                self._paste_asset_random(
+                used_censor = self._paste_asset_random(
                     img,
                     self.censorship_paths,
                     min_scale=0.25,
                     max_scale=0.8,
                     rotation=10.0,
-                    margin=80
+                    margin=80,
+                    asset_class="crossout"
                 )
+
+                if used_censor:
+                    layout_detections.append({
+                        "class": "crossout",
+                        "bbox": used_censor["bbox"],
+                        "confidence": 1.0,
+                        "source": "synthetic_generator",
+                        "target_text": None,
+                        "subtype": "censorship_asset",
+                    })
 
 
         img = img.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.0)))
-        return img
+        
+        return img, stamp_detections, layout_detections
 
 class AugmentationPipeline:
     def __init__(self, width: int, height: int):
@@ -1271,8 +1536,48 @@ class DatasetOrchestrator:
 
         # CPU BOUND WORK
         l0_img, word_boxes = self.renderer.render_layer0(texto_base)
-        l1_img = self.renderer.render_layer1(word_boxes, anotaciones)
+        l1_img, stamp_detections, layer1_detections = self.renderer.render_layer1(word_boxes, anotaciones)
         final_img = self.aug_pipe.composite(l0_img, l1_img)
+
+        layout_objects = []
+
+        # 1. Text mecanografiat
+        layout_objects.extend(build_typewritten_objects(word_boxes, i))
+
+        # 2. Stamps, mantenint compatibilitat amb stamp_detections
+        for j, det in enumerate(stamp_detections, start=1):
+            layout_objects.append(
+                make_layout_object(
+                    obj_id=f"stamp_{i:04d}_{j:03d}",
+                    obj_type="stamp",
+                    bbox=det["bbox"],
+                    text=None,
+                    layer="layer1_annotations",
+                    confidence=det.get("confidence", 1.0),
+                    extra={
+                        "subtype": det.get("class", "official_stamp"),
+                        "legacy_class": det.get("class", "official_stamp"),
+                        "notes": "synthetic ground truth",
+                    },
+                )
+            )
+        
+        # 3. Altres marques de layer1: tachons, censura, etc.
+        for j, det in enumerate(layer1_detections, start=1):
+            layout_objects.append(
+                make_layout_object(
+                    obj_id=f"{det.get('class', 'layer1_object')}_{i:04d}_{j:03d}",
+                    obj_type=det.get("class", "layer1_object"),
+                    bbox=det["bbox"],
+                    text=det.get("target_text"),
+                    layer="layer1_annotations",
+                    confidence=det.get("confidence", 1.0),
+                    extra={
+                        "subtype": det.get("subtype"),
+                        "notes": "synthetic ground truth",
+                    },
+                )
+            )
 
         # IO BOUND (Disk)
         sample_dir = os.path.join(self.output_dir, f"sample_{i:04d}")
@@ -1283,6 +1588,36 @@ class DatasetOrchestrator:
 
         with open(os.path.join(sample_dir, "text_annotations.json"), "w", encoding="utf-8") as f:
             json.dump(anotaciones, f, indent=4, ensure_ascii=False)
+        
+        with open(os.path.join(sample_dir, "stamp_detections.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "document_id": f"synthetic_{i:04d}",
+                "page": 1,
+                "image": f"final_merged_{i:04d}.jpg",
+                "stamp_detections": [
+                    {
+                        "id": f"stamp_{i:04d}_{j:03d}",
+                        "class": det.get("class", "official_stamp"),
+                        "bbox": det["bbox"],
+                        "confidence": det.get("confidence", 1.0),
+                        "crop_path": None,
+                        "mask_path": None,
+                        "ocr_text": None,
+                        "notes": "synthetic ground truth"
+                    }
+                    for j, det in enumerate(stamp_detections, start=1)
+                ]
+            }, f, indent=2, ensure_ascii=False)
+
+        with open(os.path.join(sample_dir, "layout_annotations.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "document_id": f"synthetic_{i:04d}",
+                "page": 1,
+                "image": f"final_merged_{i:04d}.jpg",
+                "image_width": self.renderer.width,
+                "image_height": self.renderer.height,
+                "objects": layout_objects,
+            }, f, indent=2, ensure_ascii=False)
 
         final_filename = f"final_merged_{i:04d}.jpg"
         final_img.save(os.path.join(self.finals_dir, final_filename), quality=random.randint(70, 95))
@@ -1326,6 +1661,14 @@ async def main():
     os.makedirs("assets/patches", exist_ok=True)
     os.makedirs("assets/paper_textures", exist_ok=True)
     os.makedirs("assets/stains", exist_ok=True)
+    os.makedirs("assets/erasures", exist_ok=True)
+    os.makedirs("assets/tables", exist_ok=True)
+
+    os.makedirs("assets_real_reviewed/stamps", exist_ok=True)
+    os.makedirs("assets_real_reviewed/handwriting", exist_ok=True)
+    os.makedirs("assets_real_reviewed/crossouts", exist_ok=True)
+    os.makedirs("assets_real_reviewed/censorship", exist_ok=True)
+    os.makedirs("assets_real_reviewed/tables", exist_ok=True)
     # Target ~850 RPM to stay safely under the 1000 RPM limit.
     # 60 seconds / 850 requests = ~0.07 seconds between starting each request.
     #REQUEST_DELAY = 0.07

@@ -1,15 +1,108 @@
-.env
-.venv/
+# =========================
+# OS / editor
+# =========================
+.DS_Store
+*.swp
+*.swo
+*~
 __pycache__/
-data
-output_dataset_pro_try/
-fonts/descartat/
 *.pyc
-*.pyo
-*.jpg
-*.jpeg
-*.png
-*.zip
-*.pdf
-*.xcf
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+*.env
+synthetic_docs_aran/.env
+.venv/
+venv/
+
+# =========================
+# Node / frontend dependencies
+# =========================
+node_modules/
+prototypes/node_modules/
+prototypes/images/node_modules/
+
+# =========================
+# Synthetic generated datasets
+# =========================
+synthetic_docs_aran/output_dataset_pro_try/
+synthetic_docs_aran/output_dataset*/
+synthetic_docs_aran/annotations/
+synthetic_docs_aran/assets_real_reviewed/
+
+# =========================
+# YOLO generated datasets
+# =========================
+stamp_dataset/
+stamp_dataset_nofilter/
+stamp_dataset_layout/
+visual_marks_dataset/
+
+# =========================
+# Runtime outputs
+# =========================
+outputs/
+real_outputs/
+real_test_pages/
+real_test_pages_25/
+
+# =========================
+# YOLO / training runs
+# =========================
+runs/
+*.pt
+
+# =========================
+# Local reports / temporary exports
+# =========================
+Update Generator.pdf
+Àlex Update*.pdf
+
+# Backup/archive files
 *.tar.gz
+*.zip
+*.bak
+*_back
+
+# GIMP source files / large editable assets
+*.xcf
+
+# Real scraped/downloaded data
+synthetic_docs_aran/data/
+shared_experiments/
+
+# Local/generated project data
+_archive_local/
+assets_real_reviewed/
+data/ddd_random/
+tools/review_tools/migrations/
+
+# Generated outputs
+outputs/
+runs/
+__pycache__/
+*.tar.gz
+
+# Local source archives / large data
+data/source_archives/
+data/real_pages/
+data/synthetic_generated/
+data/local_pages/
+
+# Local audit snapshots
+docs/current_tree.txt
+docs/current_data_tree.txt
+
+# Local real test page folders
+real_test_current_pages_50/
+real_test_test_random_pages_10/
+
+# Local real document pages
+/data/real_pages/pages/
+/data/real_pages/raw_pdfs/
+
+# Local real document cache
+/data/real_documents/raw_pdfs/
+/data/real_documents/jpg_pages/

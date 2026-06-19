@@ -1,0 +1,51 @@
+{
+  "classes": [
+    "stamp",
+    "handwritten_text",
+    "typewritten_text",
+    "crossout",
+    "censorship_block",
+    "table_fragment",
+    "false_positive"
+  ],
+  "bbox_quality": [
+    "good",
+    "minor_partial",
+    "partial",
+    "too_large",
+    "bad_location",
+    "unsure"
+  ],
+  "human_confidence": [
+    "high",
+    "medium",
+    "low",
+    "unsure"
+  ],
+  "attributes": [
+    "crossed_out",
+    "overlaps_text",
+    "faded",
+    "low_contrast",
+    "fragmented",
+    "rotated",
+    "background_noise",
+    "stain",
+    "paper_texture",
+    "ink_bleed",
+    "background_artifact",
+    "stamp_on_text",
+    "handwritten_on_typewritten",
+    "handwritten_on_stamp",
+    "numeric_annotation",
+    "margin_note",
+    "long_note",
+    "mixed",
+    "typewritten",
+    "handwritten",
+    "stamp",
+    "table",
+    "word",
+    "line, underline"
+  ]
+}
