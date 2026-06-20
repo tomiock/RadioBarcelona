@@ -1496,29 +1496,49 @@ def index():
             <p>Expected metadata at {METADATA_PATH}</p>
             """
 
-        clear_url = url_for("index", filter="all", idx=0)
+        # If metadata exists but the current filter becomes empty after a review
+        # action, do not leave the user in a dead-end standalone page.
+        # Redirect to a useful working view and show an explanatory message.
+        all_items = load_items()
+
+        if not all_items:
+            return """
+            <h1>No crops available</h1>
+            <p>The active metadata file exists, but it contains no crops.</p>
+            """
 
         if filter_name == "accepted_not_exportable":
-            empty_filter_message = (
-                "There are currently no accepted-but-not-exportable crops left. "
-                "This can happen after you reject or fix the last weak/uncertain accepted crop. "
-                "It is usually a good sign: there are no remaining accepted crops outside the clean export set."
+            msg = (
+                "No accepted-but-not-exportable crops left. "
+                "This usually means the weak/uncertain accepted crop was fixed, rejected, "
+                "or moved into the clean export set. Returning to pending crops."
             )
-        elif type_value:
-            empty_filter_message = (
-                "The selected status filter and type filter have an empty intersection. "
-                "Try clearing the type filter or returning to all crops."
-            )
-        else:
-            empty_filter_message = (
-                "There are currently no crops matching this status filter."
-            )
+            fallback_filter = "pending" if get_filtered_items("pending") else "all"
+            return redirect(url_for("index", filter=fallback_filter, idx=0, msg=msg))
 
+        if type_value:
+            msg = (
+                "No crops match the current status + type filter. "
+                "The type filter was cleared automatically."
+            )
+            fallback_filter = filter_name if get_filtered_items(filter_name) else "all"
+            return redirect(url_for("index", filter=fallback_filter, idx=0, msg=msg))
+
+        msg = (
+            f"No crops match filter '{filter_name}'. "
+            "Returning to pending crops if available."
+        )
+        fallback_filter = "pending" if get_filtered_items("pending") else "all"
+
+        if fallback_filter != filter_name:
+            return redirect(url_for("index", filter=fallback_filter, idx=0, msg=msg))
+
+        clear_url = url_for("index", filter="all", idx=0)
         return f"""
         <h1>No crops match the current filter</h1>
         <p><b>Filter:</b> {filter_name}</p>
         <p><b>Type filter:</b> {type_field or '-'} = {type_value or '-'}</p>
-        <p>{empty_filter_message}</p>
+        <p>{msg}</p>
         <p><a href="{clear_url}">Clear filters and return to all crops</a></p>
         """
 
