@@ -405,6 +405,30 @@ def parse_corrected_bbox_from_form(form):
 # Guardar revisió
 # ============================================================
 
+
+def cleanup_previous_review_copies(crop_id):
+    """
+    Remove stale reviewed/rejected/skipped crop copies for this crop_id.
+
+    The review_log remains append-only and is the source of truth.
+    This cleanup only prevents confusing duplicated image files when a crop
+    is first rejected and later accepted, or vice versa.
+    """
+    if not crop_id:
+        return
+
+    for root in [REVIEWED_DIR, REJECTED_DIR, SKIPPED_DIR]:
+        if not root.exists():
+            continue
+
+        for path in root.rglob(f"{crop_id}.*"):
+            if path.is_file():
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
+
+
 def save_review(
     item,
     decision,
@@ -438,6 +462,10 @@ def save_review(
     REVIEW_LOG.parent.mkdir(parents=True, exist_ok=True)
 
     obj_type = normalize_class_name(new_type or item.get("type", "unknown"))
+
+    # Keep folders consistent with the latest review decision.
+    # The append-only review_log remains the source of truth.
+    cleanup_previous_review_copies(item.get("crop_id"))
 
     if decision == "accepted":
         target_crop_path = safe_copy_crop(item, REVIEWED_DIR, obj_type)
@@ -1216,7 +1244,7 @@ def compute_review_stats():
 
         is_exportable = (
             decision == "accepted"
-            and bbox_quality in {"good", "minor_partial"}
+            and bbox_quality == "good"
             and reviewed_type in exportable_types
         )
 
@@ -1266,7 +1294,7 @@ def is_exportable_review_entry(entry):
     }
     return (
         entry.get("decision") == "accepted"
-        and entry.get("bbox_quality") in {"good", "minor_partial"}
+        and entry.get("bbox_quality") == "good"
         and entry.get("reviewed_type") in exportable_types
     )
 
@@ -1469,11 +1497,28 @@ def index():
             """
 
         clear_url = url_for("index", filter="all", idx=0)
+
+        if filter_name == "accepted_not_exportable":
+            empty_filter_message = (
+                "There are currently no accepted-but-not-exportable crops left. "
+                "This can happen after you reject or fix the last weak/uncertain accepted crop. "
+                "It is usually a good sign: there are no remaining accepted crops outside the clean export set."
+            )
+        elif type_value:
+            empty_filter_message = (
+                "The selected status filter and type filter have an empty intersection. "
+                "Try clearing the type filter or returning to all crops."
+            )
+        else:
+            empty_filter_message = (
+                "There are currently no crops matching this status filter."
+            )
+
         return f"""
         <h1>No crops match the current filter</h1>
         <p><b>Filter:</b> {filter_name}</p>
         <p><b>Type filter:</b> {type_field or '-'} = {type_value or '-'}</p>
-        <p>This usually means that a status filter and a type filter are being combined and the intersection is empty.</p>
+        <p>{empty_filter_message}</p>
         <p><a href="{clear_url}">Clear filters and return to all crops</a></p>
         """
 
@@ -1641,7 +1686,7 @@ def index():
                     width: 100%;
                     max-width: 100%;
                     height: auto;
-                    max-height: none;
+                    max-height: calc(100vh - 220px);
                     object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
@@ -1716,6 +1761,18 @@ def index():
                 .navlink {
                     background: #34495e;
                     color: white;
+                }
+
+                .clear-type-filter {
+                    background: #6b7280 !important;
+                    color: white !important;
+                    border: 2px solid #f59e0b;
+                    font-weight: 800;
+                }
+
+                .clear-type-filter:hover {
+                    background: #f59e0b !important;
+                    color: #111 !important;
                 }
                 input, select, textarea {
                     padding: 8px;
@@ -2090,6 +2147,44 @@ def index():
                     border-radius: 6px;
                 }
 
+                .fixed-help-buttons {
+                    position: fixed;
+                    top: 16px;
+                    right: 18px;
+                    z-index: 2000;
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                }
+
+                .help-button {
+                    background: #0f766e;
+                    color: white;
+                    text-decoration: none;
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    font-weight: 800;
+                    font-size: 13px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+                }
+
+                .help-button.secondary {
+                    background: #475569;
+                }
+
+                .help-button:hover {
+                    filter: brightness(1.08);
+                }
+
+                @media (max-width: 900px) {
+                    .fixed-help-buttons {
+                        position: static;
+                        justify-content: flex-start;
+                        margin: 6px 0 10px 0;
+                    }
+                }
+
                 .jump-form {
                     display: inline-flex;
                     align-items: center;
@@ -2142,30 +2237,11 @@ def index():
         <body>
             <h1>Manual Review</h1>
 
-    <details class="helper-note">
-        <summary><b>Pipeline and review guide: what am I looking at?</b></summary>
+            <div class="fixed-help-buttons">
+                <a class="help-button" href="{{ url_for('review_help_page') }}" target="_blank">Pipeline help</a>
+                <a class="help-button secondary" href="{{ url_for('outputs_help_page') }}" target="_blank">Files / outputs</a>
+            </div>
 
-        <p><b>Main detector crop:</b> this is an automatic YOLO detector output. YOLO predicted a bounding box and a class from the full page. Accept/reject here changes the reviewed training/export data for the bbox detector. This is different from FAISS or VAE, which only retrieve similar crops.</p>
-
-        <p><b>Total crops:</b> number of detector crops loaded from the current review metadata. In this batch, these crops come from the selected page source, detector output, and cropper.</p>
-
-        <p><b>Reviewed / Pending / Progress:</b> these counters come from the active review log. Reviewed means accepted + rejected. Pending means not reviewed yet.</p>
-
-        <p><b>Exportable assets:</b> accepted crops with a usable class and acceptable bbox quality. These are candidates for the retraining package.</p>
-
-        <p><b>Accepted, not exportable:</b> accepted crops that are still too uncertain, partial, or have a bad bbox. They remain useful for analysis but should not be used as clean YOLO labels.</p>
-
-        <p><b>Rejected / false positives:</b> detector outputs that should not become positive YOLO labels. They are still useful for error analysis and hard-negative mining.</p>
-
-        <p><b>Rebuild indexes:</b> rebuilds the filtered review/index data used by the app. Use this after changing metadata, review logs, or similarity indexes.</p>
-
-        <p><b>Export package:</b> creates the reviewed dataset package used for retraining/evaluation. It should use the active metadata and review log.</p>
-
-        <p><b>Predicted types:</b> original classes predicted by YOLO. <b>Effective types:</b> current classes after human review, relabelling, or false-positive marking.</p>
-
-        <p><b>Text granularity:</b> text can be annotated as words, lines, or larger blocks. Word-level is precise but very dense; line-level is useful for OCR/HTR; block-level is better for layout review and produces fewer, more manageable crops. For this app, large text blocks are usually better for review, while lines/words can be handled later by OCR/HTR-specific tools.</p>
-    </details>
-            
             {% if message %}
             <div class="status">
                 <b>{{ message }}</b>
@@ -2215,13 +2291,13 @@ def index():
                 <a class="stat-card stat-link good-stat {% if filter_name == 'exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Exportable assets</b><br>
                     {{ review_stats.exportable_candidates }}
-                    <span class="stat-subtext">accepted + good/minor bbox</span>
+                    <span class="stat-subtext">accepted + good bbox</span>
                 </a>
 
                 <a class="stat-card stat-link {% if filter_name == 'accepted_not_exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted_not_exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Accepted, not exportable</b><br>
                     {{ review_stats.accepted_not_exportable }}
-                    <span class="stat-subtext">partial/unsure/bad bbox</span>
+                    <span class="stat-subtext">weak/uncertain/non-export</span>
                 </a>
 
                 <a class="stat-card stat-link bad-stat {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0, type_field=type_field, type_value=type_value) }}">
@@ -2254,7 +2330,7 @@ def index():
                 {% endfor %}
 
                 {% if type_value %}
-                    <a class="navlink" href="{{ url_for('index', filter=filter_name, idx=0) }}">Clear type filter</a>
+                    <a class="navlink clear-type-filter" href="{{ url_for('index', filter=filter_name, idx=0) }}">Clear type filter</a>
                 {% endif %}
             </div>
 
@@ -2324,7 +2400,7 @@ def index():
                 <div class="card left-panel">                    
                 
                     <h2>Main detector crop</h2>
-                    <p class="helper-note"><b>Automatic detector output.</b> Accept/reject here changes the reviewed training/export data for the bbox detector. This is not FAISS or VAE.</p>
+                    <p class="helper-note"><b>Automatic YOLO detector output.</b> This crop comes from the YOLO bbox detector: YOLO predicted the bounding box and class from the full page. Accept/reject here changes the reviewed training/export data for the YOLO detector. This is not FAISS or VAE; those are similarity helpers only.</p>
 
                     <details class="helper-note">
                         <summary><b>Review decision guide: what should I do?</b></summary>
@@ -2332,8 +2408,9 @@ def index():
                             <li><b>Accept</b>: use this when the predicted object is real and the bbox/type are correct enough for training.</li>
                             <li><b>Change type + Accept</b>: use this when the bbox is good but the predicted class is wrong. Example: predicted <code>handwritten_text</code> but it is actually <code>crossout</code>.</li>
                             <li><b>Draw corrected bbox + Accept</b>: use this when the object is real but the bbox is partial, too large, or slightly misplaced. The corrected bbox becomes the useful annotation.</li>
-                            <li><b>Reject</b>: use this for real false positives, such as paper texture, background noise, stains, borders, or detector hallucinations. These are useful for error analysis and hard negatives, but should not become positive YOLO labels.</li>
+                            <li><b>Reject</b>: use this for real false positives, such as paper texture, background noise, stains, borders, or detector hallucinations. Rejecting the main YOLO crop stores it as <code>false_positive</code>.</li>
                             <li><b>Manual crop</b>: use the full-page selector when the detector missed an object completely. This creates a new annotation candidate from the page context.</li>
+                            <li><b>Text granularity</b>: for <code>typewritten_text</code>, prefer larger text blocks for layout review. Lines are useful for OCR/HTR. Words are precise but create too many boxes for this review workflow.</li>
                             <li><b>Skip</b>: use this when the crop is ambiguous and needs later review or page-level context.</li>
                         </ul>
                         <p><b>Examples:</b></p>
@@ -3270,6 +3347,10 @@ def review():
     bbox_quality = request.form.get("bbox_quality") or "good"
 
     if decision == "rejected":
+        # A direct Reject on the main YOLO detector crop means:
+        # this bbox should not become a positive training label.
+        # We store it explicitly as false_positive.
+        new_type = "false_positive"
         notes = notes or "rejected from review app"
         human_confidence = "high"
         bbox_quality = "bad_location"
@@ -3593,6 +3674,123 @@ def build_review_indexes_route():
             msg = "Review indexes rebuilt. " + " | ".join(saved_lines[-1:])
 
     return redirect(url_for("index", msg=msg))
+
+
+
+@app.route("/help")
+def review_help_page():
+    """Standalone help page explaining the review pipeline."""
+    return render_template_string(
+        """
+        <!doctype html>
+        <html>
+        <head>
+            <title>Review App Help</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 28px; line-height: 1.45; max-width: 1100px; }
+                code { background:#eef2f7; padding:2px 5px; border-radius:4px; }
+                .card { background:#fff; border:1px solid #ddd; border-left:5px solid #0f766e; padding:14px 18px; margin:14px 0; border-radius:8px; }
+                h1, h2 { margin-bottom: 8px; }
+            </style>
+        </head>
+        <body>
+            <h1>Pipeline and review guide</h1>
+
+            <div class="card">
+                <h2>Main detector crop = YOLO output</h2>
+                <p>The main crop comes from the automatic <b>YOLO bbox detector</b>. YOLO predicted a bounding box and a class from the full page. Accept/reject here changes the reviewed training/export data for the YOLO detector.</p>
+                <p>This is different from FAISS or VAE. FAISS/VAE are similarity helpers: they retrieve existing crops that look similar, but they are not detectors and they do not create ground truth by themselves.</p>
+            </div>
+
+            <div class="card">
+                <h2>Counters</h2>
+                <p><b>Total crops</b>: number of crops loaded from the active <code>REVIEW_METADATA</code>. This changes when the batch, source pages, detector threshold, classes or cropper output changes.</p>
+                <p><b>Reviewed / Pending / Progress</b>: these come from the active <code>REVIEW_LOG</code>. A new empty review log starts at reviewed=0 and pending=total crops.</p>
+                <p><b>Exportable assets</b>: accepted crops with a valid export class and <code>bbox_quality=good</code>. These are clean YOLO retraining candidates.</p>
+                <p><b>Accepted, not exportable</b>: accepted crops that are useful as evidence but should not become clean YOLO labels, usually weak/uncertain FAISS/VAE suggestions or non-exportable classes.</p>
+                <p><b>Rejected / false positives</b>: crops that should not become positive detector labels. A direct Reject on the main YOLO crop is stored as <code>false_positive</code>.</p>
+            </div>
+
+            <div class="card">
+                <h2>Predicted vs Effective types</h2>
+                <p><b>Predicted type</b> is the original class predicted by YOLO.</p>
+                <p><b>Effective type</b> is the current class after human review, relabelling or false-positive marking.</p>
+                <p>Example: predicted <code>handwritten_text</code>, effective <code>false_positive</code> means YOLO predicted handwriting but the human rejected it as background/noise.</p>
+            </div>
+
+            <div class="card">
+                <h2>Text granularity</h2>
+                <p><b>Word-level boxes</b> are precise but too dense for fast review.</p>
+                <p><b>Line-level boxes</b> are useful for OCR/HTR pipelines.</p>
+                <p><b>Block-level boxes</b> are better for layout review because they produce fewer, more manageable crops.</p>
+                <p>For this Review App, larger text blocks are usually better. Lines or words can be handled later by OCR/HTR-specific tools.</p>
+            </div>
+
+            <p><a href="{{ url_for('index') }}">Back to Review App</a></p>
+        </body>
+        </html>
+        """
+    )
+
+
+@app.route("/outputs_help")
+def outputs_help_page():
+    """Standalone help page explaining where outputs are stored."""
+    return render_template_string(
+        """
+        <!doctype html>
+        <html>
+        <head>
+            <title>Review App Outputs</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 28px; line-height: 1.45; max-width: 1150px; }
+                code { background:#eef2f7; padding:2px 5px; border-radius:4px; }
+                .card { background:#fff; border:1px solid #ddd; border-left:5px solid #475569; padding:14px 18px; margin:14px 0; border-radius:8px; }
+                h1, h2 { margin-bottom: 8px; }
+            </style>
+        </head>
+        <body>
+            <h1>Files and outputs</h1>
+
+            <div class="card">
+                <h2>Input and detector outputs</h2>
+                <p><b>Source pages:</b> <code>data/ddd_random/pages/</code>, local image folders, rendered PDFs, URL downloads, synthetic pages or GAN outputs.</p>
+                <p><b>YOLO layouts:</b> detector JSON outputs such as <code>outputs/test_predicted_layout_.../</code>.</p>
+                <p><b>Detector crops:</b> crop images and active <code>metadata.jsonl</code>, e.g. <code>outputs/object_crops_ddd_random_visual_conf030/</code>.</p>
+            </div>
+
+            <div class="card">
+                <h2>Review decisions</h2>
+                <p><b>Review log:</b> active human decisions in <code>outputs/review_logs/...</code>. It is append-only; the latest entry for each crop is the source of truth.</p>
+                <p><b>Accepted copies:</b> <code>outputs/object_crops_reviewed/&lt;reviewed_type&gt;/</code>.</p>
+                <p><b>Rejected copies:</b> <code>outputs/object_crops_rejected/false_positive/</code> for direct main-crop rejects.</p>
+                <p><b>Skipped copies:</b> <code>outputs/object_crops_skipped/</code>.</p>
+                <p><b>Manual crops:</b> <code>outputs/object_crops_manual/</code>. These are human-created bboxes from the full-page selector.</p>
+            </div>
+
+            <div class="card">
+                <h2>Similarity indexes</h2>
+                <p><b>FAISS simple:</b> <code>outputs/faiss/current/</code> contains <code>embeddings.npy</code>, <code>metadata.jsonl</code>, <code>visual_index.faiss</code> and config files.</p>
+                <p><b>VAE FAISS:</b> <code>outputs/faiss/vae/global/</code> and <code>outputs/faiss/vae/by_type/</code>.</p>
+            </div>
+
+            <div class="card">
+                <h2>Reusable artifacts</h2>
+                <p><code>.jsonl</code> stores metadata/reviews. <code>.npy</code> stores embeddings. <code>.faiss</code> stores searchable indexes. <code>.pt</code> stores trained model weights.</p>
+                <p>These files can be moved to another machine as long as relative paths are preserved and the matching metadata, images, indexes and model weights are copied together.</p>
+            </div>
+
+            <div class="card">
+                <h2>Export package</h2>
+                <p><b>Export package</b> creates a reviewed dataset package for retraining/evaluation. It should use the active metadata and active review log.</p>
+                <p>The review log is the source of truth; copied folders are useful for inspection but should not replace the JSONL review records.</p>
+            </div>
+
+            <p><a href="{{ url_for('index') }}">Back to Review App</a></p>
+        </body>
+        </html>
+        """
+    )
 
 
 
