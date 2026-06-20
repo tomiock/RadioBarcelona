@@ -2631,36 +2631,40 @@ def index():
                         <h3>Review instructions — what each action means</h3>
                         <div class="instructions-grid">
                             <div>
-                                <b>Main detector crop</b>
+                                <b>Main YOLO detector crop</b>
                                 <ul>
-                                    <li><b>Accept</b> only if the class is correct and the bbox is useful.</li>
-                                    <li><b>Reject</b> if it is a false positive, a bad/huge bbox, or a mixed region that cannot be reused.</li>
-                                    <li><b>Skip</b> if you are not sure and want to decide later.</li>
+                                    <li><b>Accept</b> when the object is real, the class is correct, and the bbox is useful for YOLO training.</li>
+                                    <li><b>Change class + Accept</b> when the bbox is good but YOLO predicted the wrong class.</li>
+                                    <li><b>Draw corrected bbox + Accept</b> when the object is real but the original bbox is partial, too large, or misplaced.</li>
+                                    <li><b>Reject</b> when the YOLO bbox is a real false positive. Main-crop rejects are automatically stored as <code>false_positive</code>.</li>
+                                    <li><b>Skip</b> when the crop is ambiguous and should be reviewed later.</li>
                                 </ul>
                             </div>
                             <div>
                                 <b>Export logic</b>
                                 <ul>
-                                    <li><b>Exportable</b> = accepted + bbox_quality <code>good</code>/<code>minor_partial</code> + valid class.</li>
-                                    <li>Accepted crops with <code>partial</code>, <code>too_large</code> or <code>unsure</code> are reviewed but not clean export assets.</li>
-                                    <li>Rejected crops count as rejected/false positives.</li>
+                                    <li><b>Exportable</b> = accepted + <code>bbox_quality=good</code> + valid export class.</li>
+                                    <li>Main-crop <b>Accept</b> creates a clean positive candidate for YOLO export.</li>
+                                    <li>FAISS/VAE <b>Accept</b> is a weak crop-only review and is saved as <code>bbox_quality=unsure</code>, so it is not automatically a clean YOLO export asset.</li>
+                                    <li><b>Rejected</b> crops are counted as rejected/false positives and should not become positive YOLO labels.</li>
                                 </ul>
                             </div>
                             <div>
                                 <b>Attributes</b>
                                 <ul>
-                                    <li>Use visual flags such as <code>faded</code>, <code>low_contrast</code>, <code>rotated</code>, <code>stain</code> or <code>background_noise</code>.</li>
-                                    <li>Use <code>mixed</code> when several phenomena overlap and no single attribute explains the crop well.</li>
-                                    <li>Use notes for the reason: bbox partial, too large, false positive, mixed content, etc.</li>
+                                    <li>Use visual flags such as <code>faded</code>, <code>low_contrast</code>, <code>rotated</code>, <code>background_noise</code>, <code>paper_texture</code> or <code>table</code>.</li>
+                                    <li>Use <code>mixed</code> when several phenomena overlap and no single class/attribute explains the crop well.</li>
+                                    <li>Attributes help analysis, filtering, and future dataset cleaning, but the final class still comes from <b>Reviewed type</b>.</li>
                                 </ul>
                             </div>
                             <div>
-                                <b>FAISS similarity helper</b>
+                                <b>FAISS / VAE similarity helpers</b>
                                 <ul>
-                                    <li>They are quick binary reviews from visual retrieval.</li>
-                                    <li>Accept FAISS suggestion is a weak review from crop-only context; it is saved with bbox_quality <code>unsure</code>.</li>
-                                    <li>Reject FAISS suggestion marks it directly as false positive.</li>
-                                    <li>Use <b>Open page context</b> or Skip FAISS suggestion when the crop needs full-page context.</li>
+                                    <li>They are not detectors. They retrieve already-existing crops that look similar to the current one.</li>
+                                    <li>They prioritize same-type results when possible and may fall back to global matches.</li>
+                                    <li><b>Accept suggestion</b> is a weak review from crop-only context and is saved with <code>bbox_quality=unsure</code>.</li>
+                                    <li><b>Reject suggestion</b> marks the similar crop as <code>false_positive</code>.</li>
+                                    <li>Use <b>Open page context</b> or <b>Skip</b> when the crop needs full-page context.</li>
                                 </ul>
                             </div>
                         </div>
