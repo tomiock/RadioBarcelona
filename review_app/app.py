@@ -1703,13 +1703,14 @@ def index():
 
                 .page-img {
                     display: block;
-                    width: 100%;
+                    width: auto;
                     max-width: 100%;
                     height: auto;
                     max-height: calc(100vh - 220px);
                     object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
+                    margin: 0 auto;
                 }
 
                 input,
@@ -1983,14 +1984,17 @@ def index():
 
                 .manual-page-wrap {
                     position: relative;
-                    display: block;
-                    width: 100%;
+                    display: inline-block;
+                    width: auto;
                     max-width: 100%;
                 }
 
                 .manual-page-wrap img {
                     display: block;
-                    width: 100%;
+                    width: auto;
+                    max-width: 100%;
+                    height: auto;
+                    max-height: calc(100vh - 220px);
                     user-select: none;
                     -webkit-user-drag: none;
                 }
