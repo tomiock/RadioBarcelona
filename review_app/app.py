@@ -2141,6 +2141,30 @@ def index():
         </head>
         <body>
             <h1>Manual Review</h1>
+
+    <details class="helper-note">
+        <summary><b>Pipeline and review guide: what am I looking at?</b></summary>
+
+        <p><b>Main detector crop:</b> this is an automatic YOLO detector output. YOLO predicted a bounding box and a class from the full page. Accept/reject here changes the reviewed training/export data for the bbox detector. This is different from FAISS or VAE, which only retrieve similar crops.</p>
+
+        <p><b>Total crops:</b> number of detector crops loaded from the current review metadata. In this batch, these crops come from the selected page source, detector output, and cropper.</p>
+
+        <p><b>Reviewed / Pending / Progress:</b> these counters come from the active review log. Reviewed means accepted + rejected. Pending means not reviewed yet.</p>
+
+        <p><b>Exportable assets:</b> accepted crops with a usable class and acceptable bbox quality. These are candidates for the retraining package.</p>
+
+        <p><b>Accepted, not exportable:</b> accepted crops that are still too uncertain, partial, or have a bad bbox. They remain useful for analysis but should not be used as clean YOLO labels.</p>
+
+        <p><b>Rejected / false positives:</b> detector outputs that should not become positive YOLO labels. They are still useful for error analysis and hard-negative mining.</p>
+
+        <p><b>Rebuild indexes:</b> rebuilds the filtered review/index data used by the app. Use this after changing metadata, review logs, or similarity indexes.</p>
+
+        <p><b>Export package:</b> creates the reviewed dataset package used for retraining/evaluation. It should use the active metadata and review log.</p>
+
+        <p><b>Predicted types:</b> original classes predicted by YOLO. <b>Effective types:</b> current classes after human review, relabelling, or false-positive marking.</p>
+
+        <p><b>Text granularity:</b> text can be annotated as words, lines, or larger blocks. Word-level is precise but very dense; line-level is useful for OCR/HTR; block-level is better for layout review and produces fewer, more manageable crops. For this app, large text blocks are usually better for review, while lines/words can be handled later by OCR/HTR-specific tools.</p>
+    </details>
             
             {% if message %}
             <div class="status">
