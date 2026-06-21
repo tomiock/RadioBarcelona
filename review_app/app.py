@@ -1627,6 +1627,14 @@ def index():
             next_different_page_idx = candidate_idx
             break
 
+    prev_different_page_idx = prev_idx
+
+    for step in range(1, total):
+        candidate_idx = (idx - step) % total
+        if page_key(filtered_items[candidate_idx]) != current_page_key:
+            prev_different_page_idx = candidate_idx
+            break
+
     message = request.args.get("msg")
 
     last_manual_crop_id = request.args.get("last_manual_crop_id")
@@ -1706,7 +1714,7 @@ def index():
                     width: auto;
                     max-width: 100%;
                     height: auto;
-                    max-height: calc(100vh - 220px);
+                    max-height: calc(100vh - 170px);
                     object-fit: contain;
                     border: 2px solid #333;
                     background: #ddd;
@@ -1878,6 +1886,62 @@ def index():
                     height: 100%;
                     background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
                     border-radius: 999px;
+                }
+
+                .type-pair {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 4px 7px;
+                    align-items: center;
+                    margin: 2px 0 4px 0;
+                    line-height: 1.25;
+                }
+
+                .type-pair b {
+                    font-size: 12px;
+                }
+
+                .similar-card {
+                    font-size: 13px;
+                }
+
+                .similar-card p {
+                    margin: 4px 0 6px 0;
+                }
+
+                .similar-card .button-row {
+                    gap: 6px;
+                }
+
+                .similar-card .button-row button {
+                    font-size: 13px;
+                    padding: 6px 8px;
+                    flex: 1 1 70px;
+                }
+
+                .similar-card select {
+                    font-size: 13px;
+                    padding: 6px;
+                    margin-bottom: 6px;
+                }
+
+                .manual-crop-panel {
+                    padding: 14px;
+                }
+
+                .manual-crop-panel h3 {
+                    margin-top: 0;
+                    margin-bottom: 8px;
+                }
+
+                .manual-crop-panel button,
+                .manual-crop-panel .navlink {
+                    font-size: 14px;
+                    padding: 7px 10px;
+                }
+
+                .manual-bbox-readout {
+                    font-size: 13px;
                 }          
 
                 .review-badge {
@@ -1960,11 +2024,17 @@ def index():
 
                 .stat-card {
                     background: white;
-                    padding: 10px 14px;
+                    padding: 7px 11px;
                     border-radius: 8px;
-                    min-width: 120px;
+                    min-width: 105px;
                     box-shadow: 0 1px 5px rgba(0,0,0,0.15);
                     text-align: center;
+                    font-size: 13px;
+                    line-height: 1.15;
+                }
+
+                .stat-card b {
+                    font-size: 13px;
                 }
 
                 .stat-link {
@@ -1999,8 +2069,15 @@ def index():
                 }
 
                 .stat-action {
-                    border: none;
                     font: inherit;
+                    background: #eef2ff;
+                    border: 2px solid #64748b;
+                    min-width: 150px;
+                }
+
+                .stat-action.good-stat {
+                    background: #ecfdf5;
+                    border: 2px solid #2ecc71;
                 }
 
                 .stat-action-button {
@@ -2017,9 +2094,11 @@ def index():
 
                 .manual-page-wrap {
                     position: relative;
-                    display: inline-block;
-                    width: auto;
+                    display: block;
+                    width: fit-content;
                     max-width: 100%;
+                    margin-left: auto;
+                    margin-right: auto;
                 }
 
                 .manual-page-wrap img {
@@ -2027,7 +2106,7 @@ def index():
                     width: auto;
                     max-width: 100%;
                     height: auto;
-                    max-height: calc(100vh - 220px);
+                    max-height: calc(100vh - 170px);
                     user-select: none;
                     -webkit-user-drag: none;
                 }
@@ -2073,6 +2152,14 @@ def index():
                     text-decoration: none;
                 }
 
+                .metadata-value {
+                    display: inline-block;
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
+                    vertical-align: top;
+                }
+
                 .type-filter-panel {
                     display: flex;
                     gap: 8px;
@@ -2082,6 +2169,13 @@ def index():
 
                 .type-filter-title {
                     font-weight: 800;
+                    margin-right: 4px;
+                    font-size: 13px;
+                }
+
+                .type-filter-panel .navlink {
+                    font-size: 13px;
+                    padding: 6px 10px;
                     margin-right: 4px;
                 }
 
@@ -2321,6 +2415,79 @@ def index():
 
 
 
+            
+                /* Dense UI polish */
+                .meta-compact-row {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px 10px;
+                    align-items: center;
+                    margin: 6px 0 8px 0;
+                    font-size: 13px;
+                    line-height: 1.25;
+                }
+
+                .meta-compact-row b {
+                    font-size: 12px;
+                }
+
+                .attributes-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                    gap: 4px 8px !important;
+                }
+
+                .attribute-item {
+                    font-size: 12px !important;
+                    gap: 5px !important;
+                }
+
+                .manual-crop-panel .helper-note {
+                    display: none;
+                }
+
+                .manual-crop-panel .manual-actions {
+                    display: flex !important;
+                    flex-wrap: wrap;
+                    gap: 6px !important;
+                    align-items: center;
+                    margin-top: 6px !important;
+                }
+
+                .manual-crop-panel .manual-actions > div {
+                    padding: 0 !important;
+                    border: 0 !important;
+                    background: transparent !important;
+                }
+
+                .manual-crop-panel button,
+                .manual-crop-panel .navlink {
+                    font-size: 13px !important;
+                    padding: 6px 9px !important;
+                }
+
+                .similar-card form .button-row {
+                    display: grid !important;
+                    grid-template-columns: auto repeat(3, minmax(0, 1fr));
+                    gap: 5px !important;
+                    align-items: center;
+                }
+
+                .similar-card form .button-row::before {
+                    content: "Suggestion:";
+                    font-weight: 800;
+                    font-size: 12px;
+                    color: #374151;
+                    white-space: nowrap;
+                }
+
+                .similar-card form .button-row button {
+                    font-size: 12px !important;
+                    padding: 5px 5px !important;
+                    width: 100%;
+                    margin: 0 !important;
+                    white-space: nowrap;
+                }
+
             </style>
         </head>
         <body>
@@ -2401,13 +2568,13 @@ def index():
             </div>
 
             <div class="stats-details type-filter-panel">
-                <span class="type-filter-title">Predicted types:</span>
+                <span class="type-filter-title">Predicted:</span>
                 {% for key, value in review_stats.predicted_types.items() %}
                     <a class="navlink {% if type_field == 'predicted' and type_value == key %}active-filter{% endif %}"
                        href="{{ url_for('index', filter='all', type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
                 {% endfor %}
 
-                <span class="type-filter-title">Effective types:</span>
+                <span class="type-filter-title">Effective:</span>
                 {% for key, value in review_stats.effective_types.items() %}
                     <a class="navlink {% if type_field == 'effective' and type_value == key %}active-filter{% endif %}"
                        href="{{ url_for('index', filter='all', type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
@@ -2424,7 +2591,8 @@ def index():
             <div class="topbar">
                 <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next →</a>
-                <a class="navlink" href="{{ url_for('index', idx=next_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next different page</a>
+                <a class="navlink" href="{{ url_for('index', idx=prev_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous different page</a>
+                <a class="navlink" href="{{ url_for('index', idx=next_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next different page →</a>
                 <form class="jump-form" method="get" action="{{ url_for('index') }}">
                     <input type="hidden" name="filter" value="{{ filter_name }}">
                     <input type="hidden" name="type_field" value="{{ type_field }}">
@@ -2476,21 +2644,23 @@ def index():
                     
 
                     <h2>Metadata</h2>
-                    <p><b>Crop ID:</b> {{ item.get("crop_id") }}</p>
-                    <p><b>Predicted type:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></p>
+                    <p><b>Crop ID:</b> <span class="metadata-value">{{ item.get("crop_id") }}</span></p>
+                    <div class="meta-compact-row">
+                        <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></span>
 
-                    {% if previous_review %}
-                    <p><b>Review decision:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></p>
-                    <p><b>Reviewed type:</b> <span class="meta-badge type-{{ previous_review.get('reviewed_type') or 'unknown' }}">{{ previous_review.get("reviewed_type") }}</span></p>
-{% endif %}
+                        {% if previous_review %}
+                        <span><b>Dec:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></span>
+                        <span><b>Rev:</b> <span class="meta-badge type-{{ previous_review.get('reviewed_type') or 'unknown' }}">{{ previous_review.get("reviewed_type") }}</span></span>
+                        {% endif %}
 
-                    <p><b>Effective type:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></p>
+                        <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></span>
+                    </div>
                     {% set detector_conf = item.get("confidence")|float %}
                     <p><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
                     <div class="confidence-track" title="Detector confidence">
                         <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
                     </div>
-                    <p><b>Document / page:</b> {{ item.get("document_id") }}</p>
+                    <p><b>Document / page:</b> <span class="metadata-value">{{ item.get("document_id") }}</span></p>
                     <p><a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a></p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
@@ -2499,10 +2669,6 @@ def index():
                         <input type="hidden" name="type_field" value="{{ type_field }}">
                         <input type="hidden" name="type_value" value="{{ type_value }}">
 <input type="hidden" name="new_type" value="{{ current_type }}">
-                        <p class="vae-note">
-                            <b>Final class:</b> <code>{{ current_type }}</code>
-                            — confirmed when accepting.
-                        </p>
 
                         <br>
                         <input type="hidden" name="human_confidence" value="high">
@@ -2592,25 +2758,12 @@ def index():
                             <input type="hidden" id="manual-y1" name="y1">
                             <input type="hidden" id="manual-x2" name="x2">
                             <input type="hidden" id="manual-y2" name="y2">
-
-                            <div class="manual-bbox-readout">
-                                x1=<code id="manual-x1-text">-</code>,
-                                y1=<code id="manual-y1-text">-</code>,
-                                x2=<code id="manual-x2-text">-</code>,
-                                y2=<code id="manual-y2-text">-</code>
-                            </div>
-
-                            <p class="vae-note">
+<p class="vae-note">
                                 <b>Selected bbox:</b> <code id="selected-bbox-summary">none</code>
                             </p>
 <input type="hidden" name="manual_type" value="{{ current_type }}">
-                            <p class="vae-note">
-                                <b>Manual class:</b> <code>{{ current_type }}</code>
-                                — confirmed when saving the manual crop.
-                            </p>
-<div class="manual-actions" style="display:grid; gap:10px; margin-top:10px;">
+<div class="manual-actions" style="display:grid; gap:8px; margin-top:8px;">
 <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
-                                    <b>New manual crop</b><br>
                                     <button class="accept needs-class-confirm" data-class-input="manual_type" data-default-class="{{ current_type }}" data-modal-title="Confirm class for manual detector crop" type="submit" name="send_to_assets" value="0">
                                         Save crop for detector
                                     </button>
@@ -2705,10 +2858,10 @@ def index():
                                     {% set sim_conf = sim.get("confidence")|float %}
                                     · conf={{ "%.4f"|format(sim_conf) }}
                                     <br>
-                                    <b>Predicted:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a>
-                                    <br>
-                                    <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
-                                    <br>
+                                    <span class="type-pair">
+                                        <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a></span>
+                                        <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a></span>
+                                    </span>
                                     <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
                                     <div class="mini-confidence-track" title="Detector confidence">
                                         <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
@@ -2744,11 +2897,6 @@ def index():
                                     <input type="hidden" name="type_field" value="{{ type_field }}">
                                     <input type="hidden" name="type_value" value="{{ type_value }}">
                                     <input type="hidden" name="new_type" value="{{ sim.get('effective_type') or sim.get('type') }}">
-                                    <p class="vae-note">
-                                        <b>Final class:</b>
-                                        <code>{{ sim.get("effective_type") or sim.get("type") }}</code>
-                                        — confirmed when accepting.
-                                    </p>
 
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
@@ -2784,10 +2932,10 @@ def index():
                                     <br>
                                     <small>{{ sim.get("similarity_source") }}</small>
                                     <br>
-                                    <b>Predicted:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a>
-                                    <br>
-                                    <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
-                                    <br>
+                                    <span class="type-pair">
+                                        <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a></span>
+                                        <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a></span>
+                                    </span>
                                     <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
                                     <div class="mini-confidence-track" title="Detector confidence">
                                         <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
@@ -2820,11 +2968,6 @@ def index():
                                     <input type="hidden" name="type_field" value="{{ type_field }}">
                                     <input type="hidden" name="type_value" value="{{ type_value }}">
                                     <input type="hidden" name="new_type" value="{{ sim.get('effective_type') or sim.get('type') }}">
-                                    <p class="vae-note">
-                                        <b>Final class:</b>
-                                        <code>{{ sim.get("effective_type") or sim.get("type") }}</code>
-                                        — confirmed when accepting.
-                                    </p>
 
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
@@ -3111,7 +3254,9 @@ def index():
                     }
 
                     if (acceptCorrectionBtn) {
-                        acceptCorrectionBtn.style.display = hasSelection ? 'inline-block' : 'none';
+                        // Once a corrected bbox is already set, hide the "Use selection"
+                        // button to avoid confusion. Clear it first if you want to redraw.
+                        acceptCorrectionBtn.style.display = (hasSelection && !hasCorrected) ? 'inline-block' : 'none';
                     }
 
                     if (clearCorrectedBtn) {
@@ -3259,6 +3404,7 @@ def index():
         prev_idx=prev_idx,
         next_idx=next_idx,
         next_different_page_idx=next_different_page_idx,
+        prev_different_page_idx=prev_different_page_idx,
         previous_review=previous_review,
         similar_items=similar_items,
         vae_similar_items=vae_similar_items,
