@@ -2171,6 +2171,38 @@ def index():
                     border-radius: 6px;
                 }
 
+                .class-modal-backdrop {
+                    position: fixed;
+                    inset: 0;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(0,0,0,0.45);
+                    z-index: 5000;
+                    padding: 20px;
+                }
+
+                .class-modal {
+                    background: white;
+                    width: min(520px, 95vw);
+                    padding: 18px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+                    border-top: 6px solid #1abc9c;
+                }
+
+                .class-modal h3 {
+                    margin-top: 0;
+                }
+
+                .class-modal-actions {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                    margin-top: 12px;
+                    flex-wrap: wrap;
+                }
+
                 .fixed-help-buttons {
                     position: fixed;
                     top: 16px;
@@ -2284,7 +2316,6 @@ def index():
                 <a class="stat-card stat-link {% if filter_name == 'reviewed' %}active-filter{% endif %}" href="{{ url_for('index', filter='reviewed', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Reviewed</b><br>
                     {{ review_stats.reviewed_total }}
-                    <span class="stat-subtext">accepted + rejected</span>
                 </a>
 
                 <a class="stat-card stat-link {% if filter_name == 'accepted' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted', idx=0, type_field=type_field, type_value=type_value) }}">
@@ -2315,13 +2346,11 @@ def index():
                 <a class="stat-card stat-link good-stat {% if filter_name == 'exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Exportable assets</b><br>
                     {{ review_stats.exportable_candidates }}
-                    <span class="stat-subtext">accepted + good bbox</span>
                 </a>
 
                 <a class="stat-card stat-link {% if filter_name == 'accepted_not_exportable' %}active-filter{% endif %}" href="{{ url_for('index', filter='accepted_not_exportable', idx=0, type_field=type_field, type_value=type_value) }}">
                     <b>Accepted, not exportable</b><br>
                     {{ review_stats.accepted_not_exportable }}
-                    <span class="stat-subtext">weak/uncertain/non-export</span>
                 </a>
 
                 <a class="stat-card stat-link bad-stat {% if filter_name == 'rejected' %}active-filter{% endif %}" href="{{ url_for('index', filter='rejected', idx=0, type_field=type_field, type_value=type_value) }}">
@@ -2331,12 +2360,10 @@ def index():
 
                 <form class="stat-card stat-action" method="post" action="{{ url_for('build_review_indexes_route') }}">
                     <button class="stat-action-button" type="submit" name="export_package" value="0">Rebuild indexes</button>
-                    <span class="stat-subtext">save filtered JSONL</span>
                 </form>
 
                 <form class="stat-card stat-action good-stat" method="post" action="{{ url_for('build_review_indexes_route') }}">
                     <button class="stat-action-button" type="submit" name="export_package" value="1">Export package</button>
-                    <span class="stat-subtext">save retraining package</span>
                 </form>
             </div>
 
@@ -2358,49 +2385,7 @@ def index():
                 {% endif %}
             </div>
 
-            <div class="stats-details">
-                <details>
-                    <summary>Review statistics</summary>
 
-                    <div class="stats-columns">
-                        <div>
-                            <h4>Decisions</h4>
-                            <ul>
-                                {% for key, value in review_stats.decisions.items() %}
-                                <li>{{ key }}: {{ value }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4>Reviewed types</h4>
-                            <ul>
-                                {% for key, value in review_stats.reviewed_types.items() %}
-                                <li>{{ key }}: {{ value }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4>BBox quality</h4>
-                            <ul>
-                                {% for key, value in review_stats.bbox_qualities.items() %}
-                                <li>{{ key }}: {{ value }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4>Attributes</h4>
-                            <ul>
-                                {% for key, value in review_stats.attributes.items() %}
-                                <li>{{ key }}: {{ value }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </details>
-            </div>
 
 
             <div class="topbar">
@@ -2480,14 +2465,11 @@ def index():
                         <input type="hidden" name="filter" value="{{ filter_name }}">
                         <input type="hidden" name="type_field" value="{{ type_field }}">
                         <input type="hidden" name="type_value" value="{{ type_value }}">
-<label>Correct class:</label><br>
-                        <select name="new_type">
-                            {% for cls in review_schema.classes %}
-                                <option value="{{ cls }}" {% if cls == current_type %}selected{% endif %}>
-                                    {{ cls }}
-                                </option>
-                            {% endfor %}
-                        </select>
+<input type="hidden" name="new_type" value="{{ current_type }}">
+                        <p class="vae-note">
+                            <b>Final class:</b> <code>{{ current_type }}</code>
+                            — confirmed when accepting.
+                        </p>
 
                         <br>
                         <input type="hidden" name="human_confidence" value="high">
@@ -2528,7 +2510,7 @@ def index():
                         <input type="hidden" name="corrected_y2" value="{{ corrected_bbox.get('y2', '') if corrected_bbox else '' }}">
 
 <div class="button-row">
-                            <button class="accept" name="decision" value="accepted">Accept main crop</button>
+                            <button class="accept needs-class-confirm" data-class-input="new_type" data-default-class="{{ current_type }}" data-modal-title="Confirm class for main YOLO crop" name="decision" value="accepted">Accept main crop</button>
                             <button class="reject" name="decision" value="rejected">Reject main crop</button>
                             <button class="skip" name="decision" value="skipped">Skip main crop</button>
                         </div>
@@ -2588,21 +2570,18 @@ def index():
                             <p class="vae-note">
                                 <b>Selected bbox:</b> <code id="selected-bbox-summary">none</code>
                             </p>
-<label>Manual class:</label><br>
-                            <select name="manual_type">
-                                {% for cls in review_schema.classes %}
-                                    {% if cls != "false_positive" %}
-                                    <option value="{{ cls }}" {% if cls == current_type %}selected{% endif %}>{{ cls }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
+<input type="hidden" name="manual_type" value="{{ current_type }}">
+                            <p class="vae-note">
+                                <b>Manual class:</b> <code>{{ current_type }}</code>
+                                — confirmed when saving the manual crop.
+                            </p>
 <div class="manual-actions" style="display:grid; gap:10px; margin-top:10px;">
 <div style="padding:8px; border:1px solid #d0d7de; border-radius:6px; background:#f6f8fa;">
                                     <b>New manual crop</b><br>
-                                    <button class="accept" type="submit" name="send_to_assets" value="0">
+                                    <button class="accept needs-class-confirm" data-class-input="manual_type" data-default-class="{{ current_type }}" data-modal-title="Confirm class for manual detector crop" type="submit" name="send_to_assets" value="0">
                                         Save crop for detector
                                     </button>
-                                    <button class="navlink" type="submit" name="send_to_assets" value="1">
+                                    <button class="navlink needs-class-confirm" data-class-input="manual_type" data-default-class="{{ current_type }}" data-modal-title="Confirm class for manual crop + generator asset" type="submit" name="send_to_assets" value="1">
                                         Save crop for detector + generator
                                     </button>
                                 </div>
@@ -2728,19 +2707,17 @@ def index():
                                     <input type="hidden" name="filter" value="{{ filter_name }}">
                                     <input type="hidden" name="type_field" value="{{ type_field }}">
                                     <input type="hidden" name="type_value" value="{{ type_value }}">
-                                    <label>Class:</label><br>
-                                    <select name="new_type">
-                                        {% for cls in review_schema.classes %}
-                                            <option value="{{ cls }}" {% if cls == sim.get("effective_type") %}selected{% endif %}>
-                                                {{ cls }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
+                                    <input type="hidden" name="new_type" value="{{ sim.get('effective_type') or sim.get('type') }}">
+                                    <p class="vae-note">
+                                        <b>Final class:</b>
+                                        <code>{{ sim.get("effective_type") or sim.get("type") }}</code>
+                                        — confirmed when accepting.
+                                    </p>
 
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
                                     <div class="button-row">
-                                        <button class="accept" name="decision" value="accepted">Accept FAISS suggestion</button>
+                                        <button class="accept needs-class-confirm" data-class-input="new_type" data-default-class="{{ sim.get('effective_type') or sim.get('type') }}" data-modal-title="Confirm class for FAISS suggestion" name="decision" value="accepted">Accept FAISS suggestion</button>
                                         <button class="reject" name="decision" value="rejected">Reject FAISS suggestion</button>
                                         <button class="skip" name="decision" value="skipped">Skip FAISS suggestion</button>
                                     </div>
@@ -2803,19 +2780,17 @@ def index():
                                     <input type="hidden" name="filter" value="{{ filter_name }}">
                                     <input type="hidden" name="type_field" value="{{ type_field }}">
                                     <input type="hidden" name="type_value" value="{{ type_value }}">
-                                    <label>Class:</label><br>
-                                    <select name="new_type">
-                                        {% for cls in review_schema.classes %}
-                                            <option value="{{ cls }}" {% if cls == sim.get("effective_type") %}selected{% endif %}>
-                                                {{ cls }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
+                                    <input type="hidden" name="new_type" value="{{ sim.get('effective_type') or sim.get('type') }}">
+                                    <p class="vae-note">
+                                        <b>Final class:</b>
+                                        <code>{{ sim.get("effective_type") or sim.get("type") }}</code>
+                                        — confirmed when accepting.
+                                    </p>
 
                                     <input type="hidden" name="bbox_quality" value="unsure">
 
                                     <div class="button-row">
-                                        <button class="accept" name="decision" value="accepted">Accept VAE suggestion</button>
+                                        <button class="accept needs-class-confirm" data-class-input="new_type" data-default-class="{{ sim.get('effective_type') or sim.get('type') }}" data-modal-title="Confirm class for VAE suggestion" name="decision" value="accepted">Accept VAE suggestion</button>
                                         <button class="reject" name="decision" value="rejected">Reject VAE suggestion</button>
                                         <button class="skip" name="decision" value="skipped">Skip VAE suggestion</button>
                                     </div>
@@ -2830,6 +2805,165 @@ def index():
                 </div>
 
             </div>
+
+            <div id="class-confirm-modal" class="class-modal-backdrop" aria-hidden="true">
+                <div class="class-modal">
+                    <h3 id="class-confirm-title">Confirm final class</h3>
+                    <p class="helper-note">
+                        Select the final class that should be stored in the review log.
+                        The proposed value comes from the current predicted/effective type.
+                    </p>
+
+                    <label for="class-confirm-select"><b>Final class:</b></label>
+                    <select id="class-confirm-select">
+                        {% for cls in review_schema.classes %}
+                            {% if cls != "false_positive" %}
+                                <option value="{{ cls }}">{{ cls }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <div class="class-modal-actions">
+                        <button class="skip" type="button" id="class-confirm-cancel">Cancel</button>
+                        <button class="accept" type="button" id="class-confirm-ok">Confirm class and continue</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div style="margin-top: 20px;">
+                <h2>Review statistics</h2>
+            </div>
+            <div class="stats-details">
+                <details>
+                    <summary>Review statistics</summary>
+
+                    <div class="stats-columns">
+                        <div>
+                            <h4>Decisions</h4>
+                            <ul>
+                                {% for key, value in review_stats.decisions.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>Reviewed types</h4>
+                            <ul>
+                                {% for key, value in review_stats.reviewed_types.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>BBox quality</h4>
+                            <ul>
+                                {% for key, value in review_stats.bbox_qualities.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4>Attributes</h4>
+                            <ul>
+                                {% for key, value in review_stats.attributes.items() %}
+                                <li>{{ key }}: {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <script>
+            (function() {
+                const modal = document.getElementById('class-confirm-modal');
+                const title = document.getElementById('class-confirm-title');
+                const select = document.getElementById('class-confirm-select');
+                const cancelBtn = document.getElementById('class-confirm-cancel');
+                const okBtn = document.getElementById('class-confirm-ok');
+
+                if (!modal || !title || !select || !cancelBtn || !okBtn) return;
+
+                let pendingButton = null;
+
+                function closeModal() {
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                    pendingButton = null;
+                }
+
+                function openModal(button) {
+                    pendingButton = button;
+
+                    const form = button.closest('form');
+                    const inputName = button.dataset.classInput;
+                    const hiddenInput = form ? form.querySelector(`input[name="${inputName}"]`) : null;
+                    const defaultClass = button.dataset.defaultClass || (hiddenInput ? hiddenInput.value : '');
+
+                    title.textContent = button.dataset.modalTitle || 'Confirm final class';
+
+                    if (defaultClass) {
+                        select.value = defaultClass;
+                    }
+
+                    modal.style.display = 'flex';
+                    modal.setAttribute('aria-hidden', 'false');
+                    select.focus();
+                }
+
+                document.querySelectorAll('.needs-class-confirm').forEach(function(button) {
+                    button.addEventListener('click', function(ev) {
+                        if (button.dataset.classConfirmed === '1') {
+                            delete button.dataset.classConfirmed;
+                            return;
+                        }
+
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        openModal(button);
+                    });
+                });
+
+                cancelBtn.addEventListener('click', closeModal);
+
+                modal.addEventListener('click', function(ev) {
+                    if (ev.target === modal) {
+                        closeModal();
+                    }
+                });
+
+                document.addEventListener('keydown', function(ev) {
+                    if (ev.key === 'Escape' && modal.style.display === 'flex') {
+                        closeModal();
+                    }
+                });
+
+                okBtn.addEventListener('click', function() {
+                    if (!pendingButton) {
+                        closeModal();
+                        return;
+                    }
+
+                    const form = pendingButton.closest('form');
+                    const inputName = pendingButton.dataset.classInput;
+                    const hiddenInput = form ? form.querySelector(`input[name="${inputName}"]`) : null;
+
+                    if (hiddenInput) {
+                        hiddenInput.value = select.value;
+                    }
+
+                    pendingButton.dataset.classConfirmed = '1';
+                    const buttonToClick = pendingButton;
+                    closeModal();
+                    buttonToClick.click();
+                });
+            })();
+            </script>
+
             <script>
             (function() {
                 const img = document.getElementById('manual-page-img');
@@ -3674,6 +3808,12 @@ def build_review_indexes_route():
         str(BUILD_INDEX_SCRIPT),
         "--project-root",
         str(PROJECT_ROOT),
+        "--metadata",
+        str(METADATA_PATH),
+        "--review-log",
+        str(REVIEW_LOG),
+        "--output-dir",
+        str(INDEX_DIR),
     ]
     if export_package:
         cmd.append("--export-package")
