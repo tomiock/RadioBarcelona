@@ -47,12 +47,15 @@ def load_page(xml_path: Path) -> dict:
     lines = []
     for tl in root.findall(f".//{{{NS}}}TextLine"):
         coords_el  = tl.find(f"{{{NS}}}Coords")
-        te_el      = tl.find(f"{{{NS}}}TextEquiv/{{{NS}}}Unicode")
+        te_el      = tl.find(f"{{{NS}}}TextEquiv")
+        unicode_el = te_el.find(f"{{{NS}}}Unicode") if te_el is not None else None
         if coords_el is None:
             continue
-        pts  = parse_points(coords_el.attrib.get("points", ""))
-        text = (te_el.text or "").strip() if te_el is not None else ""
-        lines.append({"id": tl.attrib.get("id", ""), "pts": pts, "text": text})
+        pts    = parse_points(coords_el.attrib.get("points", ""))
+        text   = (unicode_el.text or "").strip() if unicode_el is not None else ""
+        engine = te_el.attrib.get("engine", "") if te_el is not None else ""
+        lines.append({"id": tl.attrib.get("id", ""), "pts": pts,
+                      "text": text, "engine": engine})
 
     return {"lines": lines, "xml_path": xml_path}
 
@@ -150,12 +153,13 @@ def build_app(ocr_output_dir: Path) -> Flask:
             xs = [p[0] for p in pts_s]
             ys = [p[1] for p in pts_s]
             scaled_lines.append({
-                "id":    ln["id"],
-                "text":  ln["text"],
-                "pts":   pts_s,
-                "x":     min(xs), "y": min(ys),
-                "w":     max(xs) - min(xs),
-                "h":     max(ys) - min(ys),
+                "id":     ln["id"],
+                "text":   ln["text"],
+                "engine": ln["engine"],
+                "pts":    pts_s,
+                "x":      min(xs), "y": min(ys),
+                "w":      max(xs) - min(xs),
+                "h":      max(ys) - min(ys),
             })
 
         # build prev/next navigation
@@ -305,14 +309,21 @@ body { background: #111; color: #ddd; font-family: 'Segoe UI', sans-serif;
 #page-img { display: block; }
 #overlay { position: absolute; top: 0; left: 0; pointer-events: none; }
 .line-rect {
-  fill: rgba(76,175,80,.12); stroke: rgba(76,175,80,.5);
   stroke-width: 1.5; cursor: pointer; pointer-events: all;
   transition: fill .1s;
 }
-.line-rect:hover { fill: rgba(76,175,80,.35); stroke: rgba(76,175,80,1); }
-.line-rect.active { fill: rgba(76,175,80,.45); stroke: #4caf50; stroke-width: 2; }
+/* Tesseract — green */
+.line-rect.tesseract { fill: rgba(76,175,80,.12); stroke: rgba(76,175,80,.5); }
+.line-rect.tesseract:hover { fill: rgba(76,175,80,.35); stroke: rgba(76,175,80,1); }
+.line-rect.tesseract.active { fill: rgba(76,175,80,.45); stroke: #4caf50; stroke-width: 2; }
+/* ODAOCR — orange */
+.line-rect.odaocr { fill: rgba(255,152,0,.12); stroke: rgba(255,152,0,.5); }
+.line-rect.odaocr:hover { fill: rgba(255,152,0,.35); stroke: rgba(255,152,0,1); }
+.line-rect.odaocr.active { fill: rgba(255,152,0,.45); stroke: #ff9800; stroke-width: 2; }
+/* no text — blue */
 .line-rect.empty { stroke: rgba(100,181,246,.4); fill: rgba(100,181,246,.06); }
 .line-rect.empty:hover { fill: rgba(100,181,246,.2); }
+.line-rect.empty.active { stroke: #64b5f6; stroke-width: 2; }
 
 /* tooltip */
 #tooltip {
@@ -342,10 +353,15 @@ body { background: #111; color: #ddd; font-family: 'Segoe UI', sans-serif;
   transition: background .1s;
 }
 .line-entry:hover { background: #1e1e1e; }
-.line-entry.active { background: #1e2a1e; border-left-color: #4caf50; }
+.line-entry.tesseract.active { background: #1e2a1e; border-left-color: #4caf50; }
+.line-entry.odaocr.active    { background: #2a1e00; border-left-color: #ff9800; }
 .line-entry.empty { color: #444; font-style: italic; }
 .line-entry.empty:hover { background: #181818; }
 #show-empty-label { font-size: 11px; color: #555; cursor: pointer; }
+#legend { display: flex; gap: 14px; padding: 8px 16px;
+  border-bottom: 1px solid #2a2a2a; font-size: 11px; flex-shrink: 0; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; margin-right: 4px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -376,6 +392,11 @@ body { background: #111; color: #ddd; font-family: 'Segoe UI', sans-serif;
       <span id="line-count"></span>
       <span id="show-empty-label" onclick="toggleEmpty()">show empty</span>
     </div>
+    <div id="legend">
+      <span><span class="legend-dot" style="background:#4caf50"></span>Tesseract</span>
+      <span><span class="legend-dot" style="background:#ff9800"></span>ODAOCR</span>
+      <span><span class="legend-dot" style="background:#64b5f6"></span>empty</span>
+    </div>
     <div id="transcript"></div>
   </div>
 </div>
@@ -383,7 +404,7 @@ body { background: #111; color: #ddd; font-family: 'Segoe UI', sans-serif;
 <div id="tooltip"></div>
 
 <script>
-const LINES = {{ lines_json }};
+const LINES = {{ lines_json | safe }};
 const overlay = document.getElementById('overlay');
 const transcript = document.getElementById('transcript');
 const tooltip = document.getElementById('tooltip');
@@ -393,12 +414,13 @@ let activeId = null;
 // build rects + sidebar entries
 LINES.forEach((ln, i) => {
   const hasText = ln.text && ln.text.length > 0;
+  const engineClass = hasText ? (ln.engine || 'tesseract') : 'empty';
 
   // SVG rect
   const pts = ln.pts.map(p => p[0] + ',' + p[1]).join(' ');
   const el = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
   el.setAttribute('points', pts);
-  el.setAttribute('class', 'line-rect' + (hasText ? '' : ' empty'));
+  el.setAttribute('class', 'line-rect ' + engineClass);
   el.dataset.id = ln.id;
   el.dataset.idx = i;
 
@@ -416,7 +438,7 @@ LINES.forEach((ln, i) => {
 
   // sidebar entry
   const div = document.createElement('div');
-  div.className = 'line-entry' + (hasText ? '' : ' empty');
+  div.className = 'line-entry' + (hasText ? ' ' + engineClass : ' empty');
   div.dataset.id = ln.id;
   div.dataset.idx = i;
   div.textContent = hasText ? ln.text : '—';
@@ -426,9 +448,10 @@ LINES.forEach((ln, i) => {
 });
 
 // stats
-const nText = LINES.filter(l => l.text).length;
+const nTess = LINES.filter(l => l.engine === 'tesseract').length;
+const nOda  = LINES.filter(l => l.engine === 'odaocr').length;
 document.getElementById('line-count').textContent =
-  nText + ' / ' + LINES.length + ' lines';
+  `${nTess + nOda} / ${LINES.length} lines`;
 
 function activateLine(id, idx) {
   // deactivate previous
