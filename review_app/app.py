@@ -1845,6 +1845,39 @@ def index():
                     border: 1px solid #333;
                     display: block;
                     margin-bottom: 8px;
+                }
+
+                .similar-card {
+                    overflow: hidden;
+                }
+
+                .crop-id-line {
+                    display: block;
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
+                    word-break: break-word;
+                    font-size: 12px;
+                    line-height: 1.25;
+                }
+
+                .mini-confidence-row {
+                    margin-top: 3px;
+                    margin-bottom: 6px;
+                }
+
+                .mini-confidence-track {
+                    width: 100%;
+                    height: 7px;
+                    background: #e5e7eb;
+                    border-radius: 999px;
+                    overflow: hidden;
+                    border: 1px solid rgba(0,0,0,0.08);
+                }
+
+                .mini-confidence-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+                    border-radius: 999px;
                 }          
 
                 .review-badge {
@@ -2669,14 +2702,17 @@ def index():
                                 <p>
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
+                                    {% set sim_conf = sim.get("confidence")|float %}
+                                    · conf={{ "%.4f"|format(sim_conf) }}
                                     <br>
                                     <b>Predicted:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a>
                                     <br>
                                     <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
                                     <br>
-                                    crop={{ sim.get("crop_id") }}
-                                    <br>
-                                    conf={{ sim.get("confidence") }}                                    
+                                    <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
+                                    <div class="mini-confidence-track" title="Detector confidence">
+                                        <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
+                                    </div>                                    
                                 </p>
 
                                 <a href="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}" target="_blank" title="Open similar crop full size">
@@ -2743,6 +2779,8 @@ def index():
                                 <p>
                                     <b>#{{ sim.rank }}</b>
                                     score={{ "%.4f"|format(sim.score) }}
+                                    {% set sim_conf = sim.get("confidence")|float %}
+                                    · conf={{ "%.4f"|format(sim_conf) }}
                                     <br>
                                     <small>{{ sim.get("similarity_source") }}</small>
                                     <br>
@@ -2750,9 +2788,10 @@ def index():
                                     <br>
                                     <b>Effective:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a>
                                     <br>
-                                    crop={{ sim.get("crop_id") }}
-                                    <br>
-                                    conf={{ sim.get("confidence") }}
+                                    <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
+                                    <div class="mini-confidence-track" title="Detector confidence">
+                                        <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
+                                    </div>
                                 </p>
 
                                 <a href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" target="_blank" title="Open VAE similar crop full size">
