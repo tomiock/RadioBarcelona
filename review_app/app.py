@@ -4188,6 +4188,90 @@ yolo detect train \
                     <li><b>Do not replace the base model yet</b> until more reviewed data is collected or merged with the synthetic/original dataset.</li>
                 </ul>
 
+
+                <h3>Roadmap — project/document set management</h3>
+                <p>
+                    Future versions should allow us to create and switch complete document sets by project or collection,
+                    instead of manually sampling pages every time. For example: <code>Radio Barcelona</code>,
+                    <code>Guerra Civil</code>, or any other DDD collection/project.
+                </p>
+
+                <pre><code>Target structure:
+
+data/sources/
+  radio_barcelona_YYYYMMDD/
+    raw_pdfs/
+    pages/
+    manifest.jsonl
+    source_config.json
+
+  guerra_civil_YYYYMMDD/
+    raw_pdfs/
+    pages/
+    manifest.jsonl
+    source_config.json
+
+outputs/batches/
+  radio_barcelona_batch_001/
+    predicted_layouts/
+    object_crops/
+    review_log.jsonl
+    faiss/
+    vae/
+    export_package/
+    yolo_dataset/</code></pre>
+
+                <p>
+                    Each downloaded document/page should keep enough metadata to trace where it came from:
+                </p>
+
+                <pre><code>Recommended metadata fields:
+
+project_id
+collection_name
+source_query
+source_url
+record_id
+document_id
+page_id
+page_number
+local_pdf_path
+local_page_image_path
+download_date
+dpi
+sampling_seed
+license_or_access_note</code></pre>
+
+                <p>
+                    Desired future commands:
+                </p>
+
+                <pre><code># Download or refresh a full project/collection set
+python tools/data_tools/download_ddd_project.py \
+  --project-id radio_barcelona \
+  --query "Radio Barcelona" \
+  --max-records 50 \
+  --pages-per-record 5 \
+  --dpi 200 \
+  --output-dir data/sources/radio_barcelona_YYYYMMDD
+
+# Build a review batch from that project set
+python tools/pipeline/build_review_batch.py \
+  --source data/sources/radio_barcelona_YYYYMMDD \
+  --weights runs/detect/layout_detector_typewritten_v1/weights/best.pt \
+  --conf 0.30 \
+  --output-batch outputs/batches/radio_barcelona_batch_001
+
+# Run review app from a batch config
+python review_app/app.py \
+  --batch-config outputs/batches/radio_barcelona_batch_001/batch_config.json</code></pre>
+
+                <p>
+                    This would make it easier to compare projects, reproduce experiments, and know exactly
+                    which files and commands belong to each review version.
+                </p>
+
+
                 <h3>What is still missing / future improvements</h3>
                 <ul>
                     <li>Add a proper <code>batch_config.json</code> so the app can load batches without long env commands.</li>
