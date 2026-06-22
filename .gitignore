@@ -111,3 +111,6 @@ real_test_test_random_pages_10/
 _backup_before_review_config/
 _handoff_local/
 review_app/_app.py
+
+# Local DDD sampled/downloaded datasets
+data/ddd_random*/
