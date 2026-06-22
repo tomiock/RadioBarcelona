@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--padding", type=int, default=8)
     parser.add_argument("--min-width", type=int, default=20)
     parser.add_argument("--min-height", type=int, default=20)
+    parser.add_argument("--crop-id-prefix", default="", help="Optional prefix added to crop IDs and crop filenames.")
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -100,6 +101,8 @@ def main():
                     class_dir.mkdir(parents=True, exist_ok=True)
 
                     crop_id = f"{obj_type}_{n_crops:06d}"
+                    if args.crop_id_prefix:
+                        crop_id = f"{args.crop_id_prefix}_{crop_id}"
                     crop_path = class_dir / f"{crop_id}.jpg"
 
                     crop = img.crop((x1, y1, x2, y2))
