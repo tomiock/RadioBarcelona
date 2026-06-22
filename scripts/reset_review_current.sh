@@ -3,11 +3,18 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-LOG=outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl
+CONFIG=${REVIEW_CONFIG:-configs/review_current.json}
 
-mkdir -p "$(dirname "$LOG")"
-: > "$LOG"
+REVIEW_LOG=$(python - "$CONFIG" <<'PY'
+import json, sys
+cfg = json.load(open(sys.argv[1], encoding="utf-8"))
+print(cfg["review_log"])
+PY
+)
+
+mkdir -p "$(dirname "$REVIEW_LOG")"
+: > "$REVIEW_LOG"
 
 echo "Reset review log:"
-echo "$LOG"
-wc -l "$LOG"
+echo "$REVIEW_LOG"
+wc -l "$REVIEW_LOG"

@@ -1,0 +1,29 @@
+{
+  "batch_id": "ddd_random_v2_retry_base_conf030",
+  "description": "Current DDD random v2 review batch with automatic and manual crops.",
+  "source_pages": "data/ddd_random_v2_retry/pages",
+  "source_manifest": "data/ddd_random_v2_retry/manifest.jsonl",
+  "predicted_layouts": "outputs/test_predicted_layout_ddd_random_v2_retry_base_conf030",
+  "crop_dir": "outputs/object_crops_ddd_random_v2_retry_base_conf030",
+  "metadata": "outputs/object_crops_ddd_random_v2_retry_base_conf030/metadata.jsonl",
+  "review_log": "outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl",
+  "classes": [
+    "stamp",
+    "handwritten_text",
+    "crossout",
+    "table_fragment",
+    "censorship_block",
+    "typewritten_text"
+  ],
+  "faiss_dir": "outputs/faiss/current",
+  "faiss_tmp_dir": "outputs/faiss/current_build_tmp",
+  "vae_dir": "outputs/faiss/vae/global",
+  "vae_model": "outputs/vae/vae_best.pt",
+  "index_output_dir": "outputs/index",
+  "notes": [
+    "data/ddd_random*/ is local data and should not be committed.",
+    "The review log is the source of truth for human decisions.",
+    "Simple FAISS should be built from metadata crop_path values to include manual crops.",
+    "Retraining from this batch alone is experimental only."
+  ]
+}
