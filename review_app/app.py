@@ -4082,130 +4082,145 @@ def review_help_page():
             <p><a href="{{ url_for('index') }}">Back to Review App</a></p>
         
             <section class="card">
-                <h2>Current pipeline versions and commands</h2>
+                <h2>Current active pipeline</h2>
 
                 <p>
-                    This section records the current working versions of the review/detection pipeline.
-                    It helps us remember which files, commands, models and outputs belong to each experiment.
+                    This help page documents the current working review pipeline, not every past experiment.
+                    Older models and batches are kept in Git history and output folders, but the UI focuses on
+                    the active workflow used for manual review and future retraining.
                 </p>
 
-                <h3>Version A — Base detector / high recall</h3>
+                <h3>Pipeline overview</h3>
+                <pre><code>DDD pages
+→ YOLO base detector
+→ filtered object crops
+→ manual review app
+→ export package
+→ merge reviewed exports
+→ retrain when enough clean labels exist</code></pre>
+
+                <h3>Current active review batch</h3>
                 <p>
-                    This is the safest detector for demo/use because it detects many candidates.
-                    It also produces many false positives, so it is useful for review and correction.
+                    The current active batch adds more DDD variation. It uses the base detector and crops only
+                    the classes we currently want to review: <code>stamp</code>, <code>handwritten_text</code>
+                    and <code>crossout</code>. <code>typewritten_text</code> is intentionally excluded from
+                    this crop batch to avoid too many noisy crops.
                 </p>
 
-                <pre><code>Base model:
+                <pre><code>Batch name:
+ddd_random_v2_retry_base_conf030
+
+Source pages:
+data/ddd_random_v2_retry/pages
+
+Source manifest:
+data/ddd_random_v2_retry/manifest.jsonl
+
+Important:
+data/ddd_random*/ is local downloaded/rendered data and should not be committed to git.</code></pre>
+
+                <pre><code>Detector:
 runs/detect/layout_detector_typewritten_v1/weights/best.pt
 
-Base inference on DDD random pages:
-outputs/test_predicted_layout_ddd_random_base_conf030
+Predicted layouts:
+outputs/test_predicted_layout_ddd_random_v2_retry_base_conf030
 
-Older/current review crop batch:
-outputs/object_crops_ddd_random_visual_conf030/metadata.jsonl
+Prediction summary:
+52 files
+52 nonzero pages
+1265 total detections
 
-Older/current review log:
-outputs/review_logs/review_log_ddd_random_visual_conf030.jsonl</code></pre>
+Predicted types:
+typewritten_text: 999
+stamp: 51
+crossout: 104
+handwritten_text: 111</code></pre>
 
-                <h3>Version B — Reviewed conservative model / experimental</h3>
-                <p>
-                    This model was fine-tuned using the reviewed export. It is more conservative:
-                    it produces fewer detections than the base model. It should not replace the base model
-                    until we visually confirm that recall is still acceptable.
-                </p>
+                <pre><code>Filtered crop metadata:
+outputs/object_crops_ddd_random_v2_retry_base_conf030/metadata.jsonl
 
-                <pre><code>Clean reviewed export package:
-outputs/review_exports/export_20260622_000230
+Filtered crop counts:
+stamp: 51
+handwritten_text: 111
+crossout: 104
 
-YOLO dataset generated from reviewed export:
-outputs/review_yolo_dataset_ddd_random_conf030_baseclasses/data.yaml
+Total review crops:
+266
 
-Important: class order matches the base model:
-0: stamp
-1: handwritten_text
-2: crossout
-3: typewritten_text
+Crop ID prefix:
+ddd_random_v2_retry_base_conf030</code></pre>
 
-Reviewed conservative model:
-runs/detect/layout_detector_reviewed_ddd_baseclasses_v1/weights/best.pt
+                <pre><code>Review log:
+outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl
 
-Inference output:
-outputs/test_predicted_layout_ddd_random_reviewed_baseclasses_v1_conf030
+Run this batch:
+./scripts/run_review_ddd_random_v2_retry_base_conf030.sh
 
-Crops for visual review:
-outputs/object_crops_ddd_random_reviewed_baseclasses_v1_conf030/metadata.jsonl
+Reset only if reviews must be discarded:
+./scripts/reset_review_ddd_random_v2_retry_base_conf030.sh</code></pre>
 
-Review log for this batch:
-outputs/review_logs/review_log_ddd_random_reviewed_baseclasses_v1_conf030.jsonl</code></pre>
+                <h3>Current visual search indexes</h3>
+                <pre><code>Simple FAISS:
+outputs/faiss/current/visual_index.faiss
+outputs/faiss/current/metadata.jsonl
 
-                <h3>Run the reviewed conservative batch</h3>
-                <pre><code>./scripts/run_review_reviewed_baseclasses_v1.sh</code></pre>
+FAISS vectors:
+266
 
-                <p>
-                    Only reset the review log if we intentionally want to discard the reviews for this batch:
-                </p>
+VAE FAISS:
+outputs/faiss/vae/global
 
-                <pre><code>./scripts/reset_review_reviewed_baseclasses_v1.sh</code></pre>
+VAE by type:
+stamp: 51
+handwritten_text: 111
+crossout: 104</code></pre>
 
-                <h3>Useful commands</h3>
+                <h3>Useful current commands</h3>
 
-                <pre><code># Rebuild review indexes and export package
+                <pre><code># Run active review batch
+./scripts/run_review_ddd_random_v2_retry_base_conf030.sh
+
+# Build review indexes and export package after manual review
 python tools/review_tools/build_review_indexes.py \
   --project-root . \
-  --metadata outputs/object_crops_ddd_random_visual_conf030/metadata.jsonl \
-  --review-log outputs/review_logs/review_log_ddd_random_visual_conf030.jsonl \
+  --metadata outputs/object_crops_ddd_random_v2_retry_base_conf030/metadata.jsonl \
+  --review-log outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl \
   --output-dir outputs/index \
-  --export-package
+  --export-package</code></pre>
 
-# Convert clean review export to YOLO dataset
-python tools/review_tools/export_review_to_yolo.py \
-  --project-root . \
-  --export-dir outputs/review_exports/export_20260622_000230 \
-  --output-dir outputs/review_yolo_dataset_ddd_random_conf030_baseclasses \
-  --classes stamp handwritten_text crossout typewritten_text \
-  --val-ratio 0.2 \
-  --seed 42 \
-  --copy-mode copy \
-  --min-box-size 0
-
-# Fine-tune from base model
-yolo detect train \
-  model=runs/detect/layout_detector_typewritten_v1/weights/best.pt \
-  data=outputs/review_yolo_dataset_ddd_random_conf030_baseclasses/data.yaml \
-  epochs=15 \
-  imgsz=1024 \
-  batch=4 \
-  patience=6 \
-  device=cpu \
-  workers=0 \
-  lr0=0.0005 \
-  name=layout_detector_reviewed_ddd_baseclasses_v1</code></pre>
-
-                <h3>Current conclusion</h3>
+                <h3>Implemented improvements</h3>
                 <ul>
-                    <li><b>Base model:</b> better recall, good for main demo and candidate generation.</li>
-                    <li><b>Reviewed conservative model:</b> fewer detections, useful as retraining proof of concept.</li>
-                    <li><b>Do not replace the base model yet</b> until more reviewed data is collected or merged with the synthetic/original dataset.</li>
+                    <li>Review app with manual accept/reject/skip workflow.</li>
+                    <li>Export packages from reviewed crops.</li>
+                    <li>YOLO dataset export from reviewed packages.</li>
+                    <li>Experimental retraining from reviewed data.</li>
+                    <li>DDD random sampler for additional real pages.</li>
+                    <li>Sampler now skips failed DDD downloads instead of crashing.</li>
+                    <li>Crop IDs now support batch prefixes.</li>
+                    <li>Separate review logs per batch.</li>
+                    <li>Local downloaded DDD datasets are ignored in Git.</li>
+                    <li>Batch-specific run/reset scripts.</li>
+                    <li>FAISS and VAE visual similarity support.</li>
                 </ul>
 
-
-                <h3>Roadmap — project/document set management</h3>
+                <h3>Retraining policy</h3>
                 <p>
-                    Future versions should allow us to create and switch complete document sets by project or collection,
-                    instead of manually sampling pages every time. For example: <code>Radio Barcelona</code>,
-                    <code>Guerra Civil</code>, or any other DDD collection/project.
+                    Do not retrain from a very small reviewed set alone. First collect more reviewed crops,
+                    export this batch, merge several review exports, and only then retrain. The base detector
+                    remains the safest detector for generating candidates because it has higher recall.
+                </p>
+
+                <h3>Project/document set roadmap</h3>
+                <p>
+                    Future versions should support complete project-based document sets such as
+                    <code>Radio Barcelona</code>, <code>Guerra Civil</code>, or other DDD collections.
+                    Each project should have a source directory, manifest, pages, review batch, logs and exports.
                 </p>
 
                 <pre><code>Target structure:
 
 data/sources/
   radio_barcelona_YYYYMMDD/
-    raw_pdfs/
-    pages/
-    manifest.jsonl
-    source_config.json
-
-  guerra_civil_YYYYMMDD/
     raw_pdfs/
     pages/
     manifest.jsonl
@@ -4220,57 +4235,6 @@ outputs/batches/
     vae/
     export_package/
     yolo_dataset/</code></pre>
-
-                <p>
-                    Each downloaded document/page should keep enough metadata to trace where it came from:
-                </p>
-
-                <pre><code>Recommended metadata fields:
-
-project_id
-collection_name
-source_query
-source_url
-record_id
-document_id
-page_id
-page_number
-local_pdf_path
-local_page_image_path
-download_date
-dpi
-sampling_seed
-license_or_access_note</code></pre>
-
-                <p>
-                    Desired future commands:
-                </p>
-
-                <pre><code># Download or refresh a full project/collection set
-python tools/data_tools/download_ddd_project.py \
-  --project-id radio_barcelona \
-  --query "Radio Barcelona" \
-  --max-records 50 \
-  --pages-per-record 5 \
-  --dpi 200 \
-  --output-dir data/sources/radio_barcelona_YYYYMMDD
-
-# Build a review batch from that project set
-python tools/pipeline/build_review_batch.py \
-  --source data/sources/radio_barcelona_YYYYMMDD \
-  --weights runs/detect/layout_detector_typewritten_v1/weights/best.pt \
-  --conf 0.30 \
-  --output-batch outputs/batches/radio_barcelona_batch_001
-
-# Run review app from a batch config
-python review_app/app.py \
-  --batch-config outputs/batches/radio_barcelona_batch_001/batch_config.json</code></pre>
-
-                <p>
-                    This would make it easier to compare projects, reproduce experiments, and know exactly
-                    which files and commands belong to each review version.
-                </p>
-
 
                 <h3>What is still missing / future improvements</h3>
                 <ul>
