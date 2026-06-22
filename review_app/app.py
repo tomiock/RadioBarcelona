@@ -187,9 +187,6 @@ def load_review_schema():
     schema["classes"] = list(dict.fromkeys(schema["classes"]))
 
     schema.setdefault("attributes", [])
-    if "mixed" not in schema["attributes"]:
-        schema["attributes"].append("mixed")
-
     return schema
 
 

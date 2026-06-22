@@ -6,14 +6,11 @@
     "crossout",
     "censorship_block",
     "table_fragment",
+    "other",
     "false_positive"
   ],
   "bbox_quality": [
     "good",
-    "minor_partial",
-    "partial",
-    "too_large",
-    "bad_location",
     "unsure"
   ],
   "human_confidence": [
@@ -23,29 +20,23 @@
     "unsure"
   ],
   "attributes": [
-    "crossed_out",
-    "overlaps_text",
-    "faded",
-    "low_contrast",
-    "fragmented",
+    "faded, low_contrast",
     "rotated",
-    "background_noise",
-    "stain",
-    "paper_texture",
-    "ink_bleed",
-    "background_artifact",
-    "stamp_on_text",
-    "handwritten_on_typewritten",
-    "handwritten_on_stamp",
-    "numeric_annotation",
-    "margin_note",
-    "long_note",
-    "mixed",
+    "background_noise, paper",
+    "stain, ink_bleed",
+    "margin note",
+    "long note",
+    "numeric",
+    "word",
+    "overlaps",
+    "crossed_out",
+    "line, underline",
     "typewritten",
     "handwritten",
     "stamp",
     "table",
-    "word",
-    "line, underline"
+    "photo",
+    "signature",
+    "correction/censorship"
   ]
 }
