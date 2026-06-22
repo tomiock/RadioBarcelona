@@ -4190,7 +4190,7 @@ Run this batch:
 ./scripts/run_review_current.sh
 
 Reset only if reviews must be discarded:
-./scripts/reset_review_ddd_random_v2_retry_base_conf030.sh</code></pre>
+./scripts/reset_review_current.sh</code></pre>
 
                 <h3>Current visual search indexes</h3>
                 <pre><code>Simple FAISS:

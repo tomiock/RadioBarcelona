@@ -3,4 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-exec ./scripts/run_review_ddd_random_v2_retry_base_conf030.sh
+lsof -ti:5000 | xargs -r kill -9 || true
+
+env \
+REVIEW_METADATA=outputs/object_crops_ddd_random_v2_retry_base_conf030/metadata.jsonl \
+REVIEW_LOG=outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl \
+python review_app/app.py
