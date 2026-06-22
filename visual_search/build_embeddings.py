@@ -39,6 +39,53 @@ def iter_image_files(input_dir, classes=None):
         yield path
 
 
+def iter_image_files_from_metadata(metadata_path, classes=None):
+    """
+    Recorre directament els crop_path del metadata.jsonl.
+
+    Això és útil quan el batch actiu inclou crops manuals o crops que viuen
+    fora del directori principal de --input-crops, per exemple:
+        outputs/object_crops_manual/table_fragment/...
+
+    Si classes té valors, filtra pel camp "type" del metadata.
+    """
+    metadata_path = Path(metadata_path)
+    seen_paths = set()
+
+    with metadata_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+
+            item = json.loads(line)
+
+            crop_path = item.get("crop_path")
+            if not crop_path:
+                continue
+
+            class_name = item.get("type") or Path(crop_path).parent.name
+
+            if classes is not None and class_name not in classes:
+                continue
+
+            path = Path(crop_path)
+
+            if not path.is_absolute():
+                path = Path(".") / path
+
+            if not path.exists():
+                print(f"WARNING: crop_path not found, skipping: {crop_path}")
+                continue
+
+            resolved = str(path.resolve())
+
+            if resolved in seen_paths:
+                continue
+
+            seen_paths.add(resolved)
+            yield path
+
+
 def load_metadata(metadata_path):
     """
     Carrega el metadata.jsonl generat per crop_objects_from_layout.py.
@@ -178,6 +225,12 @@ def main():
     )
 
     parser.add_argument(
+        "--use-metadata-crop-paths",
+        action="store_true",
+        help="Read crop images from metadata.jsonl crop_path values instead of scanning only --input-crops.",
+    )
+
+    parser.add_argument(
         "--thumbnail-size",
         type=int,
         default=64,
@@ -210,9 +263,15 @@ def main():
     embeddings = []
     output_metadata = []
 
-    image_paths = list(iter_image_files(input_crops, classes=args.classes))
+    if args.use_metadata_crop_paths:
+        if args.metadata is None:
+            raise SystemExit("--use-metadata-crop-paths requires --metadata")
 
-    print(f"Input crops found: {len(image_paths)}")
+        image_paths = list(iter_image_files_from_metadata(args.metadata, classes=args.classes))
+        print(f"Input crops found from metadata crop_path: {len(image_paths)}")
+    else:
+        image_paths = list(iter_image_files(input_crops, classes=args.classes))
+        print(f"Input crops found: {len(image_paths)}")
 
     for embedding_id, image_path in enumerate(image_paths):
         # Calculem embedding visual.
