@@ -1635,6 +1635,25 @@ def index():
             prev_different_page_idx = candidate_idx
             break
 
+    # Count different source pages in the current filtered view.
+    # This follows the same definition used by Previous/Next different page.
+    ordered_page_keys = []
+    page_crop_counts = {}
+
+    for candidate in filtered_items:
+        key = page_key(candidate)
+        page_crop_counts[key] = page_crop_counts.get(key, 0) + 1
+        if key not in ordered_page_keys:
+            ordered_page_keys.append(key)
+
+    total_different_pages = len(ordered_page_keys)
+    current_page_position = (
+        ordered_page_keys.index(current_page_key) + 1
+        if current_page_key in ordered_page_keys
+        else 0
+    )
+    current_page_crop_count = page_crop_counts.get(current_page_key, 0)
+
     message = request.args.get("msg")
 
     last_manual_crop_id = request.args.get("last_manual_crop_id")
@@ -2591,6 +2610,7 @@ def index():
             <div class="topbar">
                 <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next →</a>
+                <span class="navlabel">Different pages: {{ current_page_position }} / {{ total_different_pages }} · crops on this page: {{ current_page_crop_count }}</span>
                 <a class="navlink" href="{{ url_for('index', idx=prev_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous different page</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next different page →</a>
                 <form class="jump-form" method="get" action="{{ url_for('index') }}">
@@ -3405,6 +3425,9 @@ def index():
         next_idx=next_idx,
         next_different_page_idx=next_different_page_idx,
         prev_different_page_idx=prev_different_page_idx,
+        total_different_pages=total_different_pages,
+        current_page_position=current_page_position,
+        current_page_crop_count=current_page_crop_count,
         previous_review=previous_review,
         similar_items=similar_items,
         vae_similar_items=vae_similar_items,
