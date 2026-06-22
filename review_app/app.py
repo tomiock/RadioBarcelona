@@ -4187,7 +4187,7 @@ ddd_random_v2_retry_base_conf030</code></pre>
 outputs/review_logs/review_log_ddd_random_v2_retry_base_conf030.jsonl
 
 Run this batch:
-./scripts/run_review_ddd_random_v2_retry_base_conf030.sh
+./scripts/run_review_current.sh
 
 Reset only if reviews must be discarded:
 ./scripts/reset_review_ddd_random_v2_retry_base_conf030.sh</code></pre>
@@ -4211,7 +4211,7 @@ crossout: 104</code></pre>
                 <h3>Useful current commands</h3>
 
                 <pre><code># Run active review batch
-./scripts/run_review_ddd_random_v2_retry_base_conf030.sh
+./scripts/run_review_current.sh
 
 # Build review indexes and export package after manual review
 python tools/review_tools/build_review_indexes.py \
