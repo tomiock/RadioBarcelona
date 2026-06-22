@@ -114,3 +114,6 @@ review_app/_app.py
 
 # Local DDD sampled/downloaded datasets
 data/ddd_random*/
+
+# Local registered source datasets
+data/sources/
