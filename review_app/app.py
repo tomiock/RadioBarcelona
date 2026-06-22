@@ -2513,8 +2513,8 @@ def index():
             <h1>Manual Review</h1>
 
             <div class="fixed-help-buttons">
-                <a class="help-button" href="{{ url_for('review_help_page') }}" target="_blank">Pipeline help</a>
-                <a class="help-button secondary" href="{{ url_for('outputs_help_page') }}" target="_blank">Files / outputs</a>
+                <a class="help-button" href="{{ url_for('review_help_page') }}">Pipeline help</a>
+                <a class="help-button secondary" href="{{ url_for('outputs_help_page') }}">Files / outputs</a>
             </div>
 
             {% if message %}
@@ -2651,7 +2651,7 @@ def index():
                             <li>Detector missed a stamp → create a <b>manual crop</b> from the full page.</li>
                         </ul>
                     </details>
-                    <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" target="_blank" title="Open crop full size">
+                    <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="Open crop full size">
                         <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
                     </a>
                     {% if previous_review %}
@@ -2681,7 +2681,7 @@ def index():
                         <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
                     </div>
                     <p><b>Document / page:</b> <span class="metadata-value">{{ item.get("document_id") }}</span></p>
-                    <p><a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a></p>
+                    <p><a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}">Open full page preview</a></p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
@@ -2762,7 +2762,7 @@ def index():
                         ></div>
                     </div>
                     <br>
-                    <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" target="_blank">Open full page preview</a>
+                    <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}">Open full page preview</a>
 
                     <div class="card manual-crop-panel">
                         <h3>Manual crops for detector training</h3>
@@ -2807,7 +2807,7 @@ def index():
 {% if last_manual_crop %}
                         <div class="similar-card">
                             <h4>Last manual crop created</h4>
-                            <a href="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}" target="_blank">
+                            <a href="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}">
                                 <img class="similar-img" src="{{ url_for('crop_image_by_id', crop_id=last_manual_crop.get('crop_id')) }}">
                             </a>
                             <p><b>{{ last_manual_crop.get('crop_id') }}</b></p>
@@ -2888,13 +2888,13 @@ def index():
                                     </div>                                    
                                 </p>
 
-                                <a href="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}" target="_blank" title="Open similar crop full size">
+                                <a href="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}" title="Open similar crop full size">
                                     <img
                                         class="similar-img zoomable"
                                         src="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}"
                                     >
                                 </a>
-                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" target="_blank">Open page context</a>
+                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}">Open page context</a>
 
                                 {% if sim.previous_review %}
                                     
@@ -2962,13 +2962,13 @@ def index():
                                     </div>
                                 </p>
 
-                                <a href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" target="_blank" title="Open VAE similar crop full size">
+                                <a href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" title="Open VAE similar crop full size">
                                     <img
                                         class="similar-img zoomable"
                                         src="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}"
                                     >
                                 </a>
-                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" target="_blank">Open page context</a>
+                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}">Open page context</a>
 
                                 {% if sim.previous_review %}
                                 <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
@@ -3628,7 +3628,7 @@ def manual_crops_gallery():
                 {% set crop_id = item.get('crop_id') %}
                 {% set crop_type = item.get('type') %}
                 <div class="card">
-                    <a href="{{ url_for('manual_crop_image', crop_id=crop_id) }}" target="_blank">
+                    <a href="{{ url_for('manual_crop_image', crop_id=crop_id) }}">
                         <img src="{{ url_for('manual_crop_image', crop_id=crop_id) }}">
                     </a>
 
@@ -3645,8 +3645,8 @@ def manual_crops_gallery():
                     <p class="small"><b>Crop:</b> {{ item.get('crop_path') }}</p>
                     <p class="small"><b>Image:</b> {{ item.get('image_path') }}</p>
 
-                    <a class="navlink" href="{{ url_for('manual_crop_image', crop_id=crop_id) }}" target="_blank">Open crop</a>
-                    <a class="navlink" href="{{ url_for('page_preview', crop_id=crop_id) }}" target="_blank">Open page context</a>
+                    <a class="navlink" href="{{ url_for('manual_crop_image', crop_id=crop_id) }}">Open crop</a>
+                    <a class="navlink" href="{{ url_for('page_preview', crop_id=crop_id) }}">Open page context</a>
 
                     {% if crop_type in generator_asset_targets %}
                     <form class="inline-form" method="post" action="{{ url_for('send_manual_crop_to_generator_assets') }}">
@@ -4064,7 +4064,17 @@ def review_help_page():
             <title>Review App Help</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 28px; line-height: 1.45; max-width: 1100px; }
-                code { background:#eef2f7; padding:2px 5px; border-radius:4px; }
+                code { background:#eef2f7; padding:2px 5px; border-radius:4px; overflow-wrap:anywhere; }
+                pre {
+                    background:#f8fafc;
+                    border:1px solid #e2e8f0;
+                    border-radius:8px;
+                    padding:10px 12px;
+                    max-width:100%;
+                    overflow-x:auto;
+                    white-space:pre-wrap;
+                    word-break:break-word;
+                }
                 .card { background:#fff; border:1px solid #ddd; border-left:5px solid #0f766e; padding:14px 18px; margin:14px 0; border-radius:8px; }
                 h1, h2 { margin-bottom: 8px; }
             </style>
@@ -4287,46 +4297,101 @@ def outputs_help_page():
             <title>Review App Outputs</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 28px; line-height: 1.45; max-width: 1150px; }
-                code { background:#eef2f7; padding:2px 5px; border-radius:4px; }
+                code { background:#eef2f7; padding:2px 5px; border-radius:4px; overflow-wrap:anywhere; }
+                pre {
+                    background:#f8fafc;
+                    border:1px solid #e2e8f0;
+                    border-radius:8px;
+                    padding:10px 12px;
+                    max-width:100%;
+                    overflow-x:auto;
+                    white-space:pre-wrap;
+                    word-break:break-word;
+                }
                 .card { background:#fff; border:1px solid #ddd; border-left:5px solid #475569; padding:14px 18px; margin:14px 0; border-radius:8px; }
                 h1, h2 { margin-bottom: 8px; }
             </style>
         </head>
         <body>
-            <h1>Files and outputs</h1>
+            <h1>Files / outputs reference</h1>
+
+            <p>
+                This page is a folder/file map. It explains where things are stored.
+                For the active workflow and commands, use the Pipeline help.
+            </p>
+
+            <p>
+                <a href="{{ url_for('review_help_page') }}">Open Pipeline help</a>
+                ·
+                <a href="{{ url_for('index') }}">Back to Review App</a>
+            </p>
 
             <div class="card">
-                <h2>Input and detector outputs</h2>
-                <p><b>Source pages:</b> <code>data/ddd_random/pages/</code>, local image folders, rendered PDFs, URL downloads, synthetic pages or GAN outputs.</p>
-                <p><b>YOLO layouts:</b> detector JSON outputs such as <code>outputs/test_predicted_layout_.../</code>.</p>
-                <p><b>Detector crops:</b> crop images and active <code>metadata.jsonl</code>, e.g. <code>outputs/object_crops_ddd_random_visual_conf030/</code>.</p>
+                <h2>Source data</h2>
+                <p><b>Local DDD sampled datasets:</b> <code>data/ddd_random*/</code></p>
+                <p>These contain downloaded/rendered DDD pages and manifests. They are local working data and should not be committed to Git.</p>
+                <p><b>Future project datasets:</b> <code>data/sources/&lt;project_id&gt;/</code>, for example Radio Barcelona or Guerra Civil collections.</p>
+            </div>
+
+            <div class="card">
+                <h2>Detector predictions</h2>
+                <p><b>YOLO layout predictions:</b> <code>outputs/test_predicted_layout_*/</code></p>
+                <p>These folders contain one predicted layout JSON per page. They are produced by the YOLO detector.</p>
+                <p><b>Trained detector weights:</b> <code>runs/detect/*/weights/best.pt</code></p>
+            </div>
+
+            <div class="card">
+                <h2>Object crops and metadata</h2>
+                <p><b>Crop batches:</b> <code>outputs/object_crops_*/</code></p>
+                <p>Each crop batch contains class folders and a <code>metadata.jsonl</code> file.</p>
+                <p><b>Active metadata:</b> selected through <code>REVIEW_METADATA</code>.</p>
+                <p>The metadata stores crop ID, predicted type, source page, bbox, confidence and crop path.</p>
             </div>
 
             <div class="card">
                 <h2>Review decisions</h2>
-                <p><b>Review log:</b> active human decisions in <code>outputs/review_logs/...</code>. It is append-only; the latest entry for each crop is the source of truth.</p>
-                <p><b>Accepted copies:</b> <code>outputs/object_crops_reviewed/&lt;reviewed_type&gt;/</code>.</p>
-                <p><b>Rejected copies:</b> <code>outputs/object_crops_rejected/false_positive/</code> for direct main-crop rejects.</p>
-                <p><b>Skipped copies:</b> <code>outputs/object_crops_skipped/</code>.</p>
-                <p><b>Manual crops:</b> <code>outputs/object_crops_manual/</code>. These are human-created bboxes from the full-page selector.</p>
+                <p><b>Review logs:</b> <code>outputs/review_logs/*.jsonl</code></p>
+                <p>The active log is selected through <code>REVIEW_LOG</code>. It is append-only: the latest entry for each crop is the source of truth.</p>
+                <p><b>Reviewed copies:</b> <code>outputs/object_crops_reviewed/</code></p>
+                <p><b>Rejected copies:</b> <code>outputs/object_crops_rejected/</code></p>
+                <p><b>Skipped copies:</b> <code>outputs/object_crops_skipped/</code></p>
+                <p><b>Manual crops:</b> <code>outputs/object_crops_manual/</code></p>
+                <p>Copied folders are useful for inspection, but the JSONL review log is the authoritative record.</p>
             </div>
 
             <div class="card">
                 <h2>Similarity indexes</h2>
-                <p><b>FAISS simple:</b> <code>outputs/faiss/current/</code> contains <code>embeddings.npy</code>, <code>metadata.jsonl</code>, <code>visual_index.faiss</code> and config files.</p>
-                <p><b>VAE FAISS:</b> <code>outputs/faiss/vae/global/</code> and <code>outputs/faiss/vae/by_type/</code>.</p>
+                <p><b>Simple FAISS:</b> <code>outputs/faiss/current/</code></p>
+                <p>Contains <code>embeddings.npy</code>, <code>metadata.jsonl</code>, <code>visual_index.faiss</code> and config files.</p>
+                <p><b>VAE FAISS:</b> <code>outputs/faiss/vae/global/</code> and <code>outputs/faiss/vae/by_type/</code></p>
+                <p>These indexes are helpers for finding visually similar crops. They are not the detector.</p>
             </div>
 
             <div class="card">
-                <h2>Reusable artifacts</h2>
-                <p><code>.jsonl</code> stores metadata/reviews. <code>.npy</code> stores embeddings. <code>.faiss</code> stores searchable indexes. <code>.pt</code> stores trained model weights.</p>
-                <p>These files can be moved to another machine as long as relative paths are preserved and the matching metadata, images, indexes and model weights are copied together.</p>
+                <h2>Exports for training / evaluation</h2>
+                <p><b>Review export packages:</b> <code>outputs/review_exports/export_*/</code></p>
+                <p>These packages contain reviewed metadata snapshots and accepted/rejected crops.</p>
+                <p><b>YOLO datasets from review exports:</b> <code>outputs/review_yolo_dataset_*/</code></p>
+                <p>These are the datasets used for retraining/evaluation.</p>
             </div>
 
             <div class="card">
-                <h2>Export package</h2>
-                <p><b>Export package</b> creates a reviewed dataset package for retraining/evaluation. It should use the active metadata and active review log.</p>
-                <p>The review log is the source of truth; copied folders are useful for inspection but should not replace the JSONL review records.</p>
+                <h2>Batch scripts</h2>
+                <p><b>Run scripts:</b> <code>scripts/run_review_*.sh</code></p>
+                <p>Open a specific review batch with the correct metadata and review log.</p>
+                <p><b>Reset scripts:</b> <code>scripts/reset_review_*.sh</code></p>
+                <p>Only use reset scripts if reviews for that batch should be discarded.</p>
+            </div>
+
+            <div class="card">
+                <h2>Quick rules</h2>
+                <ul>
+                    <li><code>data/ddd_random*/</code> is local sampled/downloaded data: do not commit it.</li>
+                    <li><code>metadata.jsonl</code> describes crops; <code>review_log.jsonl</code> stores human decisions.</li>
+                    <li>The review log is more important than copied accepted/rejected folders.</li>
+                    <li>FAISS/VAE outputs are similarity helpers, not detector outputs.</li>
+                    <li>Export packages are the bridge from review to training/evaluation.</li>
+                </ul>
             </div>
 
             <p><a href="{{ url_for('index') }}">Back to Review App</a></p>
