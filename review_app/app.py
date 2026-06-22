@@ -4080,6 +4080,125 @@ def review_help_page():
             </div>
 
             <p><a href="{{ url_for('index') }}">Back to Review App</a></p>
+        
+            <section class="card">
+                <h2>Current pipeline versions and commands</h2>
+
+                <p>
+                    This section records the current working versions of the review/detection pipeline.
+                    It helps us remember which files, commands, models and outputs belong to each experiment.
+                </p>
+
+                <h3>Version A — Base detector / high recall</h3>
+                <p>
+                    This is the safest detector for demo/use because it detects many candidates.
+                    It also produces many false positives, so it is useful for review and correction.
+                </p>
+
+                <pre><code>Base model:
+runs/detect/layout_detector_typewritten_v1/weights/best.pt
+
+Base inference on DDD random pages:
+outputs/test_predicted_layout_ddd_random_base_conf030
+
+Older/current review crop batch:
+outputs/object_crops_ddd_random_visual_conf030/metadata.jsonl
+
+Older/current review log:
+outputs/review_logs/review_log_ddd_random_visual_conf030.jsonl</code></pre>
+
+                <h3>Version B — Reviewed conservative model / experimental</h3>
+                <p>
+                    This model was fine-tuned using the reviewed export. It is more conservative:
+                    it produces fewer detections than the base model. It should not replace the base model
+                    until we visually confirm that recall is still acceptable.
+                </p>
+
+                <pre><code>Clean reviewed export package:
+outputs/review_exports/export_20260622_000230
+
+YOLO dataset generated from reviewed export:
+outputs/review_yolo_dataset_ddd_random_conf030_baseclasses/data.yaml
+
+Important: class order matches the base model:
+0: stamp
+1: handwritten_text
+2: crossout
+3: typewritten_text
+
+Reviewed conservative model:
+runs/detect/layout_detector_reviewed_ddd_baseclasses_v1/weights/best.pt
+
+Inference output:
+outputs/test_predicted_layout_ddd_random_reviewed_baseclasses_v1_conf030
+
+Crops for visual review:
+outputs/object_crops_ddd_random_reviewed_baseclasses_v1_conf030/metadata.jsonl
+
+Review log for this batch:
+outputs/review_logs/review_log_ddd_random_reviewed_baseclasses_v1_conf030.jsonl</code></pre>
+
+                <h3>Run the reviewed conservative batch</h3>
+                <pre><code>./scripts/run_review_reviewed_baseclasses_v1.sh</code></pre>
+
+                <p>
+                    Only reset the review log if we intentionally want to discard the reviews for this batch:
+                </p>
+
+                <pre><code>./scripts/reset_review_reviewed_baseclasses_v1.sh</code></pre>
+
+                <h3>Useful commands</h3>
+
+                <pre><code># Rebuild review indexes and export package
+python tools/review_tools/build_review_indexes.py \
+  --project-root . \
+  --metadata outputs/object_crops_ddd_random_visual_conf030/metadata.jsonl \
+  --review-log outputs/review_logs/review_log_ddd_random_visual_conf030.jsonl \
+  --output-dir outputs/index \
+  --export-package
+
+# Convert clean review export to YOLO dataset
+python tools/review_tools/export_review_to_yolo.py \
+  --project-root . \
+  --export-dir outputs/review_exports/export_20260622_000230 \
+  --output-dir outputs/review_yolo_dataset_ddd_random_conf030_baseclasses \
+  --classes stamp handwritten_text crossout typewritten_text \
+  --val-ratio 0.2 \
+  --seed 42 \
+  --copy-mode copy \
+  --min-box-size 0
+
+# Fine-tune from base model
+yolo detect train \
+  model=runs/detect/layout_detector_typewritten_v1/weights/best.pt \
+  data=outputs/review_yolo_dataset_ddd_random_conf030_baseclasses/data.yaml \
+  epochs=15 \
+  imgsz=1024 \
+  batch=4 \
+  patience=6 \
+  device=cpu \
+  workers=0 \
+  lr0=0.0005 \
+  name=layout_detector_reviewed_ddd_baseclasses_v1</code></pre>
+
+                <h3>Current conclusion</h3>
+                <ul>
+                    <li><b>Base model:</b> better recall, good for main demo and candidate generation.</li>
+                    <li><b>Reviewed conservative model:</b> fewer detections, useful as retraining proof of concept.</li>
+                    <li><b>Do not replace the base model yet</b> until more reviewed data is collected or merged with the synthetic/original dataset.</li>
+                </ul>
+
+                <h3>What is still missing / future improvements</h3>
+                <ul>
+                    <li>Add a proper <code>batch_config.json</code> so the app can load batches without long env commands.</li>
+                    <li>Add <code>--crop-id-prefix</code> support to <code>processing/crop_objects_from_layout.py</code>.</li>
+                    <li>Merge reviewed labels with the larger synthetic/original YOLO dataset before final retraining.</li>
+                    <li>Review more examples, especially <code>stamp</code>, <code>crossout</code> and <code>typewritten_text</code>.</li>
+                    <li>Keep rejected crops as <code>false_positive</code> for clean analysis.</li>
+                    <li>Compare models visually, not only by number of detections.</li>
+                </ul>
+            </section>
+
         </body>
         </html>
         """
