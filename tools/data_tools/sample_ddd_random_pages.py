@@ -323,7 +323,14 @@ def main() -> int:
             print(f"[SKIP] No PDF found for record {record.record_id}: {record.record_url}")
             continue
 
-        pdf_path = download_pdf(record, raw_dir=raw_dir, max_pdf_mb=args.max_pdf_mb, dry_run=args.dry_run)
+        try:
+            pdf_path = download_pdf(record, raw_dir=raw_dir, max_pdf_mb=args.max_pdf_mb, dry_run=args.dry_run)
+        except requests.RequestException as exc:
+            print(f"[WARN] Could not download PDF for record {record.record_id}: {exc}")
+            continue
+        except Exception as exc:
+            print(f"[WARN] Unexpected error downloading PDF for record {record.record_id}: {exc}")
+            continue
         if not pdf_path:
             continue
 
