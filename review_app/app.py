@@ -1676,7 +1676,7 @@ def index():
                 }
                 .container {
                     display: grid;
-                    grid-template-columns: minmax(300px, 0.85fr) minmax(720px, 2.1fr) minmax(300px, 0.75fr) minmax(300px, 0.75fr);
+                    grid-template-columns: minmax(300px, 0.85fr) minmax(620px, 1.45fr) minmax(340px, 0.95fr) minmax(340px, 0.95fr);
                     gap: 18px;
                     align-items: start;
                     max-width: none;
@@ -1749,7 +1749,7 @@ def index():
 
                 @media (max-width: 1650px) {
                     .container {
-                        grid-template-columns: minmax(320px, 0.85fr) minmax(620px, 1.8fr) minmax(320px, 0.9fr);
+                        grid-template-columns: minmax(300px, 0.8fr) minmax(560px, 1.35fr) minmax(330px, 1fr);
                     }
 
                     .vae-panel {
@@ -2409,7 +2409,7 @@ def index():
 
                 @media (max-width: 1650px) {
                     .container {
-                        grid-template-columns: minmax(320px, 0.85fr) minmax(620px, 1.8fr) minmax(320px, 0.9fr);
+                        grid-template-columns: minmax(300px, 0.8fr) minmax(560px, 1.35fr) minmax(330px, 1fr);
                     }
                     .vae-panel {
                         grid-column: 1 / -1;
@@ -2598,12 +2598,24 @@ def index():
                     </button>
                 </form>
 
-                <div class="stats-details" style="flex-basis:100%; margin:0; padding:8px 12px; font-size:13px; line-height:1.35;">
-                    <b>Action guide:</b>
-                    <b>Rebuild FAISS/VAE</b> refreshes visual similarity after a new batch, manual crops, changed metadata, or when similar/VAE results do not appear.
-                    <b>Rebuild indexes</b> refreshes accepted/rejected/exportable counters after reviewing.
-                    <b>Export package</b> saves the reviewed state for sharing, backup, delivery, or future training.
-                </div>
+                <details class="stats-details" style="flex-basis:100%; margin:0; padding:7px 12px; font-size:13px; line-height:1.35;">
+                    <summary style="cursor:pointer; font-weight:800;">
+                        Action guide: what do these buttons do?
+                    </summary>
+                    <div style="margin-top:8px;">
+                        <p style="margin:4px 0;">
+                            <b>Rebuild FAISS/VAE</b>: refreshes visual similarity after a new batch, manual crops, changed metadata, or when similar/VAE results do not appear.
+                            It does <b>not</b> delete reviews.
+                        </p>
+                        <p style="margin:4px 0;">
+                            <b>Rebuild indexes</b>: refreshes accepted/rejected/exportable counters after reviewing.
+                            It does <b>not</b> rebuild visual similarity.
+                        </p>
+                        <p style="margin:4px 0;">
+                            <b>Export package</b>: saves the reviewed state for sharing, backup, delivery, or future training.
+                        </p>
+                    </div>
+                </details>
             </div>
 
             <div class="stats-details type-filter-panel">
