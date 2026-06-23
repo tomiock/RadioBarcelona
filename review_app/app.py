@@ -2704,8 +2704,13 @@ def index():
                         </ul>
                     </details>
 
+                    <div class="meta-compact-row" style="margin:8px 0 6px 0;">
+                        <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></span>
+                        <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></span>
+                    </div>
+
                     {% set detector_conf = item.get("confidence")|float %}
-                    <p style="margin:8px 0 4px 0;"><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
+                    <p style="margin:4px 0 4px 0;"><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
                     <div class="confidence-track" title="Detector confidence">
                         <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
                     </div>
@@ -2722,25 +2727,12 @@ def index():
                     {% endif %}
                     
 
-                    <h2>Metadata</h2>
-                    <p>
-                        <b>Crop:</b>
-                        <a class="mini-link" href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="{{ item.get('crop_id') }}">open crop</a>
+                    <p class="meta-compact-row" style="margin:8px 0 10px 0;">
+                        <span><b>Crop:</b> <a class="mini-link" href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="{{ item.get('crop_id') }}">open crop</a></span>
+                        <span><b>Document / page:</b> <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" title="{{ item.get('document_id') }}">open page</a></span>
                     </p>
-                    <div class="meta-compact-row">
-                        <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></span>
 
-                        {% if previous_review %}
-                        <span><b>Dec:</b> <span class="decision-badge decision-{{ previous_review.get('decision') or 'unknown' }}">{{ previous_review.get("decision") }}</span></span>
-                        <span><b>Rev:</b> <span class="meta-badge type-{{ previous_review.get('reviewed_type') or 'unknown' }}">{{ previous_review.get("reviewed_type") }}</span></span>
-                        {% endif %}
 
-                        <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></span>
-                    </div>
-                    <p>
-                        <b>Document / page:</b>
-                        <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" title="{{ item.get('document_id') }}">open page</a>
-                    </p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
@@ -2941,7 +2933,6 @@ def index():
                                         <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a></span>
                                         <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a></span>
                                     </span>
-                                    <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
                                     <div class="mini-confidence-track" title="Detector confidence">
                                         <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
                                     </div>                                    
@@ -2953,7 +2944,11 @@ def index():
                                         src="{{ url_for('similar_crop_image', faiss_id=sim.faiss_id) }}"
                                     >
                                 </a>
-                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}">Open page context</a>
+                                <p class="meta-compact-row" style="margin:4px 0 8px 0;">
+                                    <a class="mini-link" href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" title="{{ sim.get('crop_id') }}">Open crop</a>
+                                    <span>·</span>
+                                    <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" title="{{ sim.get('crop_id') }}">Open page context</a>
+                                </p>
 
                                 {% if sim.previous_review %}
                                     
@@ -3015,7 +3010,6 @@ def index():
                                         <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=sim.get('type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('type') or 'unknown' }}">{{ sim.get("type") }}</span></a></span>
                                         <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=sim.get('effective_type'), idx=0) }}"><span class="meta-badge type-{{ sim.get('effective_type') or 'unknown' }}">{{ sim.get("effective_type") }}</span></a></span>
                                     </span>
-                                    <span class="crop-id-line">crop={{ sim.get("crop_id") }}</span>
                                     <div class="mini-confidence-track" title="Detector confidence">
                                         <div class="mini-confidence-fill" style="width: {{ (sim_conf * 100)|round(1) }}%;"></div>
                                     </div>
@@ -3027,7 +3021,11 @@ def index():
                                         src="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}"
                                     >
                                 </a>
-                                <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}">Open page context</a>
+                                <p class="meta-compact-row" style="margin:4px 0 8px 0;">
+                                    <a class="mini-link" href="{{ url_for('crop_image_by_id', crop_id=sim.get('crop_id')) }}" title="{{ sim.get('crop_id') }}">Open crop</a>
+                                    <span>·</span>
+                                    <a class="mini-link" href="{{ url_for('page_preview', crop_id=sim.get('crop_id')) }}" title="{{ sim.get('crop_id') }}">Open page context</a>
+                                </p>
 
                                 {% if sim.previous_review %}
                                 <span class="review-badge review-{{ sim.previous_review.get('decision') }}">
