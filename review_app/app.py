@@ -1672,7 +1672,18 @@ def index():
                     color: #111;
                 }
                 .topbar {
-                    margin-bottom: 18px;
+                    margin-bottom: 14px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    text-align: center;
+                }
+
+                .navlabel {
+                    font-size: 15px;
+                    font-weight: 500;
                 }
                 .container {
                     display: grid;
@@ -2598,41 +2609,46 @@ def index():
                     </button>
                 </form>
 
-                <details class="stats-details" style="flex-basis:100%; margin:0; padding:7px 12px; font-size:13px; line-height:1.35;">
-                    <summary style="cursor:pointer; font-weight:800;">
-                        Action guide: what do these buttons do?
-                    </summary>
-                    <div style="margin-top:8px;">
-                        <p style="margin:4px 0;">
-                            <b>Rebuild FAISS/VAE</b>: refreshes visual similarity after a new batch, manual crops, changed metadata, or when similar/VAE results do not appear.
-                            It does <b>not</b> delete reviews.
-                        </p>
-                        <p style="margin:4px 0;">
-                            <b>Rebuild indexes</b>: refreshes accepted/rejected/exportable counters after reviewing.
-                            It does <b>not</b> rebuild visual similarity.
-                        </p>
-                        <p style="margin:4px 0;">
-                            <b>Export package</b>: saves the reviewed state for sharing, backup, delivery, or future training.
-                        </p>
-                    </div>
-                </details>
+
             </div>
 
             <div class="stats-details type-filter-panel">
-                <span class="type-filter-title">Predicted:</span>
-                {% for key, value in review_stats.predicted_types.items() %}
-                    <a class="navlink {% if type_field == 'predicted' and type_value == key %}active-filter{% endif %}"
-                       href="{{ url_for('index', filter='all', type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
-                {% endfor %}
+                {% set selected_type_tab = type_field if type_field else 'predicted' %}
 
-                <span class="type-filter-title">Effective:</span>
-                {% for key, value in review_stats.effective_types.items() %}
-                    <a class="navlink {% if type_field == 'effective' and type_value == key %}active-filter{% endif %}"
-                       href="{{ url_for('index', filter='all', type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
-                {% endfor %}
+                <span class="type-filter-title">Type filter:</span>
+
+                <a class="navlink {% if selected_type_tab == 'predicted' %}active-filter{% endif %}"
+                   href="{{ url_for('index', filter=filter_name, type_field='predicted', idx=0) }}">
+                   Predicted
+                </a>
+
+                <a class="navlink {% if selected_type_tab == 'effective' %}active-filter{% endif %}"
+                   href="{{ url_for('index', filter=filter_name, type_field='effective', idx=0) }}">
+                   Effective
+                </a>
+
+                <span class="type-filter-title">
+                    {% if selected_type_tab == 'effective' %}
+                        Effective classes:
+                    {% else %}
+                        Predicted classes:
+                    {% endif %}
+                </span>
+
+                {% if selected_type_tab == 'effective' %}
+                    {% for key, value in review_stats.effective_types.items() %}
+                        <a class="navlink {% if type_field == 'effective' and type_value == key %}active-filter{% endif %}"
+                           href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                    {% endfor %}
+                {% else %}
+                    {% for key, value in review_stats.predicted_types.items() %}
+                        <a class="navlink {% if type_field == 'predicted' and type_value == key %}active-filter{% endif %}"
+                           href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=key, idx=0) }}">{{ key }} ({{ value }})</a>
+                    {% endfor %}
+                {% endif %}
 
                 {% if type_value %}
-                    <a class="navlink clear-type-filter" href="{{ url_for('index', filter=filter_name, idx=0) }}">Clear type filter</a>
+                    <a class="navlink clear-type-filter" href="{{ url_for('index', filter=filter_name, type_field=selected_type_tab, idx=0) }}">Clear class filter</a>
                 {% endif %}
             </div>
 
@@ -2640,11 +2656,16 @@ def index():
 
 
             <div class="topbar">
+                <span class="navlabel"><b>Item {{ idx + 1 }} / {{ total }}</b> · Filter: {{ filters[filter_name] }}</span>
+
                 <a class="navlink" href="{{ url_for('index', idx=prev_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next →</a>
+
                 <span class="navlabel">Different pages: {{ current_page_position }} / {{ total_different_pages }} · crops on this page: {{ current_page_crop_count }}</span>
+
                 <a class="navlink" href="{{ url_for('index', idx=prev_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">← Previous different page</a>
                 <a class="navlink" href="{{ url_for('index', idx=next_different_page_idx, filter=filter_name, type_field=type_field, type_value=type_value) }}">Next different page →</a>
+
                 <form class="jump-form" method="get" action="{{ url_for('index') }}">
                     <input type="hidden" name="filter" value="{{ filter_name }}">
                     <input type="hidden" name="type_field" value="{{ type_field }}">
@@ -2652,7 +2673,6 @@ def index():
                     <label>Jump to item <input type="number" name="goto" min="1" max="{{ total }}" value="{{ idx + 1 }}"></label>
                     <button class="navlink" type="submit">Go</button>
                 </form>
-                <span>Item {{ idx + 1 }} / {{ total }} · Filter: {{ filters[filter_name] }}</span>
             </div>
 
       
@@ -2683,8 +2703,15 @@ def index():
                             <li>Detector missed a stamp → create a <b>manual crop</b> from the full page.</li>
                         </ul>
                     </details>
-                    <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="Open crop full size">
-                        <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}">
+
+                    {% set detector_conf = item.get("confidence")|float %}
+                    <p style="margin:8px 0 4px 0;"><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
+                    <div class="confidence-track" title="Detector confidence">
+                        <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
+                    </div>
+
+                    <a href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="{{ item.get('crop_id') }}">
+                        <img class="crop-img zoomable" src="{{ url_for('crop_image', crop_id=item['crop_id']) }}" alt="{{ item.get('crop_id') }}">
                     </a>
                     {% if previous_review %}
                     <div class="status review-status review-{{ previous_review.get('decision') }}">
@@ -2696,7 +2723,11 @@ def index():
                     
 
                     <h2>Metadata</h2>
-                    <p><b>Crop ID:</b> <span class="metadata-value">{{ item.get("crop_id") }}</span></p>
+                    <p>
+                        <b>Crop:</b>
+                        <a class="mini-link" href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="{{ item.get('crop_id') }}">open crop</a>
+                        <span class="metadata-value">{{ item.get("crop_id") }}</span>
+                    </p>
                     <div class="meta-compact-row">
                         <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></span>
 
@@ -2707,13 +2738,11 @@ def index():
 
                         <span><b>Eff:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='effective', type_value=current_type, idx=0) }}"><span class="meta-badge type-{{ current_type or 'unknown' }}">{{ current_type }}</span></a></span>
                     </div>
-                    {% set detector_conf = item.get("confidence")|float %}
-                    <p><b>Detector confidence:</b> {{ "%.4f"|format(detector_conf) }}</p>
-                    <div class="confidence-track" title="Detector confidence">
-                        <div class="confidence-fill" style="width: {{ (detector_conf * 100)|round(1) }}%;"></div>
-                    </div>
-                    <p><b>Document / page:</b> <span class="metadata-value">{{ item.get("document_id") }}</span></p>
-                    <p><a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}">Open full page preview</a></p>
+                    <p>
+                        <b>Document / page:</b>
+                        <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" title="{{ item.get('document_id') }}">open page</a>
+                        <span class="metadata-value">{{ item.get("document_id") }}</span>
+                    </p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
