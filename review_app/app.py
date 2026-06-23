@@ -2726,7 +2726,6 @@ def index():
                     <p>
                         <b>Crop:</b>
                         <a class="mini-link" href="{{ url_for('crop_image', crop_id=item['crop_id']) }}" title="{{ item.get('crop_id') }}">open crop</a>
-                        <span class="metadata-value">{{ item.get("crop_id") }}</span>
                     </p>
                     <div class="meta-compact-row">
                         <span><b>Pred:</b> <a class="badge-link" href="{{ url_for('index', filter=filter_name, type_field='predicted', type_value=item.get('type'), idx=0) }}"><span class="meta-badge type-{{ item.get('type') or 'unknown' }}">{{ item.get("type") }}</span></a></span>
@@ -2741,7 +2740,6 @@ def index():
                     <p>
                         <b>Document / page:</b>
                         <a class="mini-link" href="{{ url_for('page_preview', crop_id=item['crop_id']) }}" title="{{ item.get('document_id') }}">open page</a>
-                        <span class="metadata-value">{{ item.get("document_id") }}</span>
                     </p>
                     <form method="post" action="{{ url_for('review') }}">
                         <input type="hidden" name="crop_id" value="{{ item.get('crop_id') }}">
