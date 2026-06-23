@@ -2574,13 +2574,36 @@ def index():
                     {{ review_stats.false_positives }}
                 </a>
 
-                <form class="stat-card stat-action" method="post" action="{{ url_for('build_review_indexes_route') }}">
-                    <button class="stat-action-button" type="submit" name="export_package" value="0">Rebuild indexes</button>
+                <form class="stat-card stat-action" method="post" action="{{ url_for('rebuild_visual_search') }}"
+                      onsubmit="return confirm('Rebuild FAISS/VAE visual search indexes? This is safe: it does not delete reviews or modify review_log.jsonl. It only refreshes visual similarity indexes and may take a while.');">
+                    <button class="stat-action-button" type="submit" title="Refresh FAISS/VAE visual similarity indexes. Safe for reviews.">
+                        Rebuild FAISS/VAE
+                        <span class="stat-subtext">visual similarity · safe</span>
+                    </button>
                 </form>
 
-                <form class="stat-card stat-action good-stat" method="post" action="{{ url_for('build_review_indexes_route') }}">
-                    <button class="stat-action-button" type="submit" name="export_package" value="1">Export package</button>
+                <form class="stat-card stat-action" method="post" action="{{ url_for('build_review_indexes_route') }}"
+                      onsubmit="return confirm('Rebuild review/export indexes? This is safe: it updates accepted/rejected/exportable summaries from the current metadata and review log.');">
+                    <button class="stat-action-button" type="submit" name="export_package" value="0" title="Refresh review/export counters and filtered indexes. Safe for reviews.">
+                        Rebuild indexes
+                        <span class="stat-subtext">review/export counters</span>
+                    </button>
                 </form>
+
+                <form class="stat-card stat-action good-stat" method="post" action="{{ url_for('build_review_indexes_route') }}"
+                      onsubmit="return confirm('Create an export package from the current reviewed data? This does not delete reviews. Recommended after Rebuild indexes.');">
+                    <button class="stat-action-button" type="submit" name="export_package" value="1" title="Create an export package with reviewed material.">
+                        Export package
+                        <span class="stat-subtext">backup / delivery / training</span>
+                    </button>
+                </form>
+
+                <div class="stats-details" style="flex-basis:100%; margin:0; padding:8px 12px; font-size:13px; line-height:1.35;">
+                    <b>Action guide:</b>
+                    <b>Rebuild FAISS/VAE</b> refreshes visual similarity after a new batch, manual crops, changed metadata, or when similar/VAE results do not appear.
+                    <b>Rebuild indexes</b> refreshes accepted/rejected/exportable counters after reviewing.
+                    <b>Export package</b> saves the reviewed state for sharing, backup, delivery, or future training.
+                </div>
             </div>
 
             <div class="stats-details type-filter-panel">
@@ -4470,6 +4493,220 @@ def internal_pipeline_help():
     </body>
     </html>
     """
+
+
+
+
+@app.before_request
+def serve_internal_pipeline_help_override():
+    """
+    Render /help and /internal_pipeline_help from docs/internal_pipeline_help.md.
+
+    Keep the documentation in Markdown, but show it as a clean HTML page.
+    """
+    if request.path not in {"/help", "/internal_pipeline_help"}:
+        return None
+
+    try:
+        import markdown
+    except ImportError:
+        return "<h1>Pipeline Help</h1><p>Missing dependency: markdown. Run <code>python -m pip install markdown</code>.</p>"
+
+    help_path = PROJECT_ROOT / "docs/internal_pipeline_help.md"
+
+    if not help_path.exists():
+        return "<h1>Pipeline Help</h1><p>Missing file: docs/internal_pipeline_help.md</p>"
+
+    md_text = help_path.read_text(encoding="utf-8")
+
+    html_body = markdown.markdown(
+        md_text,
+        extensions=["fenced_code", "tables"]
+    )
+
+    return render_template_string("""
+    <!doctype html>
+    <html>
+    <head>
+        <title>Pipeline Help</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f4f6f8;
+                color: #111;
+                margin: 0;
+                line-height: 1.55;
+            }
+
+            .page {
+                max-width: 1080px;
+                margin: 28px auto;
+                padding: 0 20px 40px 20px;
+            }
+
+            .topbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-bottom: 14px;
+            }
+
+            .back {
+                color: #0f766e;
+                font-weight: 800;
+                text-decoration: none;
+            }
+
+            .card {
+                background: white;
+                padding: 30px 38px;
+                border-radius: 14px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+                border: 1px solid #ddd;
+            }
+
+            h1 {
+                margin-top: 0;
+                border-bottom: 2px solid #e5e7eb;
+                padding-bottom: 10px;
+            }
+
+            h2 {
+                margin-top: 32px;
+                border-left: 5px solid #0f766e;
+                padding-left: 10px;
+            }
+
+            h3 {
+                margin-top: 24px;
+            }
+
+            code {
+                background: #eef2f7;
+                padding: 2px 6px;
+                border-radius: 5px;
+                overflow-wrap: anywhere;
+            }
+
+            pre {
+                background: #0f172a;
+                color: #e5e7eb;
+                padding: 14px 16px;
+                border-radius: 10px;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            pre code {
+                background: transparent;
+                color: inherit;
+                padding: 0;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin: 16px 0;
+            }
+
+            th, td {
+                border: 1px solid #d1d5db;
+                padding: 8px 10px;
+                text-align: left;
+                vertical-align: top;
+            }
+
+            th {
+                background: #f3f4f6;
+            }
+
+            blockquote {
+                border-left: 4px solid #0f766e;
+                background: #f0fdfa;
+                padding: 10px 14px;
+                margin: 16px 0;
+                border-radius: 8px;
+            }
+
+            @media (max-width: 800px) {
+                .page {
+                    margin: 10px auto;
+                    padding: 0 10px 24px 10px;
+                }
+
+                .card {
+                    padding: 20px 16px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="page">
+            <div class="topbar">
+                <a class="back" href="{{ url_for('index') }}">← Back to review app</a>
+                <b>Internal pipeline guide</b>
+            </div>
+
+            <div class="card">
+                {{ html_body|safe }}
+            </div>
+        </div>
+    </body>
+    </html>
+    """, html_body=html_body)
+
+
+
+@app.route("/rebuild_visual_search", methods=["POST"])
+def rebuild_visual_search():
+    """
+    Rebuild FAISS/VAE visual search indexes for the active review config.
+
+    Safe action:
+    - does not modify review_log.jsonl
+    - does not delete reviews
+    - only rebuilds visual similarity indexes
+    """
+    import subprocess
+    from datetime import datetime
+
+    script = PROJECT_ROOT / "scripts/rebuild_visual_search_current.sh"
+    log_dir = PROJECT_ROOT / "outputs/logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "rebuild_visual_search_from_app.log"
+
+    if not script.exists():
+        return redirect(url_for("index", msg="Visual search rebuild script not found"))
+
+    started = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with log_path.open("w", encoding="utf-8") as log:
+        log.write(f"Started: {started}\n")
+        log.write(f"Script: {script}\n")
+        log.write(f"Config: {PROJECT_ROOT / 'configs/review_current.json'}\n\n")
+        log.flush()
+
+        result = subprocess.run(
+            [str(script)],
+            cwd=PROJECT_ROOT,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+        ended = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log.write(f"\nEnded: {ended}\n")
+        log.write(f"Return code: {result.returncode}\n")
+
+    if result.returncode != 0:
+        msg = f"FAISS/VAE rebuild failed. See log: {log_path.relative_to(PROJECT_ROOT)}"
+    else:
+        msg = f"FAISS/VAE visual search rebuilt. Log: {log_path.relative_to(PROJECT_ROOT)}"
+
+    return redirect(url_for("index", msg=msg))
 
 
 if __name__ == "__main__":

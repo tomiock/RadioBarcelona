@@ -1,0 +1,12 @@
+flask
+pillow
+numpy
+opencv-python
+torch
+torchvision
+ultralytics
+faiss-cpu
+markdown
+requests
+beautifulsoup4
+tqdm
