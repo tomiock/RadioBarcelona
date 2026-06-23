@@ -4399,6 +4399,79 @@ def outputs_help_page():
 
 
 
+
+
+@app.route("/internal_pipeline_help")
+def internal_pipeline_help():
+    """
+    Internal pipeline help page.
+
+    The content is kept in docs/internal_pipeline_help.md so it can be edited
+    without changing the Flask app code every time.
+    """
+    import html
+
+    help_path = PROJECT_ROOT / "docs/internal_pipeline_help.md"
+
+    if not help_path.exists():
+        return """
+        <h1>Internal Pipeline Help</h1>
+        <p>Missing file: docs/internal_pipeline_help.md</p>
+        """
+
+    content = help_path.read_text(encoding="utf-8")
+
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+        <title>Internal Pipeline Help</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 24px;
+                background: #f5f5f5;
+                color: #111;
+                line-height: 1.45;
+            }}
+            .card {{
+                background: white;
+                padding: 22px;
+                border-radius: 10px;
+                max-width: 1100px;
+                margin: 0 auto;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            }}
+            pre {{
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                background: #f8fafc;
+                border: 1px solid #d0d7de;
+                padding: 16px;
+                border-radius: 8px;
+                font-size: 14px;
+            }}
+            a {{
+                color: #0f766e;
+            }}
+            .nav {{
+                margin-bottom: 16px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="nav">
+                <a href="/">← Back to review app</a>
+            </div>
+            <pre>{html.escape(content)}</pre>
+        </div>
+    </body>
+    </html>
+    """
+
+
 if __name__ == "__main__":
     # App local.
     # Obre al navegador: http://127.0.0.1:5000
