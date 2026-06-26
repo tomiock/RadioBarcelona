@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Document Viewer</title>
+    <style>
+        /* Side-by-Side Display Mode for Layers */
+        #imageContainer.side-by-side-mode {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100% !important; /* Overrides the inline 600px so they have room */
+            max-width: 1200px;
+        }
+
+        #imageContainer.side-by-side-mode img {
+            position: static !important; /* Stops them from overlapping */
+            width: 48% !important;       /* Overrides the inline 100% width */
+            height: auto !important;     /* Overrides the inline 100% height */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            background-color: var(--img-bg);
+        }
+        :root {
+            --bg-color: #faf7f2; 
+            --vignette-edge: rgba(100, 50, 15, 0.25); 
+            --text-color: #1c1917; 
+            --heading-color: #1c1917; 
+            --card-bg: #b45309; 
+            --panel-bg: #faf7f2;
+            --card-hover-shadow: rgba(180, 83, 9, 0.4); 
+            --btn-bg: #b45309; 
+            --btn-hover: #92400e; 
+            --btn-text: #ffffff; 
+            --input-bg: #faf7f2;
+            --border-color: #d1c5b4; 
+            --border-dark: #bbaea0; 
+            --img-bg: #ffffff; 
+            --line-color: rgba(180, 83, 9, 0.3);
+        }
+
+        body.dark-mode {
+            --bg-color: #292524; 
+            --vignette-edge: rgba(0, 0, 0, 0.8); 
+            --text-color: #f5f5f4; 
+            --card-bg: #b45309; --card-hover-shadow: rgba(0,0,0,0.8); --panel-bg: #292524;
+            --border-color: #44403c; --border-dark: #57534e; --btn-bg: #b45309; --btn-hover: #92400e;
+            --btn-text: #ffffff; --heading-color: #d6d3d1; --img-bg: #1c1917; --line-color: rgba(255, 255, 255, 0.2);
+            --input-bg: #44403c;
+        }
+        body { font-family: system-ui, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); height: 100vh; overflow: hidden; transition: 0.3s; }
+        #themeToggle { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; background: var(--panel-bg); color: var(--text-color); z-index: 100; font-weight: 500; }
+        
+        #fileSelectionScreen { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding-top: 80px; 
+            height: 100vh; 
+            background: radial-gradient(circle at center, var(--bg-color) 30%, var(--vignette-edge) 100%); 
+            overflow-y: auto; 
+        }
+        .search-container { margin-bottom: 40px; width: 100%; max-width: 600px; padding: 0 20px; box-sizing: border-box; }
+        #searchInput { width: 100%; padding: 16px 24px; font-size: 18px; border: none; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: var(--input-bg); color: var(--text-color); outline: none; }
+
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; max-width: 1200px; width: 100%; padding: 20px; box-sizing: border-box; }
+        .file-card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; overflow: hidden; display: flex; flex-direction: column; transition: 0.2s; position: relative;}
+        .file-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px var(--card-hover-shadow); }
+        .file-card img { width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid var(--border-color); }
+        .file-card-title { padding: 12px; font-size: 14px; font-weight: 600; text-align: center; color: #ffffff; }    
+
+        #mainViewer { 
+            display: none; 
+            height: 100vh; 
+            width: 100vw; 
+            background: radial-gradient(circle at center, var(--bg-color) 30%, var(--vignette-edge) 100%);
+        }
+        .viewer-area { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 40px; overflow-y: auto; gap: 60px; }
+        #pagesContainer { display: flex; flex-direction: column; align-items: center; gap: 80px; width: 100%; }
+        
+        .controls-area { width: 320px; background: var(--panel-bg); border-left: 1px solid var(--border-dark); padding: 32px 24px; display: flex; flex-direction: column; gap: 32px; overflow-y: auto; z-index: 10; }
+        .top-controls { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+        .back-btn { background: var(--btn-bg); border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--btn-text); }
+        .control-group h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #d6d3d1; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <button id="themeToggle">Toggle Dark Mode</button>
+
+    <div id="fileSelectionScreen">
+        <h1 style="margin-bottom: 20px;">Document Library</h1>
+        <div style="display: flex; gap: 10px; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto 30px auto; padding: 0 20px; box-sizing: border-box;">
+            <select id="searchTypeToggle" style="padding: 15px 20px; border-radius: 30px; border: 2px solid #b45309; background: #b45309; color: #ffffff; box-shadow: 0 4px 12px rgba(180,83,9,0.2); cursor: pointer; height: 54px; font-weight: bold; outline: none; flex-shrink: 0;">
+                <option value="exact">Exact Match</option>
+                <option value="conceptual">Conceptual</option>
+            </select>
+
+            <div class="search-box" style="margin: 0; flex-grow: 1; position: relative; display: flex; align-items: center;">
+                <input type="search" id="searchInput" placeholder="Search archive text, concepts, dates..." style="width: 100%; padding: 16px 50px 16px 24px; font-size: 16px; border: 2px solid #b45309; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background-color: var(--input-bg); color: var(--text-color); outline: none;">
+                
+                <input type="file" id="stampUpload" accept="image/png, image/jpeg, image/jpg" style="display: none;">
+                <label for="stampUpload" style="position: absolute; right: 18px; cursor: pointer; color: #b45309; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Upload a stamp to search by image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                </label>
+            </div>
+
+            <select id="yearFilter" style="padding: 15px 20px; border-radius: 30px; border: 2px solid #b45309; background: #b45309; color: #ffffff; box-shadow: 0 4px 12px rgba(180,83,9,0.2); cursor: pointer; height: 54px; font-weight: 500; flex-shrink: 0; outline: none;">
+                <option value="">All Years</option>
+                </select>
+        </div>
+        <div class="file-grid" id="fileGrid"></div>
+        <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 40px; width: 100%;"></div>
+    </div>
+
+    <div id="mainViewer" style="display: none; height: 100vh; width: 100vw; background: radial-gradient(circle at center, var(--bg-color) 30%, var(--vignette-edge) 100%);">
+        
+        <div class="controls-area" style="width: 320px; background: var(--card-bg); color: white; padding: 30px 20px; box-shadow: 4px 0 20px rgba(0,0,0,0.3); z-index: 10; display: flex; flex-direction: column; gap: 25px; overflow-y: auto;">
+            
+            <div class="top-controls" style="display: flex; flex-direction: column; gap: 15px;">
+                <button class="back-btn" onclick="closeFile()" style="padding: 12px; background: var(--bg-color); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    ← Back to Archive
+                </button>
+                <h3 id="viewerTitle" style="margin: 0; font-size: 18px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 10px;">Document Title</h3>
+            </div>
+
+            <div class="control-group" style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 10px;">Display Mode</h3>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="radio" name="viewMode" value="original" checked> Original Document
+                </label>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="radio" name="viewMode" value="layers"> Separated Layers
+                </label>
+            </div>
+
+            <div id="originalControls" class="control-group">
+                <label style="display: block; cursor: pointer;">
+                    <input type="checkbox" id="toggleHighlights" checked> Show Search Highlights & Stamps
+                </label>
+            </div>
+
+            <div id="layerControls" class="control-group layer-controls" style="display: none; transition: 0.3s;">
+                <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--border-dark);">Active Layers</h3>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="toggleLayer0" checked> Typewritten (Blue)
+                </label>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="toggleLayer1"> Handwritten (Red)
+                </label>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1);">
+                    <label style="cursor: pointer; font-weight: bold;">
+                        <input type="checkbox" id="separateToggle"> Separate Side-by-Side
+                    </label>
+                </div>
+            </div>
+            
+        </div>
+        <div class="viewer-area" style="flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: hidden; position: relative;">
+            
+            <div id="imageContainer" style="position: relative; border-radius: 4px; width: 600px; height: 85vh; flex-shrink: 0;">
+                
+                <img id="originalImage" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; transition: 0.4s;">
+                
+                <img id="layer0Fake" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; display: none; pointer-events: none; transition: 0.4s;">
+                
+                <img id="layer1Fake" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 3; display: none; pointer-events: none; transition: 0.4s;">
+                
+                <div id="highlightLayer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => document.body.classList.toggle('dark-mode'));
+
+        const fileGrid = document.getElementById('fileGrid');
+        const searchInput = document.getElementById('searchInput');
+        const yearFilterElement = document.getElementById('yearFilter');
+
+        // --- DYNAMIC YEAR POPULATION ---
+        function populateYears() {
+            if (typeof filesData === 'undefined') return;
+
+            // Extract unique years from the dataset, filter out empty/Unknown, and sort them
+            const uniqueYears = [...new Set(filesData.map(f => f.year))]
+                .filter(year => year && year !== "Unknown")
+                .sort((a, b) => a - b); // Ascending chronological order
+
+            // Inject them into the dropdown
+            uniqueYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilterElement.appendChild(option);
+            });
+        }
+        
+        // Execute immediately since data.js is already loaded
+        populateYears();
+
+
+
+        let currentSearchTerm = "";
+        let currentPage = 1;
+        
+
+        async function performSearch(searchTerm = "", page = 1) {
+            currentSearchTerm = searchTerm;
+            currentPage = page;
+            
+            const year = document.getElementById('yearFilter').value;
+            const searchType = document.getElementById('searchTypeToggle').value;
+
+            fileGrid.innerHTML = ''; 
+            const paginationControls = document.getElementById('paginationControls');
+            paginationControls.innerHTML = ''; 
+
+            try {
+                  // Fetch URL updated to remove month parameter
+                  const response = await fetch(`http://localhost:3000/search?q=${encodeURIComponent(searchTerm)}&page=${page}&year=${year}&type=${searchType}`);
+                  const data = await response.json();
+                  
+                  window.currentSearchResults = data.hits;
+
+                  data.hits.forEach(hit => {
+                      const file = filesData.find(f => f.id === hit.id);
+                      if (file) renderCard(file, hit.score);
+                  });
+
+                  if (data.hits.length === 0) {
+                      fileGrid.innerHTML = '<p style="text-align: center; grid-column: 1 / -1; font-size: 18px; font-weight: 500; color: var(--text-color); margin-top: 40px;">No documents found for that search and filter combination.</p>';
+                  } else if (data.totalPages > 1) {
+                      renderPagination(data.currentPage, data.totalPages, data.total);
+                  }
+
+              } catch (error) {
+                console.error("Search Server Error:", error);
+                fileGrid.innerHTML = '<p style="text-align: center; color: red; grid-column: 1 / -1;">Error: Cannot connect to the search server.</p>';
+            }
+        }
+
+        // Updated event listeners
+        document.getElementById('yearFilter').addEventListener('change', () => performSearch(searchInput.value, 1));
+        document.getElementById('searchTypeToggle').addEventListener('change', () => performSearch(searchInput.value, 1));
+
+        function renderPagination(current, totalPages, totalHits) {
+            const container = document.getElementById('paginationControls');
+            
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'back-btn';
+            prevBtn.innerText = '← Previous';
+            prevBtn.disabled = current === 1;
+            prevBtn.style.opacity = current === 1 ? '0.5' : '1';
+            prevBtn.onclick = () => performSearch(currentSearchTerm, current - 1);
+
+            const pageInfo = document.createElement('span');
+            pageInfo.style.color = 'var(--text-color)';
+            pageInfo.style.fontWeight = 'bold';
+            pageInfo.innerText = `Page ${current} of ${totalPages} (${totalHits} results)`;
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'back-btn';
+            nextBtn.innerText = 'Next →';
+            nextBtn.disabled = current === totalPages;
+            nextBtn.style.opacity = current === totalPages ? '0.5' : '1';
+            nextBtn.onclick = () => performSearch(currentSearchTerm, current + 1);
+
+            container.appendChild(prevBtn);
+            container.appendChild(pageInfo);
+            container.appendChild(nextBtn);
+        }
+        
+        const stampUpload = document.getElementById('stampUpload');
+        
+        stampUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Visual feedback for the user
+            searchInput.value = `Searching for stamp: ${file.name}...`;
+            fileGrid.innerHTML = '<p style="text-align: center; grid-column: 1 / -1; margin-top: 40px;">Analyzing image with VAE & FAISS...</p>';
+            document.getElementById('paginationControls').innerHTML = '';
+
+            // Create a form data object to send the image to Python
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // IMPORTANT: Change this URL to match the exact endpoint on your Python server (Port 8000)
+                const res = await fetch('http://localhost:8000/search_upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!res.ok) throw new Error("Server returned an error");
+                const data = await res.json();
+                
+                // Assuming Python returns { "results": ["1925_1", "1931_2"] }
+                window.currentSearchResults = data.results.map(id => ({ id: id, matched_chunks: [] }));
+                
+                fileGrid.innerHTML = '';
+                
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(docId => {
+                        const matchedFile = filesData.find(f => f.id === docId);
+                        if (matchedFile) renderCard(matchedFile);
+                    });
+                } else {
+                    fileGrid.innerHTML = `
+                        <div style="text-align: center; grid-column: 1 / -1; margin-top: 50px;">
+                            <h3 style="color: var(--text-color);">No matches found</h3>
+                            <p style="color: var(--border-dark);">We couldn't find any documents containing a similar stamp in the archive.</p>
+                            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #b45309; color: white;">
+                                Back to Library
+                            </button>
+                        </div>`;
+                }
+                
+            } catch (error) {
+                console.error("Image Search Error:", error);
+                fileGrid.innerHTML = '<p style="text-align: center; color: red; grid-column: 1 / -1;">Error: Could not connect to the Python FAISS Server on Port 8000.</p>';
+            }
+            
+            // Reset the input value so the same image can be re-uploaded if needed
+            searchInput.value = "";
+            stampUpload.value = '';
+        });
+        let timeout = null;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => performSearch(e.target.value, 1), 300);
+        });
+
+        performSearch();
+
+        function renderCard(file, score = null) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            card.onclick = () => openFile(file.id);
+            
+            const scoreBadge = ""; 
+            
+            card.innerHTML = `
+                ${scoreBadge}
+                <img src="seg_split_A_package/original_images/${file.thumb}" alt="preview" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22200%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23ddd%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23888%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                <div class="file-card-title">${file.title}</div>
+            `;
+            fileGrid.appendChild(card);
+        }
+
+        const fileSelectionScreen = document.getElementById('fileSelectionScreen');
+        const mainViewer = document.getElementById('mainViewer');
+
+        async function openFile(fileId) {
+            const file = filesData.find(f => f.id === fileId);
+            if (!file) return;
+
+            // 1. UI Setup
+            document.getElementById('fileSelectionScreen').style.display = 'none';
+            document.getElementById('mainViewer').style.display = 'flex';
+            document.getElementById('viewerTitle').textContent = file.title;
+
+            // 2. Clear previous highlights and layers
+            const highlightLayer = document.getElementById('highlightLayer');
+            highlightLayer.innerHTML = ''; 
+
+            // 3. Set Image Sources
+            const mainImg = document.getElementById('originalImage');
+            mainImg.src = `seg_split_A_package/original_images/${file.thumb}`;
+            
+            // Set layer images using the suffix logic we fixed earlier
+            document.getElementById('layer0Fake').src = `seg_split_A_package/layer_separation/blue/${file.thumb.replace('.png', '_blue.png')}`;
+            document.getElementById('layer1Fake').src = `seg_split_A_package/layer_separation/red/${file.thumb.replace('.png', '_red.png')}`;
+
+            // 4. Wait for the main image to load before drawing any boxes
+            mainImg.onload = async () => {
+                
+                // A. Render Search Highlights (Yellow/Blue boxes)
+                const hit = window.currentSearchResults?.find(h => h.id === fileId);
+                if (hit) {
+                    drawHighlights(hit.matched_chunks, document.getElementById('searchInput').value, document.getElementById('searchTypeToggle').value);
+                }
+
+                // B. Fetch and Render Stamps
+                try {
+                    const response = await fetch(`http://localhost:8000/get_stamp/${fileId}`);
+                    const stampData = await response.json();
+                    
+                    if (stampData.found) {
+                        const stampInfo = stampData;
+                        
+                        // Calculate Scale factors for this specific image size
+                        const imgRatio = mainImg.naturalWidth / mainImg.naturalHeight;
+                        const containerRatio = mainImg.clientWidth / mainImg.clientHeight;
+                        let renderWidth, renderHeight, offsetX = 0, offsetY = 0;
+
+                        if (imgRatio > containerRatio) {
+                            renderWidth = mainImg.clientWidth; 
+                            renderHeight = mainImg.clientWidth / imgRatio; 
+                            offsetY = (mainImg.clientHeight - renderHeight) / 2;
+                        } else {
+                            renderHeight = mainImg.clientHeight; 
+                            renderWidth = mainImg.clientHeight * imgRatio; 
+                            offsetX = (mainImg.clientWidth - renderWidth) / 2;
+                        }
+
+                        const scaleX = renderWidth / mainImg.naturalWidth;
+                        const scaleY = renderHeight / mainImg.naturalHeight;
+
+                        // Create the Stamp Box
+                        const stampBox = document.createElement('div');
+                        stampBox.style.position = 'absolute';
+                        stampBox.style.left = (offsetX + (stampInfo.bbox.x1 * scaleX)) + 'px';
+                        stampBox.style.top = (offsetY + (stampInfo.bbox.y1 * scaleY)) + 'px';
+                        stampBox.style.width = ((stampInfo.bbox.x2 - stampInfo.bbox.x1) * scaleX) + 'px';
+                        stampBox.style.height = ((stampInfo.bbox.y2 - stampInfo.bbox.y1) * scaleY) + 'px';
+                        
+                        // Styling
+                        stampBox.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                        stampBox.style.border = '2px solid rgba(255, 0, 0, 0.9)';
+                        stampBox.style.boxShadow = '0 0 8px rgba(255, 0, 0, 0.6)';
+                        stampBox.style.cursor = 'pointer';
+                        stampBox.style.pointerEvents = 'auto'; 
+                        stampBox.style.zIndex = '5';
+                        
+                        highlightLayer.appendChild(stampBox);
+                    }
+                } catch (err) {
+                    console.warn("No stamp data found for this document or API unreachable:", err);
+                }
+            };
+
+            // 5. Update UI view mode
+            resetControls();
+            updateViewMode();
+        }
+
+        function closeFile() {
+            mainViewer.style.display = 'none';
+            fileSelectionScreen.style.display = 'flex';
+        }
+
+        function resetControls() {
+          const originalRadio = document.querySelector('input[name="viewMode"][value="original"]');
+          if (originalRadio) originalRadio.checked = true;
+          
+          if (document.getElementById('toggleHighlights')) document.getElementById('toggleHighlights').checked = true;
+          if (document.getElementById('toggleLayer0')) document.getElementById('toggleLayer0').checked = true;
+          if (document.getElementById('toggleLayer1')) document.getElementById('toggleLayer1').checked = false;
+          if (document.getElementById('separateToggle')) document.getElementById('separateToggle').checked = false;
+
+          if (typeof updateViewMode === 'function') updateViewMode();
+        }
+
+       function drawHighlights(chunks, searchTerm, searchType) {
+            const box = document.createElement('div');
+            box.classList.add('text-highlight');
+            const highlightLayer = document.getElementById('highlightLayer');
+            const img = document.getElementById('originalImage');
+            highlightLayer.innerHTML = ''; 
+
+            if (!chunks || chunks.length === 0 || !searchTerm) return;
+
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+            const containerRatio = img.clientWidth / img.clientHeight;
+
+            let renderWidth, renderHeight, offsetX = 0, offsetY = 0;
+
+            if (imgRatio > containerRatio) {
+                renderWidth = img.clientWidth;
+                renderHeight = img.clientWidth / imgRatio;
+                offsetY = (img.clientHeight - renderHeight) / 2;
+            } else {
+                renderHeight = img.clientHeight;
+                renderWidth = img.clientHeight * imgRatio;
+                offsetX = (img.clientWidth - renderWidth) / 2;
+            }
+
+            const scaleX = renderWidth / img.naturalWidth;
+            const scaleY = renderHeight / img.naturalHeight;
+
+            function createHighlightBox(bbox, type) {
+                const dynamicPadding = img.naturalHeight * 0.012; 
+                
+                // Shift the box UP by 80% of the padding, and increase the total height
+                const adjustedTop = bbox.top - (dynamicPadding * 0.8);
+                const adjustedHeight = bbox.height + dynamicPadding;
+
+                const box = document.createElement('div');
+                box.style.position = 'absolute';
+                box.style.left = (offsetX + (bbox.left * scaleX)) + 'px';
+                
+                // Use our new adjusted calculations
+                box.style.top = (offsetY + (adjustedTop * scaleY)) + 'px';
+                box.style.width = (bbox.width * scaleX) + 'px';
+                box.style.height = (adjustedHeight * scaleY) + 'px';
+                
+                if (type === 'exact') {
+                    box.style.backgroundColor = 'rgba(255, 235, 59, 0.3)'; 
+                    box.style.border = '2px solid rgba(255, 193, 7, 0.8)';
+                } else {
+                    box.style.backgroundColor = 'rgba(33, 150, 243, 0.2)'; 
+                    box.style.border = '2px dashed rgba(33, 150, 243, 0.7)';
+                }
+                
+                box.style.borderRadius = '3px';
+                box.style.pointerEvents = 'none'; 
+                highlightLayer.appendChild(box);
+            }
+            chunks.forEach(chunk => {
+                if (chunk.bbox) {
+                    if (searchType === 'exact') {
+                        createHighlightBox(chunk.bbox, 'exact'); 
+                    } else if (searchType === 'conceptual') {
+                        createHighlightBox(chunk.bbox, 'conceptual'); 
+                    }
+                }
+            });  
+        } 
+
+        function updateViewMode() {
+            const isOriginal = document.querySelector('input[name="viewMode"]:checked').value === 'original';
+            
+            const originalControls = document.getElementById('originalControls');
+            const layerControls = document.getElementById('layerControls');
+            
+            const mainImage = document.getElementById('originalImage');
+            const layer0 = document.getElementById('layer0Fake');
+            const layer1 = document.getElementById('layer1Fake');
+            const highlightLayer = document.getElementById('highlightLayer'); 
+            
+            const showHighlights = document.getElementById('toggleHighlights').checked;
+            const showL0 = document.getElementById('toggleLayer0').checked;
+            const showL1 = document.getElementById('toggleLayer1').checked;
+            const separateToggle = document.getElementById('separateToggle').checked;
+            
+            if(!mainImage) return; 
+            const imageContainer = mainImage.parentElement;
+
+            if (isOriginal) {
+                originalControls.style.display = 'block';
+                layerControls.style.display = 'none';
+                
+                mainImage.style.display = 'block';
+                layer0.style.display = 'none';
+                layer1.style.display = 'none';
+                
+                if (highlightLayer) {
+                    highlightLayer.style.display = 'block';
+                
+                    const children = highlightLayer.children;
+                    for (let child of children) {
+                        // If it's a search highlight (yellow/blue), respect the toggle
+                        if (child.classList.contains('text-highlight')) {
+                            child.style.display = showHighlights ? 'block' : 'none';
+                        }
+                    }
+                }
+                imageContainer.classList.remove('side-by-side-mode');
+                
+            } else {
+                originalControls.style.display = 'none';
+                layerControls.style.display = 'block';
+                
+                mainImage.style.display = 'none';
+                if (highlightLayer) highlightLayer.style.display = 'none'; 
+                
+                layer0.style.display = showL0 ? 'block' : 'none';
+                layer1.style.display = showL1 ? 'block' : 'none';
+                
+                if (separateToggle) {
+                    imageContainer.classList.add('side-by-side-mode');
+                } else {
+                    imageContainer.classList.remove('side-by-side-mode');
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+                radio.addEventListener('change', updateViewMode);
+            });
+            const btnHigh = document.getElementById('toggleHighlights');
+            const btnL0 = document.getElementById('toggleLayer0');
+            const btnL1 = document.getElementById('toggleLayer1');
+            const btnSep = document.getElementById('separateToggle');
+
+            if(btnHigh) btnHigh.addEventListener('change', updateViewMode);
+            if(btnL0) btnL0.addEventListener('change', updateViewMode);
+            if(btnL1) btnL1.addEventListener('change', updateViewMode);
+            if(btnSep) btnSep.addEventListener('change', updateViewMode);
+        });
+    </script>
+</body>
+</html>
