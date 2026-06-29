@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:34</Created>
+    <LastChange>2026-06-01T16:45:34</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9573632478713989" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1945_1.png" imageWidth="1785" imageHeight="2526">
+    <TextRegion id="textregion_368f3c48-cb95-4ff6-aaea-606542b2eac9">
+      <Coords points="0,0 0,2526 1785,2526 1785,0" />
+      <TextLine id="textline_41ebbc42-5ca9-4302-8485-c2c2868f01da">
+        <Coords points="609,64 609,66 980,66 980,64" />
+        <Baseline points="610,64 979,65" />
+      <TextEquiv engine="tesseract"><Unicode>FROGRAVA DO DISCOS</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_23b44890-4822-4cd3-bf1c-5af0c0f259fb">
+        <Coords points="1411,75 1411,77 1568,77 1568,75" />
+        <Baseline points="1411,76 1567,75" />
+      <TextEquiv engine="tesseract"><Unicode>Pad]</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9392f0e1-cace-4ce1-bb21-f0bd776793d0">
+        <Coords points="607,129 607,135 906,135 906,129" />
+        <Baseline points="608,134 905,129" />
+      <TextEquiv engine="tesseract"><Unicode>A LAS 22 10==H</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e4db6492-5ee3-4d25-bdde-a257be1b5a9a">
+        <Coords points="1085,130 1085,134 1612,134 1612,130" />
+        <Baseline points="1085,130 1535,133 1611,131" />
+      <TextEquiv engine="tesseract"><Unicode>Wiércoles,7 de Novbre, 1945</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_21fbce9c-beb2-400b-bfca-4f191a060f72">
+        <Coords points="223,266 223,270 444,270 444,266" />
+        <Baseline points="224,267 374,266 444,269" />
+      <TextEquiv engine="tesseract"><Unicode>ED o: OE sl</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_22334ad0-1d21-43f4-99a0-13197b99849f">
+        <Coords points="87,359 87,368 980,368 980,359" />
+        <Baseline points="88,365 188,367 288,359 388,363 488,361 538,367 979,363" />
+      <TextEquiv engine="tesseract"><Unicode>"626)P4L2" LA NAVE DE LAS ISLAS") de Poteret</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5c8690c6-8583-4add-bf55-d281faa2981a">
+        <Coords points="207,395 207,401 498,401 498,395" />
+        <Baseline points="208,395 498,400" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_203bb96a-082b-4f0c-b62c-6c2f8789f7b5">
+        <Coords points="585,531 585,538 888,538 888,531" />
+        <Baseline points="586,537 686,533 786,535 836,531 888,535" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_29ecdb0c-aa3d-4593-8e4f-1d98b1c433db">
+        <Coords points="247,631 247,636 558,636 558,631" />
+        <Baseline points="248,634 298,631 498,631 558,635" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_ced2ea89-9b32-4edf-be6b-db2fe72f87c2">
+        <Coords points="101,697 101,707 1302,707 1302,697" />
+        <Baseline points="102,706 152,700 352,698 652,701 1251,697 1301,701" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_e0d77c19-61a6-4a1c-b885-7042ff10c871">
+        <Coords points="567,830 567,836 690,836 690,830" />
+        <Baseline points="568,831 668,830 690,835" />
+      <TextEquiv engine="tesseract"><Unicode>LAA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_09d05793-5b8b-47e3-84ce-340098eeb19a">
+        <Coords points="269,897 269,906 484,906 484,897" />
+        <Baseline points="270,900 420,897 484,905" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c6d40377-c193-457d-8790-9bdddcf82c06">
+        <Coords points="105,994 105,1014 1338,1014 1338,994" />
+        <Baseline points="106,1002 206,1000 256,1010 306,1008 356,1012 706,1011 806,1013 856,994 955,996 1055,1006 1337,1007" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_1ab77017-0724-44c1-87f9-730861d62bbb">
+        <Coords points="79,1106 79,1127 1084,1127 1084,1106" />
+        <Baseline points="80,1116 230,1115 280,1125 380,1123 430,1126 630,1123 680,1109 929,1111 1029,1106 1083,1108" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_689f8bdb-878d-4ac4-87ae-3a33a5ae8c97">
+        <Coords points="903,1142 903,1147 1420,1147 1420,1142" />
+        <Baseline points="903,1142 953,1146 1003,1142 1419,1145" />
+      <TextEquiv engine="tesseract"><Unicode>kt por Org. Viator de Salón</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ac506f10-40bd-4ca0-9536-0cddcbb28ba2">
+        <Coords points="757,1359 757,1364 1036,1364 1036,1359" />
+        <Baseline points="758,1363 1007,1362 1035,1359" />
+      <TextEquiv engine="tesseract"><Unicode>Ne de de de le De de oi</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d0759f9d-8de6-44ea-8076-3d2c5f824541">
+        <Coords points="1449,2213 1449,2216 1550,2216 1550,2213" />
+        <Baseline points="1449,2215 1549,2213" />
+      <TextEquiv engine="tesseract"><Unicode>en e</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

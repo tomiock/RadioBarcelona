@@ -1,0 +1,188 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:33</Created>
+    <LastChange>2026-06-01T16:45:33</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9322759509086609" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1944_1.png" imageWidth="2480" imageHeight="3509">
+    <TextRegion id="textregion_1c6aa3a1-230b-416e-8f50-f6aae2a99a66">
+      <Coords points="0,0 0,3509 2480,3509 2480,0" />
+      <TextLine id="textline_efb2651e-1db6-4b9b-9d0d-744f23512864">
+        <Coords points="2042,121 2042,151 2383,151 2383,121" />
+        <Baseline points="2042,151 2092,148 2192,134 2342,122 2382,122" />
+      <TextEquiv engine="tesseract"><Unicode>TR AS Es</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_c728e688-187b-4bd3-bd8e-4d1b672ef4af">
+        <Coords points="750,321 750,327 1949,327 1949,321" />
+        <Baseline points="750,322 1400,322 1650,326 1850,324 1948,327" />
+      <TextEquiv engine="tesseract"><Unicode>4 A 4 "I AL dl A XU ELL La I ' Un</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ae6f4c36-7282-465e-b261-30531b711b05">
+        <Coords points="806,399 806,406 1825,406 1825,399" />
+        <Baseline points="806,400 1056,404 1824,406" />
+      <TextEquiv engine="tesseract"><Unicode>1 ua DAD J ..1 d A Li A ADLUD A US LUN</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8dd55dc0-ed3f-45e8-87e2-91b12dbc2c66">
+        <Coords points="954,481 954,486 1719,486 1719,481" />
+        <Baseline points="954,484 1654,482 1718,486" />
+      <TextEquiv engine="tesseract"><Unicode>LUNDO y? 2 ONU 08 ,L 3 4 4</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9146a67b-10e7-4fa9-8f65-380bec3069c2">
+        <Coords points="1010,538 1010,541 1623,541 1623,538" />
+        <Baseline points="1010,541 1622,539" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2b16fbb0-3b4a-434c-ac89-8cb0cbb2aba7">
+        <Coords points="316,642 316,650 2271,650 2271,642" />
+        <Baseline points="316,647 516,643 1666,647 2166,646 2270,650" />
+      <TextEquiv engine="tesseract"><Unicode>&gt; Merci LO VOL em DU. UA J OEA d Li Se du LLULL Y $10 3 ' 1. 0 ta l</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1c6ea60a-6610-4df8-b303-ae6232ff1eab">
+        <Coords points="574,697 574,701 2205,701 2205,697" />
+        <Baseline points="574,701 624,698 1724,701 2204,699" />
+      <TextEquiv engine="tesseract"><Unicode>Dl ELO. LAS) A J ¡A my EL I er" LOT el Ñ he i d'u LA, y. ql Li cau ALLIO</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_daa30835-910d-404f-8100-548e690cdee7">
+        <Coords points="574,753 574,758 2353,758 2353,753" />
+        <Baseline points="574,758 624,754 2352,755" />
+      <TextEquiv engine="tesseract"><Unicode>A LADCO. yl Hor | | ¿LO ye: LOS, nuy SU nos alas : i Luac 3 3</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f89f4067-5adc-446a-906a-5f36644d45a4">
+        <Coords points="572,808 572,812 1115,812 1115,808" />
+        <Baseline points="572,810 1072,809 1114,812" />
+      <TextEquiv engine="tesseract"><Unicode>Us ALLLDA, BSpañda s</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_04daee83-a7c5-4227-a991-bc97ff89fdbc">
+        <Coords points="364,914 364,923 1817,923 1817,914" />
+        <Baseline points="364,915 464,919 514,916 1714,918 1816,923" />
+      <TextEquiv engine="tesseract"><Unicode>Hr - Vampanedes esas: LE Vatecaral as sarcelonas</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_729c9db4-ed7c-4393-9bef-7924a7327c6d">
+        <Coords points="354,1023 354,1032 1901,1032 1901,1023" />
+        <Baseline points="354,1032 554,1024 854,1027 1900,1028" />
+      <TextEquiv engine="tesseract"><Unicode>PA Tm VROCLOLOS españolas. darcos feqondos (VASCOS)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_484d0ca9-f989-4774-9eb1-6b2c00f6ff6c">
+        <Coords points="348,1129 348,1134 2423,1134 2423,1129" />
+        <Baseline points="348,1131 498,1134 848,1130 1148,1133 2048,1134 2398,1130 2422,1132" />
+      <TextEquiv engine="tesseract"><Unicode>OL) UU Eu LA uo Y ad A EU Ll, LA LA Li i AULUULEU: LL</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9cce1f7e-b702-475b-8e3c-9734b659a0a4">
+        <Coords points="572,1186 572,1187 1639,1187 1639,1186" />
+        <Baseline points="572,1187 1638,1187" />
+      <TextEquiv engine="tesseract"><Unicode>MALLA LA DADA dudas DE. DA A a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f9672d20-0d45-4b1e-a512-d00a1241b4de">
+        <Coords points="346,1291 346,1301 2329,1301 2329,1291" />
+        <Baseline points="346,1301 396,1296 546,1293 1746,1292 2246,1298 2328,1296" />
+      <TextEquiv engine="tesseract"><Unicode>¡AA Y od LES Mar |! WA De Ll ¡| VA LA. Lo LU. y vau L E Li Y. LAS NA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8971fae3-fc43-4195-b054-2336d651731f">
+        <Coords points="568,1347 568,1353 1345,1353 1345,1347" />
+        <Baseline points="568,1350 1268,1348 1344,1353" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_40da7687-88e4-47b2-9cc8-2152a70d3a68">
+        <Coords points="346,1458 346,1468 1439,1468 1439,1458" />
+        <Baseline points="346,1468 546,1459 1438,1460" />
+      <TextEquiv engine="tesseract"><Unicode>A — HEEGEOG ES LU, Ye, QUE ES ei ¡PAD</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_db5c065d-723d-4713-887b-1eab362a4f6f">
+        <Coords points="336,1565 336,1570 1027,1570 1027,1565" />
+        <Baseline points="336,1570 386,1566 936,1566 1026,1569" />
+      <TextEquiv engine="tesseract"><Unicode>Y La EU uta CUOCI OC LO L a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_bb7979a2-c01f-4a2e-a6ef-c61ed17600f3">
+        <Coords points="344,1674 344,1682 1467,1682 1467,1674" />
+        <Baseline points="344,1682 394,1676 1144,1675 1294,1678 1444,1677 1466,1681" />
+      <TextEquiv engine="tesseract"><Unicode>24 Ph.) PULOGLLO LOLOLMaA VO LBLLELOSO .</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_788fe859-39ef-4ebd-9b23-d1a759937e7e">
+        <Coords points="348,1785 348,1790 1319,1790 1319,1785" />
+        <Baseline points="348,1789 398,1785 1318,1785" />
+      <TextEquiv engine="tesseract"><Unicode>A Lla JU DULUS US OLBGUOUS (VLOGUO y</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_09f42cf6-1f76-4526-94d2-2327bca3bba9">
+        <Coords points="340,1890 340,1898 2369,1898 2369,1890" />
+        <Baseline points="340,1897 540,1891 2368,1890" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_42d2eaa6-9269-488f-87d8-e22c9d720f57">
+        <Coords points="572,1943 572,1949 2347,1949 2347,1943" />
+        <Baseline points="572,1948 622,1945 1222,1943 2346,1945" />
+      <TextEquiv engine="tesseract"><Unicode>Q1m0s ade. ustedes asta las Goce, sl ULOS quiere. »enDres - Ta</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_3d4257ee-d245-420e-88da-1ebe1acf0dff">
+        <Coords points="570,1997 570,2003 2319,2003 2319,1997" />
+        <Baseline points="570,2002 620,1999 1020,1997 1370,2000 2270,1998 2318,2001" />
+      <TextEquiv engine="tesseract"><Unicode>'ALOyentes, muy vuenos 0188. CUULLUAU DLOCADULA UE RAULUUI TU</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_547675f9-6a15-428f-81c3-ac503f4b2b12">
+        <Coords points="570,2051 570,2056 2271,2056 2271,2051" />
+        <Baseline points="570,2055 1070,2051 1420,2054 2220,2051 2270,2054" />
+      <TextEquiv engine="tesseract"><Unicode>ODLUN, J ML na LE Li | De 4.191.491. P rx id e! 4 LURO -i Bo, Taco. ATITLUS 3</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9de71adc-0dec-41cb-86ec-c5a50da85b91">
+        <Coords points="570,2109 570,2115 799,2115 799,2109" />
+        <Baseline points="570,2112 620,2109 770,2109 798,2114" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_deda2902-782c-4091-9f20-61b6404b79e4">
+        <Coords points="1124,2162 1124,2166 1705,2166 1705,2162" />
+        <Baseline points="1124,2163 1524,2165 1704,2162" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_5295b5a3-9219-49f5-95e0-29d9468c6268">
+        <Coords points="558,2267 558,2273 2403,2273 2403,2267" />
+        <Baseline points="558,2272 608,2269 908,2267 2402,2268" />
+      <TextEquiv engine="tesseract"><Unicode>—BLATODA! em DU LI AU | a El A AJ Las LAN od LL LU LE US LU. FE LA Ad o L y nh-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f3389838-5e43-48ac-ac75-f653b27456ad">
+        <Coords points="298,2273 298,2282 545,2282 545,2273" />
+        <Baseline points="298,2281 398,2275 544,2273" />
+      <TextEquiv engine="tesseract"><Unicode>A LLAL emo</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1b84022e-554d-4229-ac30-8efe32245390">
+        <Coords points="574,2321 574,2326 2383,2326 2383,2321" />
+        <Baseline points="574,2325 1024,2321 1974,2321 2382,2325" />
+      <TextEquiv engine="tesseract"><Unicode>VELLA Bulovas US DAGUBLONEAE £áagyg-&gt;=Zly EL BOrvicLo de £epañe y: Ge</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_7f0a32f3-3d80-4b95-b3ac-75d3b64b83a0">
+        <Coords points="570,2375 570,2382 2379,2382 2379,2375" />
+        <Baseline points="570,2381 620,2377 1420,2375 2378,2378" />
+      <TextEquiv engine="tesseract"><Unicode>su JBAnaLLLoO CO.» 238 nO0rTres 1] oyen 8 1 SUE nos alas Da</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8890af46-038d-440e-9cc9-fc4cca017e27">
+        <Coords points="570,2431 570,2435 1433,2435 1433,2431" />
+        <Baseline points="570,2434 620,2431 1370,2431 1432,2434" />
+      <TextEquiv engine="tesseract"><Unicode>LUUO a F¿Tanñdoos.,.Aalriva pala.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_10dbb1af-4c06-4fdf-8c09-c248f04e7f35">
+        <Coords points="432,2513 432,2523 1821,2523 1821,2513" />
+        <Baseline points="432,2522 582,2513 1820,2515" />
+      <TextEquiv engine="tesseract"><Unicode>ye — ampañagas esde La vatecural ue Barco lonis</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_01094f5e-8c70-44fd-972d-f208a2c5a8cb">
+        <Coords points="398,2621 398,2637 1527,2637 1527,2621" />
+        <Baseline points="398,2636 548,2622 798,2624 1498,2621 1526,2625" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_5bfc0d7d-8ce9-4bca-9e25-16f5a579e184">
+        <Coords points="286,2729 286,2742 2407,2742 2407,2729" />
+        <Baseline points="286,2741 586,2729 1286,2733 1686,2730 2086,2734 2406,2733" />
+      <TextEquiv engine="tesseract"><Unicode>Xx 4¿¿ns+u &gt;) "PLauUsto”, ase vounoa , 4Paguentos orquestales po ulge »1n10nica</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_70d0b784-a789-4cf2-8cf9-7bc5d67d7050">
+        <Coords points="570,2785 570,2791 1107,2791 1107,2785" />
+        <Baseline points="570,2790 770,2785 1106,2786" />
+      <TextEquiv engine="tesseract"><Unicode>Ce M11807 (0LSCOB)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f7fa9828-7bc0-4b5e-bd6c-a57bad27db3c">
+        <Coords points="282,2893 282,2908 2333,2908 2333,2893" />
+        <Baseline points="282,2907 382,2900 632,2895 1782,2893 2332,2897" />
+      <TextEquiv engine="tesseract"><Unicode>hd Aci. 34 valeria ue cauyanyos COoLONIOS: ubras 1nterprerattas por 1150.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f635f06f-bfa9-4b3b-ac6c-e9fd28678009">
+        <Coords points="564,2949 564,2954 1043,2954 1043,2949" />
+        <Baseline points="564,2953 764,2949 1042,2951" />
+      <TextEquiv engine="tesseract"><Unicode>*AOnipas (VL5UOS/</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_57d1928b-9602-4b2d-89b1-8fc50b8fb6be">
+        <Coords points="284,3058 284,3073 1171,3073 1171,3058" />
+        <Baseline points="284,3072 384,3063 1084,3058 1170,3060" />
+      <TextEquiv engine="tesseract"><Unicode>h di Lee 29 DOLOGUIO dd</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_afe15d67-a6f3-4641-a461-6b562240a5f7">
+        <Coords points="1850,3113 1850,3114 2125,3114 2125,3113" />
+        <Baseline points="1850,3113 2124,3113" />
+      <TextEquiv engine="tesseract"><Unicode>Biblioteca de Comúnicz</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_016eecdb-6dbc-4f23-bf89-43f786fd0a55">
+        <Coords points="358,3139 358,3177 2145,3177 2145,3139" />
+        <Baseline points="358,3176 508,3169 1358,3169 1908,3164 2008,3158 2058,3142 2144,3139" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_67de3cc2-b69a-4f72-a6d2-aacea9d7db6e">
+        <Coords points="302,3178 302,3186 333,3186 333,3178" />
+        <Baseline points="302,3185 332,3178" />
+      <TextEquiv engine="tesseract"><Unicode>”</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_443b7071-cee2-4ed9-bc4a-1dc986d1b18d">
+        <Coords points="1052,3245 1052,3250 1611,3250 1611,3245" />
+        <Baseline points="1052,3249 1452,3249 1610,3245" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_98a45372-1d6c-46cf-bda0-4a9c20daff09">
+        <Coords points="1286,3304 1286,3306 1407,3306 1407,3304" />
+        <Baseline points="1286,3304 1406,3305" />
+      <TextEquiv engine="tesseract"><Unicode>sn dl</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

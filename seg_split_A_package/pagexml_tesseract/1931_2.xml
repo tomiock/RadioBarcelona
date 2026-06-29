@@ -1,0 +1,364 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:32</Created>
+    <LastChange>2026-06-01T16:45:32</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9184463620185852" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1931_2.png" imageWidth="3009" imageHeight="5646">
+    <TextRegion id="textregion_49a15711-6abb-40d3-8a2a-e8ee2118d344">
+      <Coords points="0,0 0,5646 3009,5646 3009,0" />
+      <TextLine id="textline_f73245d3-e7d8-45de-92af-996465442153">
+        <Coords points="1123,224 1123,240 2124,240 2124,224" />
+        <Baseline points="1124,239 1573,236 2073,224 2123,227" />
+      <TextEquiv engine="tesseract"><Unicode>MARTES, DIA 80 DE OCTUBAE 0 ¿20L</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9229e3fa-5c09-4d14-8282-f171ab409357">
+        <Coords points="2797,257 2797,261 2842,261 2842,257" />
+        <Baseline points="2797,260 2841,257" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_87ce033d-0bc5-459a-9e3e-ca108d4e5daf">
+        <Coords points="1959,264 1959,269 2418,269 2418,264" />
+        <Baseline points="1959,268 2359,264 2417,266" />
+      <TextEquiv engine="tesseract"><Unicode>ss</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_7bcfe916-0b77-4c60-9adf-690a5a52c53f">
+        <Coords points="2517,266 2517,267 2536,267 2536,266" />
+        <Baseline points="2517,266 2535,266" />
+      <TextEquiv engine="tesseract"><Unicode>-n</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_88038bc9-fa23-4786-97bd-74752397b6cb">
+        <Coords points="283,277 283,289 1454,289 1454,277" />
+        <Baseline points="284,288 1454,277" />
+      <TextEquiv engine="tesseract"><Unicode>e se</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b3a986d7-a38b-46d7-9a19-dfbfdf6f521d">
+        <Coords points="1669,268 1669,277 1936,277 1936,268" />
+        <Baseline points="1669,276 1869,273 1935,268" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_a35aaed4-9901-4612-94b6-52915cf79f43">
+        <Coords points="1623,274 1623,277 1648,277 1648,274" />
+        <Baseline points="1623,274 1647,276" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_3f987b52-ef9f-42d7-98cb-76468bd4b159">
+        <Coords points="1327,378 1327,383 1720,383 1720,378" />
+        <Baseline points="1328,382 1627,381 1719,378" />
+      <TextEquiv engine="tesseract"><Unicode>»LA CALADRA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_df5cf544-cdcb-4307-bb73-c45c708a43aa">
+        <Coords points="1077,427 1077,437 2108,437 2108,427" />
+        <Baseline points="1078,436 1328,432 1478,434 1877,427 2107,427" />
+      <TextEquiv engine="tesseract"><Unicode>DIARIO HABLADO DM nADLU DARULLUNA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_623dcf3e-e13e-48ae-ac25-b02705e1adbc">
+        <Coords points="243,483 243,501 1386,501 1386,483" />
+        <Baseline points="244,500 644,490 894,491 1194,484 1386,483" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_11b3df73-e525-412f-ad86-51031668a2ca">
+        <Coords points="903,534 903,545 1406,545 1406,534" />
+        <Baseline points="904,544 954,540 1304,534 1406,538" />
+      <TextEquiv engine="tesseract"><Unicode>pegunaa CULCLONS</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_be5f7e62-f699-4c90-81ec-c701fbed9444">
+        <Coords points="251,542 251,548 662,548 662,542" />
+        <Baseline points="252,542 352,545 652,544 662,547" />
+      <TextEquiv engine="tesseract"><Unicode>Y Y DD</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_3debb5da-8b1b-48d6-ac27-f79e2a3b46f8">
+        <Coords points="607,618 607,645 2742,645 2742,618" />
+        <Baseline points="608,642 808,644 1208,634 1408,634 2507,618 2741,619" />
+      <TextEquiv engine="tesseract"><Unicode>CAMPANADAS HORARIAS DE LA CATEDRALRe- PARTE DEL SERVICIO MELLA UN</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d32b769a-f161-4fb0-9e81-8e320686a10b">
+        <Coords points="241,640 241,649 582,649 582,640" />
+        <Baseline points="242,648 392,645 492,647 582,640" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_58b572e2-2966-48c8-bd1a-544f3657945d">
+        <Coords points="609,669 609,699 2652,699 2652,669" />
+        <Baseline points="610,698 660,693 1060,686 2159,676 2309,670 2651,669" />
+      <TextEquiv engine="tesseract"><Unicode>DEICATALUÑA. Estado del tiempo en Europa y On ESPañas SISVARia eee</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_81bd9b1f-9404-4379-b9a1-e56eabd11850">
+        <Coords points="613,714 613,744 2742,744 2742,714" />
+        <Baseline points="614,743 1014,740 1364,732 1414,734 2463,722 2741,714" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_ebe39b3d-f829-4588-8e7a-b39d85f620dc">
+        <Coords points="615,776 615,796 2170,796 2170,776" />
+        <Baseline points="616,795 716,791 866,792 1366,783 1915,780 2115,776 2169,779" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_423811e6-d838-4c79-b10e-44036e7c42f8">
+        <Coords points="247,875 247,897 2258,897 2258,875" />
+        <Baseline points="248,896 498,896 548,892 1747,882 2247,875 2257,878" />
+      <TextEquiv engine="tesseract"><Unicode>A las 13,-- EMISION DE SOBREMESA. - Clerre del Dolsin de a matias</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_55e97f6b-c24a-4c51-9620-44ce27790be6">
+        <Coords points="1337,972 1337,987 2082,987 2082,972" />
+        <Baseline points="1338,984 1388,986 1537,982 1987,979 2081,972" />
+      <TextEquiv engine="tesseract"><Unicode>- VEASE PROGRAMA APARLE —</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8a96dce0-45c0-4c52-a366-222b193abfb8">
+        <Coords points="1497,1080 1497,1087 2028,1087 2028,1080" />
+        <Baseline points="1498,1086 1897,1080 2027,1082" />
+      <TextEquiv engine="tesseract"><Unicode>LRADLUDEUNSE LOU LNYU LA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f4e0cc2f-8e05-4e5e-9019-7b4ec51d4349">
+        <Coords points="249,1115 249,1154 2750,1154 2750,1115" />
+        <Baseline points="250,1153 500,1149 550,1143 700,1146 1100,1138 1549,1136 1649,1132 1999,1129 2149,1122 2249,1124 2649,1120 2749,1115" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_8c8c84ad-824f-4dab-a0e3-7234ccbdccb4">
+        <Coords points="615,1171 615,1196 2640,1196 2640,1171" />
+        <Baseline points="616,1195 1166,1192 1615,1184 1865,1183 2215,1175 2639,1171" />
+      <TextEquiv engine="tesseract"><Unicode>TITUCIONES BENEFICAS, ASILOS, HOSPITALES Y CASAS FALLING Ana LL</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ef930038-061b-4626-baa2-2aeb0495f12d">
+        <Coords points="623,1235 623,1247 1536,1247 1536,1235" />
+        <Baseline points="624,1245 724,1246 1274,1236 1535,1235" />
+      <TextEquiv engine="tesseract"><Unicode>ESPAÑA. Con Q18COS escogLlaUos e</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0ab65752-8bc5-445a-9d74-df0647e72fc7">
+        <Coords points="247,1288 247,1308 1302,1308 1302,1288" />
+        <Baseline points="248,1307 298,1302 548,1295 798,1296 1302,1288" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_1427101b-78f2-4fba-84de-46e0acf0f3f1">
+        <Coords points="241,1329 241,1407 2120,1407 2120,1329" />
+        <Baseline points="242,1406 342,1400 1292,1383 1891,1337 2119,1329" />
+      <TextEquiv engine="tesseract"><Unicode>A las amarla AR : oest i</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_dafa8619-36e0-44d5-8701-aa87c885ebef">
+        <Coords points="389,1392 389,1488 2598,1488 2598,1392" />
+        <Baseline points="390,1487 440,1479 490,1476 1290,1461 2039,1411 2389,1396 2589,1392 2597,1394" />
+      <TextEquiv engine="tesseract"><Unicode>E batela ne Hadid - par ll a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_217da043-bb71-472d-86b8-322ceb90f4bf">
+        <Coords points="487,1465 487,1545 2836,1545 2836,1465" />
+        <Baseline points="488,1542 538,1544 838,1538 1038,1538 1388,1529 1787,1509 2237,1496 2387,1478 2687,1465 2835,1465" />
+      <TextEquiv engine="tesseract"><Unicode>lors te d'Amer fe Es Dret de — ere Treprre A == —</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b95e896a-0b52-4a8f-abb7-74a1223b7c7e">
+        <Coords points="231,1483 231,1484 280,1484 280,1483" />
+        <Baseline points="232,1483 280,1483" />
+      <TextEquiv engine="tesseract"><Unicode>3</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9053a582-b98f-44a2-873e-84e60c3fb55c">
+        <Coords points="359,1482 359,1499 382,1499 382,1482" />
+        <Baseline points="360,1482 382,1498" />
+      <TextEquiv engine="tesseract"><Unicode>d</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8bee0c27-f017-4feb-a647-9a99c022b795">
+        <Coords points="285,1483 285,1486 324,1486 324,1483" />
+        <Baseline points="286,1483 324,1485" />
+      <TextEquiv engine="tesseract"><Unicode>aa</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_838bad57-3347-4656-a884-ea7711259a43">
+        <Coords points="219,1551 219,1557 428,1557 428,1551" />
+        <Baseline points="220,1551 370,1556 428,1551" />
+      <TextEquiv engine="tesseract"><Unicode>=D</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0667820c-78a6-4f48-85d5-495f39162f5a">
+        <Coords points="471,1563 471,1618 2400,1618 2400,1563" />
+        <Baseline points="472,1617 572,1613 1422,1600 2399,1563" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_1de08076-0eee-4654-943e-3f84330b6c99">
+        <Coords points="233,1619 233,1624 422,1624 422,1619" />
+        <Baseline points="234,1623 422,1619" />
+      <TextEquiv engine="tesseract"><Unicode>la E</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_fc58d590-bffe-40b4-87d1-c83cb4dcd609">
+        <Coords points="457,1642 457,1716 2774,1716 2774,1642" />
+        <Baseline points="458,1715 708,1707 1258,1697 1657,1676 1857,1668 2007,1668 2107,1660 2307,1655 2457,1646 2773,1642" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_7a232f35-d92b-4ba3-a322-c326f2d1c033">
+        <Coords points="245,1708 245,1713 402,1713 402,1708" />
+        <Baseline points="246,1708 402,1712" />
+      <TextEquiv engine="tesseract"><Unicode>E</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_dec0bf49-8793-4100-aead-9db950b87aed">
+        <Coords points="455,1707 455,1787 2826,1787 2826,1707" />
+        <Baseline points="456,1786 1006,1769 1456,1748 1955,1745 2205,1730 2555,1716 2755,1713 2825,1707" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c0343425-d650-45e7-8b15-439005067bec">
+        <Coords points="233,1779 233,1783 404,1783 404,1779" />
+        <Baseline points="234,1780 334,1782 404,1779" />
+      <TextEquiv engine="tesseract"><Unicode>FT O"</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_48b01e88-9a4f-43f5-a740-4aec3440bd8d">
+        <Coords points="449,1787 449,1851 2896,1851 2896,1787" />
+        <Baseline points="450,1850 1849,1808 1899,1804 1949,1803 2049,1809 2149,1808 2849,1787 2895,1791" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_b25079a2-0f92-41cc-a7b2-822d699b7a68">
+        <Coords points="229,1850 229,1856 392,1856 392,1850" />
+        <Baseline points="230,1855 392,1850" />
+      <TextEquiv engine="tesseract"><Unicode>ls</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0bfefe16-b25f-49d9-9168-910b3f521f8f">
+        <Coords points="457,1901 457,1922 2766,1922 2766,1901" />
+        <Baseline points="458,1921 508,1916 1008,1917 1408,1908 1458,1910 1607,1906 1807,1906 2007,1901 2157,1902 2307,1913 2765,1916" />
+      <TextEquiv engine="tesseract"><Unicode>A AE An O TD e A A O A e E de</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_75a6104b-3a2c-496a-9b47-fd32f09a7a15">
+        <Coords points="289,1916 289,1924 406,1924 406,1916" />
+        <Baseline points="290,1923 406,1916" />
+      <TextEquiv engine="tesseract"><Unicode>8</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0f090206-c1db-4db9-a1f9-d11190aba914">
+        <Coords points="259,1984 259,2009 2056,2009 2056,1984" />
+        <Baseline points="260,2008 610,1993 810,1998 1060,1994 1160,1989 1260,1992 1509,1986 1709,1989 1859,1984 2055,1986" />
+      <TextEquiv engine="tesseract"><Unicode>Ay EE, =&gt;, == COTIZACIONES DE MERCANGLAD y PAPITO E ANA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_13b9b06d-321f-4d6b-8536-6c5824d25392">
+        <Coords points="327,2039 327,2056 1570,2056 1570,2039" />
+        <Baseline points="328,2054 428,2055 1428,2039 1569,2042" />
+      <TextEquiv engine="tesseract"><Unicode>las 1Q 90 IL TRÍO JDERLA, lnverplrovalra.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_cee011e6-cc59-4ff0-963a-aa2865de7085">
+        <Coords points="271,2058 271,2060 318,2060 318,2058" />
+        <Baseline points="272,2059 318,2058" />
+      <TextEquiv engine="tesseract"><Unicode>a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0fc04c1f-fc46-47ca-b443-c17fb2266325">
+        <Coords points="153,2073 153,2146 2264,2146 2264,2073" />
+        <Baseline points="154,2135 254,2142 404,2145 504,2132 554,2129 1454,2102 1853,2077 2203,2073 2263,2078" />
+      <TextEquiv engine="tesseract"><Unicode>a A A E MA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b53ac3e2-01d5-4279-97ef-f6a2c2dd825f">
+        <Coords points="229,2179 229,2235 2436,2235 2436,2179" />
+        <Baseline points="230,2232 380,2230 480,2234 1130,2221 1430,2211 2029,2182 2435,2179" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_f7c368ef-23c4-43a2-8d31-57078572079c">
+        <Coords points="437,2297 437,2356 2486,2356 2486,2297" />
+        <Baseline points="438,2355 488,2348 738,2336 1488,2320 1937,2301 2087,2297 2485,2300" />
+      <TextEquiv engine="tesseract"><Unicode>a es E A A te</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5d22f595-7767-47dd-adf8-82a121f94ea1">
+        <Coords points="269,2362 269,2364 392,2364 392,2362" />
+        <Baseline points="270,2362 392,2363" />
+      <TextEquiv engine="tesseract"><Unicode>A Y</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b35f7c97-b24e-436c-a861-22eb3bba826b">
+        <Coords points="479,2471 479,2483 2214,2483 2214,2471" />
+        <Baseline points="480,2482 530,2479 930,2476 1629,2476 2079,2471 2213,2474" />
+      <TextEquiv engine="tesseract"><Unicode>RAE e— La E y AS &gt; MZA : — Es A CCAA ADS C e</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_633273c7-4995-4b8c-84da-a79e1a3ce4b2">
+        <Coords points="141,2496 141,2504 426,2504 426,2496" />
+        <Baseline points="142,2499 292,2503 392,2501 426,2496" />
+      <TextEquiv engine="tesseract"><Unicode>VA? JbO,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ce1be3c9-b140-4382-87e9-05dcdf202e5a">
+        <Coords points="483,2561 483,2575 2146,2575 2146,2561" />
+        <Baseline points="484,2563 534,2561 1034,2566 1084,2564 1733,2574 2145,2561" />
+      <TextEquiv engine="tesseract"><Unicode>JC NA == fer CIU — lis. CEE</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_6b5ade97-54be-4043-a10a-5b8e0d50fb41">
+        <Coords points="205,2576 205,2583 408,2583 408,2576" />
+        <Baseline points="206,2582 306,2576 408,2578" />
+      <TextEquiv engine="tesseract"><Unicode>o vr E</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d47f762b-dd80-4a51-9593-a8fa6051f80f">
+        <Coords points="279,2644 279,2665 1318,2665 1318,2644" />
+        <Baseline points="280,2664 430,2655 530,2656 830,2646 1230,2644 1318,2647" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2b275958-e374-47bc-8127-83d0636fd7a7">
+        <Coords points="281,2733 281,2755 1374,2755 1374,2733" />
+        <Baseline points="282,2754 332,2749 582,2746 932,2735 1032,2738 1232,2733 1374,2738" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_619bc598-7a77-4c1e-b124-a71657c71f25">
+        <Coords points="1389,2831 1389,2836 1632,2836 1632,2831" />
+        <Baseline points="1390,2835 1589,2835 1631,2831" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_a18067a7-0d30-4372-9916-dfcf85760ff6">
+        <Coords points="339,2869 339,2878 588,2878 588,2869" />
+        <Baseline points="340,2877 540,2869 588,2873" />
+      <TextEquiv engine="tesseract"><Unicode>NT AA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_51ced4bf-6965-456a-8c2a-d536089377ba">
+        <Coords points="645,2874 645,2894 2798,2894 2798,2874" />
+        <Baseline points="646,2893 946,2888 1595,2886 1995,2879 2645,2874 2745,2875 2797,2881" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_71852ec0-3c8a-46d2-a88f-5bcfa07fad72">
+        <Coords points="645,2925 645,2944 2688,2944 2688,2925" />
+        <Baseline points="646,2943 746,2939 1096,2940 1446,2934 1545,2937 1945,2929 2345,2928 2445,2925 2495,2928 2687,2927" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_3d65a28f-f8f2-4fc8-99a6-ab9d3de489b0">
+        <Coords points="281,2975 281,2999 2776,2999 2776,2975" />
+        <Baseline points="282,2998 532,2997 582,2992 732,2993 932,2988 1082,2990 1282,2986 1831,2984 2381,2976 2681,2975 2775,2978" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_afa1c545-bd8d-4f50-9a56-1ce4941eb2ff">
+        <Coords points="2305,3027 2305,3029 2506,3029 2506,3027" />
+        <Baseline points="2305,3027 2505,3028" />
+      <TextEquiv engine="tesseract"><Unicode>bLarue a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2c9f4411-90ff-4ac5-aa55-46ecee30df27">
+        <Coords points="1151,3059 1151,3068 1574,3068 1574,3059" />
+        <Baseline points="1152,3067 1202,3064 1302,3066 1352,3062 1502,3062 1573,3059" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_393ac886-db57-4066-8a16-95699e46fe88">
+        <Coords points="561,3083 561,3085 654,3085 654,3083" />
+        <Baseline points="562,3083 654,3084" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_9082caad-9b96-486b-a360-ae329a307f8b">
+        <Coords points="317,3151 317,3158 1754,3158 1754,3151" />
+        <Baseline points="318,3151 1667,3153 1753,3157" />
+      <TextEquiv engine="tesseract"><Unicode>Ll On Ma Ec Ke tu — SEPE On. — Cela RX Ra</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_bc129884-f4d2-4e92-9889-9ab2bfbf8877">
+        <Coords points="501,3229 501,3263 2608,3263 2608,3229" />
+        <Baseline points="502,3231 552,3229 902,3237 1551,3241 1801,3247 1901,3245 2001,3250 2101,3243 2401,3250 2607,3262" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_b4e07f01-1849-4b35-b692-e8afd94692a8">
+        <Coords points="237,3242 237,3250 420,3250 420,3242" />
+        <Baseline points="238,3246 338,3249 420,3242" />
+      <TextEquiv engine="tesseract"><Unicode>FS O</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2056470c-24cf-435c-b2c1-fa1f0ddf4e62">
+        <Coords points="429,3343 429,3358 1610,3358 1610,3343" />
+        <Baseline points="430,3346 480,3343 930,3353 1330,3357 1609,3354" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2cb4e654-041d-4238-8324-cce737694654">
+        <Coords points="1755,3344 1755,3363 2412,3363 2412,3344" />
+        <Baseline points="1755,3346 1805,3344 2105,3351 2411,3362" />
+      <TextEquiv engine="tesseract"><Unicode>A CUP CE es</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_4be682b5-16c9-46d8-bd4d-048e8a532b9f">
+        <Coords points="217,3356 217,3364 346,3364 346,3356" />
+        <Baseline points="218,3360 318,3363 346,3356" />
+      <TextEquiv engine="tesseract"><Unicode>FO</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2558d174-5c5c-49d3-9273-fbd914a3c988">
+        <Coords points="543,3543 543,3566 2090,3566 2090,3543" />
+        <Baseline points="544,3559 694,3554 894,3555 1344,3545 1593,3543 1943,3552 2089,3565" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_08d69ae3-e0ba-410e-9de2-5b68a0af2344">
+        <Coords points="255,3559 255,3562 530,3562 530,3559" />
+        <Baseline points="256,3559 530,3561" />
+      <TextEquiv engine="tesseract"><Unicode>E Mr da</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_678b831a-acf3-4b5f-85ae-5224c0d61dbe">
+        <Coords points="703,3646 703,3665 1576,3665 1576,3646" />
+        <Baseline points="704,3649 1004,3650 1104,3646 1254,3648 1404,3657 1504,3657 1575,3664" />
+      <TextEquiv engine="tesseract"><Unicode>ALLAN NUTS AAY A</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9d00b43a-7b8a-4e4e-babd-5c62211d3723">
+        <Coords points="517,4004 517,4051 2728,4051 2728,4004" />
+        <Baseline points="518,4018 568,4019 718,4012 918,4010 1068,4004 1567,4008 2167,4020 2467,4032 2667,4043 2727,4050" />
+      <TextEquiv engine="tesseract"><Unicode>j eur Ary HM va "ERP rama AE — ME dto rl —</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_fc4a4445-7ebc-40a9-885b-ca05e1cabf03">
+        <Coords points="237,4020 237,4038 498,4038 498,4020" />
+        <Baseline points="238,4037 498,4020" />
+      <TextEquiv engine="tesseract"><Unicode>DUES</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1554b8eb-c286-43f7-8b64-7247327a6e8b">
+        <Coords points="561,4056 561,4123 2758,4123 2758,4056" />
+        <Baseline points="562,4075 1012,4056 1262,4056 1711,4062 2361,4088 2561,4102 2757,4122" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c7259356-bfad-421e-8a37-c27acb140f4e">
+        <Coords points="579,4110 579,4135 1372,4135 1372,4110" />
+        <Baseline points="580,4134 930,4119 1280,4110 1372,4115" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_9113022f-53db-4388-96aa-e9e8f9a7045c">
+        <Coords points="1339,4204 1339,4223 1978,4223 1978,4204" />
+        <Baseline points="1340,4204 1390,4208 1539,4206 1739,4209 1939,4216 1977,4222" />
+      <TextEquiv engine="tesseract"><Unicode>SO DES mm</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_c0eb77a0-d6e1-4ac4-852b-3deee5bac68f">
+        <Coords points="309,4260 309,4313 2584,4313 2584,4260" />
+        <Baseline points="310,4260 460,4263 560,4269 1210,4282 1310,4286 1360,4302 1410,4300 1859,4306 1959,4305 2059,4309 2259,4312 2309,4291 2509,4309 2583,4311" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_a789b3fc-c525-475f-a1cb-305781b56da9">
+        <Coords points="233,4400 233,4418 1294,4418 1294,4400" />
+        <Baseline points="234,4408 484,4417 534,4403 584,4400 684,4405 1294,4413" />
+      <TextEquiv engine="tesseract"><Unicode>Del FUNE., EA GRS, “CAMA CAS</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_c3f5fa30-cff8-4d1f-8bc7-ac62d6dba5ea">
+        <Coords points="1603,4410 1603,4443 2390,4443 2390,4410" />
+        <Baseline points="1603,4410 1853,4415 2389,4442" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_8d0813c0-63f4-43ee-8146-ea05bbc68700">
+        <Coords points="1549,4410 1549,4411 1580,4411 1580,4410" />
+        <Baseline points="1549,4410 1579,4410" />
+      <TextEquiv engine="tesseract"><Unicode>mn</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8b807241-6ceb-4453-9a70-447260141950">
+        <Coords points="505,4510 505,4539 2182,4539 2182,4510" />
+        <Baseline points="506,4512 606,4510 1156,4519 1456,4519 1705,4528 1955,4530 2181,4538" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_1be5a8b0-0aa9-46ac-b5f9-a320cb5139d9">
+        <Coords points="523,4619 523,4630 1574,4630 1574,4619" />
+        <Baseline points="524,4620 724,4619 1074,4628 1573,4629" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_52c9e7f0-c0fd-4938-b8ce-dcdb35bb0e60">
+        <Coords points="459,4756 459,4788 1448,4788 1448,4756" />
+        <Baseline points="460,4756 1210,4771 1410,4782 1448,4787" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_6fe9d06f-285b-4606-b8a9-1b47838e0765">
+        <Coords points="1771,4762 1771,4783 2344,4783 2344,4762" />
+        <Baseline points="1771,4762 1871,4763 2321,4782 2343,4780" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_94249ef4-1c1e-4584-928d-0fd8c4b414dd">
+        <Coords points="233,5121 233,5191 1956,5191 1956,5121" />
+        <Baseline points="234,5123 484,5121 834,5131 1434,5159 1955,5190" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2cf4787d-a006-4649-a658-9f54e187ac30">
+        <Coords points="213,5219 213,5287 1640,5287 1640,5219" />
+        <Baseline points="214,5219 464,5231 564,5239 714,5240 1364,5264 1639,5286" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

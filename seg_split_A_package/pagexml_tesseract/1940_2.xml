@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:33</Created>
+    <LastChange>2026-06-01T16:45:33</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.8684603571891785" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1940_2.png" imageWidth="1785" imageHeight="2526">
+    <TextRegion id="textregion_1a4f004a-efe4-4e00-b758-047c48662be2">
+      <Coords points="0,0 0,2526 1785,2526 1785,0" />
+      <TextLine id="textline_04e0b000-4126-4819-99dd-1f05ee208ee4">
+        <Coords points="651,19 651,21 678,21 678,19" />
+        <Baseline points="652,20 678,19" />
+      <TextEquiv engine="tesseract"><Unicode>o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5ae66216-905a-45a6-9dd6-7f3b532b3051">
+        <Coords points="785,18 785,19 802,19 802,18" />
+        <Baseline points="786,18 802,18" />
+      <TextEquiv engine="tesseract"><Unicode>o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1b07f2c7-d94f-41ed-b90d-886cb9928df6">
+        <Coords points="417,89 417,118 1588,118 1588,89" />
+        <Baseline points="418,117 568,108 718,107 967,92 1067,89 1467,91 1587,95" />
+      <TextEquiv engine="tesseract"><Unicode>ef A E QV PL (Are</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e223814e-ab5b-4e3c-8cc8-cf338b9435c7">
+        <Coords points="43,82 43,124 132,124 132,82" />
+        <Baseline points="44,123 132,82" />
+      <TextEquiv engine="tesseract"><Unicode>e”</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_90cab3dd-ba52-4632-8676-29bc388c413a">
+        <Coords points="363,283 363,298 1208,298 1208,283" />
+        <Baseline points="364,283 614,291 1163,290 1207,297" />
+      <TextEquiv engine="tesseract"><Unicode>A AA PALIO O Lee</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d9d048e0-361a-4487-90d6-11a63fed2743">
+        <Coords points="531,363 531,372 1022,372 1022,363" />
+        <Baseline points="532,364 682,363 832,371 882,368 1021,370" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_21bc4f94-d354-4035-b10e-562dfa81a102">
+        <Coords points="613,395 613,402 952,402 952,395" />
+        <Baseline points="614,395 664,399 951,401" />
+      <TextEquiv engine="tesseract"><Unicode>suaus usa</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_189bd0b6-39ec-4abc-b63b-9aabb22b8804">
+        <Coords points="137,498 137,537 1462,537 1462,498" />
+        <Baseline points="138,536 188,511 288,513 488,511 538,499 638,498 688,513 1461,516" />
+      <TextEquiv engine="tesseract"><Unicode>8.45 BELGION DE RADIO NACIONAL ER BAROSIONA. Servicio religiosc, Información local.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_10565977-a094-41af-82af-c1d24d07e44a">
+        <Coords points="549,563 549,574 964,574 964,563" />
+        <Baseline points="550,563 949,570 963,573" />
+      <TextEquiv engine="tesseract"><Unicode>tatoo" ao too o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_aa111fd3-6db1-4efd-8ff1-31ad022de3e9">
+        <Coords points="109,760 109,913 1680,913 1680,760" />
+        <Baseline points="110,828 160,790 210,794 260,806 310,812 360,807 410,809 510,803 560,807 660,809 710,815 860,818 1009,812 1059,797 1159,803 1209,776 1259,760 1359,760 1409,808 1459,808 1509,872 1559,868 1609,869 1659,912 1679,912" />
+      <TextEquiv engine="tesseract"><Unicode>E = e al de A de ON . VALENTES</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_cd24e83f-f4aa-4eec-a743-13526f7025d4">
+        <Coords points="547,1015 547,1024 1048,1024 1048,1015" />
+        <Baseline points="548,1015 598,1019 947,1019 1047,1023" />
+      <TextEquiv engine="tesseract"><Unicode>aa a P a a pe</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_bd062008-4efa-4e76-8eb1-a0513076927e">
+        <Coords points="115,1082 115,1321 1654,1321 1654,1082" />
+        <Baseline points="116,1082 166,1208 216,1215 266,1210 366,1206 416,1198 466,1200 516,1197 566,1200 616,1194 666,1199 766,1201 866,1196 915,1201 965,1188 1015,1213 1065,1211 1165,1216 1215,1215 1265,1279 1515,1281 1565,1276 1615,1316 1653,1320" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_4ccfa387-347d-4f83-ac14-235d46e842e1">
+        <Coords points="1609,1259 1609,1261 1656,1261 1656,1259" />
+        <Baseline points="1609,1259 1655,1260" />
+      <TextEquiv engine="tesseract"><Unicode>o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_af1af385-40c4-4e1b-a0cd-2202f02458d2">
+        <Coords points="121,1364 121,1371 1226,1371 1226,1364" />
+        <Baseline points="122,1367 172,1368 222,1364 322,1368 672,1364 772,1367 1121,1365 1225,1370" />
+      <TextEquiv engine="tesseract"><Unicode>21.15 Recital por el bajo LUIS CORBELLA. Al pianos Concepción Compte,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_03a040ed-fafa-49de-8633-3bf1389431ba">
+        <Coords points="575,1405 575,1411 1446,1411 1446,1405" />
+        <Baseline points="576,1405 626,1408 975,1410 1445,1409" />
+      <TextEquiv engine="tesseract"><Unicode>LLos remeros del Volga" asuserenea Qhaliapine-Eoenemann</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_85bdb5d8-8829-438d-9f0f-ef5d26686607">
+        <Coords points="579,1467 579,1475 1272,1475 1272,1467" />
+        <Baseline points="580,1474 630,1471 780,1474 1029,1473 1271,1467" />
+      <TextEquiv engine="tesseract"><Unicode>"os Hugonotes” «rorconorono..-.. MOyOrbeor</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1cce525f-8f62-4d8c-a063-5d562d609a97">
+        <Coords points="153,1564 153,1570 700,1570 700,1564" />
+        <Baseline points="154,1567 204,1569 254,1566 404,1566 504,1569 654,1568 700,1564" />
+      <TextEquiv engine="tesseract"><Unicode>21,45 Programa español: Onnciones.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9323a2b3-313f-496b-8cfe-40ba26359b6c">
+        <Coords points="159,1623 159,1686 1668,1686 1668,1623" />
+        <Baseline points="160,1623 210,1650 260,1651 360,1647 410,1640 460,1640 510,1649 560,1653 1009,1656 1109,1668 1209,1668 1259,1683 1509,1685 1667,1678" />
+      <TextEquiv engine="tesseract"><Unicode>EE EET sala del ro 0 peres, 00 tua JUAN BALOELLS AUTER, plloto</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_388e85bb-b2b2-4cc7-82e0-3dcb1ee7f5b0">
+        <Coords points="161,1739 161,1747 550,1747 550,1739" />
+        <Baseline points="162,1741 262,1739 512,1742 550,1746" />
+      <TextEquiv engine="tesseract"><Unicode>23.-— Fin de la emisión.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a54dcd43-36ad-446f-ab43-4f3f7c62870c">
+        <Coords points="597,1764 597,1771 1072,1771 1072,1764" />
+        <Baseline points="598,1764 648,1768 1071,1770" />
+      <TextEquiv engine="tesseract"><Unicode>a a a e ld 0</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a62f9c07-7c8b-4700-b8cf-890aa2ffb0de">
+        <Coords points="1731,1826 1731,1827 1750,1827 1750,1826" />
+        <Baseline points="1731,1826 1749,1826" />
+      <TextEquiv engine="tesseract"><Unicode>el</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

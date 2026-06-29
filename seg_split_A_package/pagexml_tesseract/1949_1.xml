@@ -1,0 +1,212 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:35</Created>
+    <LastChange>2026-06-01T16:45:35</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9128987193107605" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1949_1.png" imageWidth="1851" imageHeight="2387">
+    <TextRegion id="textregion_ec0005dd-43ef-4b65-9f0b-af8cc3d0eb4c">
+      <Coords points="0,0 0,2387 1851,2387 1851,0" />
+      <TextLine id="textline_aa3408c8-41ab-4aff-9ff4-ffd62e8df83f">
+        <Coords points="893,59 893,64 958,64 958,59" />
+        <Baseline points="894,60 957,64" />
+      <TextEquiv engine="tesseract"><Unicode>le</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_787cc4c2-bcce-4d0e-8b9d-88c26a18e273">
+        <Coords points="179,87 179,97 826,97 826,87" />
+        <Baseline points="180,88 780,97 826,94" />
+      <TextEquiv engine="tesseract"><Unicode>ENT SIONS EL TARZAN DE La RADIO</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_6422fd81-1a83-4c87-84a7-6bce6a867a6d">
+        <Coords points="1499,102 1499,107 1682,107 1682,102" />
+        <Baseline points="1499,103 1549,107 1681,107" />
+      <TextEquiv engine="tesseract"><Unicode>00477409.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_31ce196d-4914-4bda-b91a-b6dfd3882558">
+        <Coords points="1703,106 1703,115 1762,115 1762,106" />
+        <Baseline points="1703,115 1753,112 1761,107" />
+      <TextEquiv engine="tesseract"><Unicode>o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1cb18725-cbbb-47a6-a6b3-58952108942c">
+        <Coords points="175,125 175,138 772,138 772,125" />
+        <Baseline points="176,133 226,126 626,131 772,138" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_4f702640-6f96-4d23-9e46-8df2f3a7ecf8">
+        <Coords points="177,161 177,168 718,168 718,161" />
+        <Baseline points="178,162 678,168 718,166" />
+      <TextEquiv engine="tesseract"><Unicode>¿DIá DE Ra DIACION: SAB4 IOS</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e335e74d-2ef0-433e-8eec-6d7532f630ac">
+        <Coords points="125,195 125,202 392,202 392,195" />
+        <Baseline points="126,199 176,196 276,201 392,202" />
+      <TextEquiv engine="tesseract"><Unicode>PF BORa: 21.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_584f0d82-040e-4577-809d-77bcbad37bc8">
+        <Coords points="181,234 181,244 638,244 638,234" />
+        <Baseline points="182,235 532,238 638,244" />
+      <TextEquiv engine="tesseract"><Unicode>DURACION; 15 minutos,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_fef6a4c1-7f64-47e4-9d5b-ca98be7e4095">
+        <Coords points="175,270 175,278 728,278 728,270" />
+        <Baseline points="176,273 276,271 576,278 728,275" />
+      <TextEquiv engine="tesseract"><Unicode>GUIONISUA: ANTONIO LO 5a DE</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_3a505d5c-558d-42de-804c-49bd983f749e">
+        <Coords points="185,301 185,312 686,312 686,301" />
+        <Baseline points="186,302 536,312 686,311" />
+      <TextEquiv engine="tesseract"><Unicode>PRO UI de dl</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2ac38747-d954-49ef-8429-2c499bfb1edd">
+        <Coords points="175,382 175,390 482,390 482,382" />
+        <Baseline points="176,386 226,383 326,386 426,384 482,390" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_ea715c09-4e6e-4620-86cc-3047d528a11a">
+        <Coords points="169,452 169,463 888,463 888,452" />
+        <Baseline points="170,455 220,453 888,463" />
+      <TextEquiv engine="tesseract"><Unicode>Locutor; Il Terzán de la Radio!</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a4ca28ed-9fa0-4355-b50a-791c95c7960c">
+        <Coords points="1479,457 1479,458 1526,458 1526,457" />
+        <Baseline points="1479,458 1525,458" />
+      <TextEquiv engine="tesseract"><Unicode>PLA D</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5d9d2ef1-73e4-48e5-b847-988caea47e9d">
+        <Coords points="165,523 165,533 888,533 888,523" />
+        <Baseline points="166,524 888,533" />
+      <TextEquiv engine="tesseract"><Unicode>Locutozra: IBI Tarzán de la Redio!</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_46d1bac3-88c2-402e-9d1f-5f1732467c9c">
+        <Coords points="1399,563 1399,568 1584,568 1584,563" />
+        <Baseline points="1399,564 1499,568 1583,564" />
+      <TextEquiv engine="tesseract"><Unicode>2 TELEFONO 18591</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9f746829-0d00-4bd9-a664-65a8c3bcd1dd">
+        <Coords points="167,596 167,604 852,604 852,596" />
+        <Baseline points="168,600 318,597 852,604" />
+      <TextEquiv engine="tesseract"><Unicode>Locutor:  IPronto! IMuy pronto!</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_967715e1-a705-4dfd-9f6e-9d17882c63ce">
+        <Coords points="1463,599 1463,603 1542,603 1542,599" />
+        <Baseline points="1463,603 1541,600" />
+      <TextEquiv engine="tesseract"><Unicode>SECCIÓN</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_738f5523-c91a-4600-b48c-abd6bb510491">
+        <Coords points="1491,635 1491,644 1548,644 1548,635" />
+        <Baseline points="1491,644 1541,639 1547,636" />
+      <TextEquiv engine="tesseract"><Unicode>ES</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a52d2230-d88f-4389-afd1-bacb34b395b9">
+        <Coords points="163,667 163,677 886,677 886,667" />
+        <Baseline points="164,671 214,668 814,673 886,677" />
+      <TextEquiv engine="tesseract"><Unicode>¿0cutora; JEl Darzárm de la hadio!</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a31f56ae-e46d-4a6b-b5b7-d29c2f2fb95d">
+        <Coords points="75,666 75,670 128,670 128,666" />
+        <Baseline points="76,670 128,667" />
+      <TextEquiv engine="tesseract"><Unicode>i</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_af7d964d-9aaa-42ef-853d-d2c6a43f41e3">
+        <Coords points="163,740 163,752 694,752 694,740" />
+        <Baseline points="164,746 214,741 414,746 514,743 694,752" />
+      <TextEquiv engine="tesseract"><Unicode>GRITO DE T4RZAN Y MUSICA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_13958c92-58b3-4660-b8a0-7b4d3ad901dc">
+        <Coords points="165,814 165,818 344,818 344,814" />
+        <Baseline points="166,815 344,818" />
+      <TextEquiv engine="tesseract"><Unicode>Locutor :</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5705f64c-b2fd-4b5c-93a1-3de6f837fa97">
+        <Coords points="377,813 377,831 1642,831 1642,813" />
+        <Baseline points="378,817 428,814 828,823 1641,831" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c2a5e681-ebbd-4770-bd6b-27d84d699de8">
+        <Coords points="383,851 383,868 1662,868 1662,851" />
+        <Baseline points="384,855 484,852 834,860 933,858 1133,860 1183,864 1283,862 1661,868" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c40bf67f-9361-4ed7-84ac-fbc35ef6f3b3">
+        <Coords points="385,886 385,906 1586,906 1586,886" />
+        <Baseline points="386,887 436,890 1135,899 1185,903 1385,901 1585,906" />
+      <TextEquiv engine="tesseract"><Unicode>radiados con tanto éxito hace un año, aproximadamente. ,2</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9338c80e-9879-458e-a679-a8e0722da55a">
+        <Coords points="163,957 163,970 846,970 846,957" />
+        <Baseline points="164,962 214,958 314,958 514,964 764,965 846,970" />
+      <TextEquiv engine="tesseract"><Unicode>Locutora; Pronto, my PrOMbO.+ +.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_59c252c4-a65f-40b6-acdf-952ef25fa74c">
+        <Coords points="159,1026 159,1042 1276,1042 1276,1026" />
+        <Baseline points="160,1027 1275,1042" />
+      <TextEquiv engine="tesseract"><Unicode>Locutor;  lendrán oportunidad de escuchar otra yez;</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_331123b6-ec22-4de2-b58d-7eeea6771e8d">
+        <Coords points="157,1101 157,1109 888,1109 888,1101" />
+        <Baseline points="158,1102 758,1109 888,1108" />
+      <TextEquiv engine="tesseract"><Unicode>Locutora: !1£1 Zarzan dela Radiol -</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ce4f2d7b-efe6-40c9-9d83-37af51407149">
+        <Coords points="159,1172 159,1185 998,1185 998,1172" />
+        <Baseline points="160,1177 210,1173 460,1179 997,1185" />
+      <TextEquiv engine="tesseract"><Unicode>Locuto r: Un programa pfesentado por...</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d43a69bc-64a7-450d-a241-b22ab46aa943">
+        <Coords points="157,1251 157,1260 504,1260 504,1251" />
+        <Baseline points="158,1251 358,1251 504,1259" />
+      <TextEquiv engine="tesseract"><Unicode>SO NT DO: HU SECA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ec35bd59-9e56-485c-bbc5-81e3df7e1b8b">
+        <Coords points="157,1321 157,1325 490,1325 490,1321" />
+        <Baseline points="158,1321 490,1324" />
+      <TextEquiv engine="tesseract"><Unicode>Locuor:,  lis..</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_897b6fd5-0b12-4b67-aa64-681e0ad3c952">
+        <Coords points="155,1391 155,1399 550,1399 550,1391" />
+        <Baseline points="156,1391 406,1392 550,1398" />
+      <TextEquiv engine="tesseract"><Unicode>Locuto ra; Limon+..</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_80891202-e938-4a01-a6b4-0977591c8c7a">
+        <Coords points="153,1463 153,1468 616,1468 616,1463" />
+        <Baseline points="154,1466 204,1463 616,1467" />
+      <TextEquiv engine="tesseract"><Unicode>locutor:  liiimonesia!</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_c4aec147-32d3-4f44-ad4f-9425c45f2194">
+        <Coords points="157,1531 157,1540 402,1540 402,1531" />
+        <Baseline points="158,1539 258,1534 308,1537 402,1531" />
+      <TextEquiv engine="tesseract"><Unicode>SONIDO: MUS]</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_9017baa5-5f7d-4254-8894-0b49f0b60f29">
+        <Coords points="151,1607 151,1622 1690,1622 1690,1607" />
+        <Baseline points="152,1609 602,1607 951,1613 1101,1612 1251,1617 1501,1617 1601,1621 1689,1618" />
+      <TextEquiv engine="tesseract"><Unicode>Locutora: El incomparable producto que regula el sistema nervioso, com.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b47e091f-c052-4234-95f8-66249096b8ea">
+        <Coords points="377,1645 377,1660 1598,1660 1598,1645" />
+        <Baseline points="378,1645 778,1651 1027,1651 1077,1654 1477,1655 1597,1659" />
+      <TextEquiv engine="tesseract"><Unicode>bate las jaquecas, el reumatismo y los dolores de cabezas</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_acbfb172-5540-43ee-a654-92c96e0ad38e">
+        <Coords points="153,1713 153,1719 654,1719 654,1713" />
+        <Baseline points="154,1714 454,1713 654,1718" />
+      <TextEquiv engine="tesseract"><Unicode>Locutora: dà -mo-ne-gia,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d17a8a12-e460-495c-a98f-4596f306a578">
+        <Coords points="149,1785 149,1796 1682,1796 1682,1785" />
+        <Baseline points="150,1787 350,1785 949,1792 1149,1790 1499,1795 1681,1794" />
+      <TextEquiv engine="tesseract"><Unicode>L0cuto 12; Limonesia es efersvescentes Tiene el sabor agradable, no por-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_728ac615-bff0-4e8b-8b94-ebf828948124">
+        <Coords points="373,1822 373,1835 1650,1835 1650,1822" />
+        <Baseline points="374,1829 424,1824 524,1822 724,1827 1123,1827 1573,1834 1649,1832" />
+      <TextEquiv engine="tesseract"><Unicode>judi ca el estomago, ni ataca 21 coraton ni a los riñobs. Es</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_80131c8c-6204-400c-a571-2c2ba0ad6bd8">
+        <Coords points="377,1858 377,1871 1644,1871 1644,1858" />
+        <Baseline points="378,1858 1643,1870" />
+      <TextEquiv engine="tesseract"><Unicode>el producto 1.8 moderno para combatir toda clase de dolores</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8a26ee68-86eb-4962-934a-54eb78092430">
+        <Coords points="369,1891 369,1903 600,1903 600,1891" />
+        <Baseline points="370,1891 420,1896 520,1896 600,1902" />
+      <TextEquiv engine="tesseract"><Unicode>n6YvVi0soSs.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ae08a259-3f32-4eac-a965-8f7ef9962f5d">
+        <Coords points="145,1962 145,1966 334,1966 334,1962" />
+        <Baseline points="146,1962 334,1965" />
+      <TextEquiv engine="tesseract"><Unicode>LOcuto Y;</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_92ff5907-021d-418b-9f2c-22f7e8f29df7">
+        <Coords points="363,1964 363,1972 648,1972 648,1964" />
+        <Baseline points="364,1966 464,1964 648,1971" />
+      <TextEquiv engine="tesseract"><Unicode>Lui -mo-ne-sisS.:</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_39a4935b-4e9f-44bf-909c-7fec130880e9">
+        <Coords points="149,2039 149,2045 466,2045 466,2039" />
+        <Baseline points="150,2044 250,2039 466,2042" />
+      <TextEquiv engine="tesseract"><Unicode>SONIDO: MUSICA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1c4b5e57-a2af-4dce-a08d-7883b603fc6a">
+        <Coords points="149,2107 149,2118 1594,2118 1594,2107" />
+        <Baseline points="150,2113 400,2107 550,2113 1593,2117" />
+      <TextEquiv engine="tesseract"><Unicode>locutora: Vamos2£ recordar, - señores, un óscena de "El Tarzán de Ja</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0115c5f8-0eae-4e24-983a-c6e83f22422f">
+        <Coords points="367,2146 367,2147 514,2147 514,2146" />
+        <Baseline points="368,2146 514,2146" />
+      <TextEquiv engine="tesseract"><Unicode>radio».</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5bf8593c-446d-471d-be7b-0c70163dd30f">
+        <Coords points="37,2202 37,2207 114,2207 114,2202" />
+        <Baseline points="38,2203 88,2206 114,2202" />
+      <TextEquiv engine="tesseract"><Unicode>+» -</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d7d16e27-548a-473d-80b6-cbc642271a56">
+        <Coords points="153,2217 153,2222 476,2222 476,2217" />
+        <Baseline points="154,2217 304,2221 454,2218 476,2221" />
+      <TextEquiv engine="tesseract"><Unicode>SONIDO: MUSICA</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

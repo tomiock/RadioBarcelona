@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:33</Created>
+    <LastChange>2026-06-01T16:45:33</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9453104138374329" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1940_1.png" imageWidth="1785" imageHeight="2526">
+    <TextRegion id="textregion_84772c0c-7563-40e0-b550-5e008a61e23e">
+      <Coords points="0,0 0,2526 1785,2526 1785,0" />
+      <TextLine id="textline_924374b4-59b0-4bef-ab64-c621642f745f">
+        <Coords points="1123,1 1123,2 1180,2 1180,1" />
+        <Baseline points="1123,1 1179,1" />
+      <TextEquiv engine="tesseract"><Unicode>o</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_44b89b86-d273-44c1-8b54-f5f77583345b">
+        <Coords points="233,129 233,134 1038,134 1038,129" />
+        <Baseline points="234,130 983,133 1037,129" />
+      <TextEquiv engine="tesseract"><Unicode>DETALLE ACTUACIONES , VIERNES, 5 DE ENERO DE 1940</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_dae8b7a8-e592-4b90-b9b4-197bad2fcf2a">
+        <Coords points="657,217 657,223 1680,223 1680,217" />
+        <Baseline points="658,217 808,220 1207,217 1407,222 1679,220" />
+      <TextEquiv engine="tesseract"><Unicode>A las 12.15 "Emisión gastronómica y de conocimientos Piles” a</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_bec244fa-b1a9-440e-8d18-3ee5a410a1e5">
+        <Coords points="859,242 859,252 1320,252 1320,242" />
+        <Baseline points="860,242 909,251 1259,249 1309,247 1319,244" />
+      <TextEquiv engine="tesseract"><Unicode>cargo de la revista "MENAJE"</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a8738585-cd4f-4fb3-b8a1-d6f25575cc59">
+        <Coords points="663,297 663,306 1148,306 1148,297" />
+        <Baseline points="664,305 814,305 864,302 1013,305 1147,297" />
+      <TextEquiv engine="tesseract"><Unicode>A las 12.30 "HISTORIAL DEVOTO”</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_74202c1d-0876-4f4c-ae25-820da16d82a3">
+        <Coords points="657,358 657,365 1710,365 1710,358" />
+        <Baseline points="658,359 708,361 957,358 1709,364" />
+      <TextEquiv engine="tesseract"><Unicode>A las 13.-—— "En un minuto un buen consejo” Emisión delicada a la</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e7b91534-7397-40d4-97ed-a0cac59e093a">
+        <Coords points="855,386 855,391 956,391 956,386" />
+        <Baseline points="856,386 905,390 955,389" />
+      <TextEquiv engine="tesseract"><Unicode>mujer.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ccf4fa9d-e73c-4a68-a511-7cd4d6604d63">
+        <Coords points="15,603 15,780 250,780 250,603" />
+        <Baseline points="16,779 66,750 250,603" />
+      <TextEquiv engine="tesseract"><Unicode>DA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_c6f07989-f75d-4ae8-9fc3-117eb127473e">
+        <Coords points="101,631 101,781 278,781 278,631" />
+        <Baseline points="102,780 202,699 252,651 278,631" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_823fc86a-b149-4a67-a7bb-4bba7b9cd3ed">
+        <Coords points="137,727 137,808 252,808 252,727" />
+        <Baseline points="138,807 238,733 252,727" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c153090a-51ce-4565-ab9f-06e187dac914">
+        <Coords points="71,786 71,804 98,804 98,786" />
+        <Baseline points="72,803 98,786" />
+      <TextEquiv engine="tesseract"><Unicode>pe</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_4cf73183-2cbc-4236-adb3-c25a2a25f241">
+        <Coords points="15,823 15,844 56,844 56,823" />
+        <Baseline points="16,843 56,823" />
+      <TextEquiv engine="tesseract"><Unicode>JS</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_bf84e572-9cdd-421d-ba28-7b079333f0d6">
+        <Coords points="15,897 15,913 56,913 56,897" />
+        <Baseline points="16,912 56,897" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_23124468-4144-46cf-a3e7-8de2ef38e48d">
+        <Coords points="607,972 607,1003 1760,1003 1760,972" />
+        <Baseline points="608,972 758,972 808,1000 858,1002 957,999 1007,987 1057,989 1157,987 1607,988 1657,992 1707,1002 1759,1001" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_40ba998a-c9ba-46f8-8599-29893f5ad4b3">
+        <Coords points="623,1138 623,1146 1692,1146 1692,1138" />
+        <Baseline points="624,1141 774,1143 824,1138 923,1142 973,1140 1691,1145" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2c6926c1-3a35-43c2-a16f-1929d581724f">
+        <Coords points="721,1169 721,1178 1286,1178 1286,1169" />
+        <Baseline points="722,1177 822,1169 872,1172 1285,1172" />
+      <TextEquiv engine="tesseract"><Unicode>21) Mtro. JUAN PÍCH SANTASUSANA. *</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_685d114f-8a0a-4af1-a9fb-801bb4757dda">
+        <Coords points="707,1322 707,1333 796,1333 796,1322" />
+        <Baseline points="708,1332 796,1322" />
+      <TextEquiv engine="tesseract"><Unicode>qate</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_466efcf3-8757-4c7b-9950-b054e1d7c7f5">
+        <Coords points="707,1340 707,1371 1326,1371 1326,1340" />
+        <Baseline points="708,1370 858,1358 1157,1347 1207,1348 1325,1340" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_ff2ee51f-bd2f-4b74-b1d5-fda729d615f7">
+        <Coords points="607,1396 607,1404 1530,1404 1530,1396" />
+        <Baseline points="608,1400 758,1401 808,1397 1007,1400 1057,1397 1257,1396 1507,1399 1529,1403" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_41dbebb7-d917-47f2-adfd-a64077fef333">
+        <Coords points="707,1425 707,1443 1300,1443 1300,1425" />
+        <Baseline points="708,1442 758,1436 1257,1425 1299,1428" />
+      <TextEquiv engine="tesseract"><Unicode>ee a Un ta, ara certa da qua UT AU la</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_158e26d8-e60b-4349-aa19-29db450e8aa7">
+        <Coords points="1657,1437 1657,1440 1710,1440 1710,1437" />
+        <Baseline points="1657,1439 1709,1437" />
+      <TextEquiv engine="tesseract"><Unicode>En ia</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_3b1634ab-11b8-419e-9c28-c3b648d23c65">
+        <Coords points="1457,1442 1457,1444 1514,1444 1514,1442" />
+        <Baseline points="1457,1442 1513,1443" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_2de455bd-dd2c-4ea1-a6b9-ec52b0f13340">
+        <Coords points="607,1482 607,1488 1148,1488 1148,1482" />
+        <Baseline points="608,1487 957,1486 1147,1482" />
+      <TextEquiv engine="tesseract"><Unicode>A las 21,15 "REVISTA CINE RADIO”.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d25b3551-2e9f-4a3a-b04e-846a4cbfe42c">
+        <Coords points="627,1692 627,1701 1758,1701 1758,1692" />
+        <Baseline points="628,1700 828,1697 1677,1696 1757,1692" />
+      <TextEquiv engine="tesseract"><Unicode>E E Os A E i Tee pe a  E</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

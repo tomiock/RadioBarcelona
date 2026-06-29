@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:35</Created>
+    <LastChange>2026-06-01T16:45:35</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9504125118255615" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1950_2.png" imageWidth="2599" imageHeight="3713">
+    <TextRegion id="textregion_4fe5cacc-6ee7-4c72-a922-fee216be2b2b">
+      <Coords points="0,0 0,3713 2599,3713 2599,0" />
+      <TextLine id="textline_c21ea2fb-b1fa-4bcb-88d0-b2afc9bab1e2">
+        <Coords points="1583,162 1583,170 1776,170 1776,162" />
+        <Baseline points="1583,163 1775,170" />
+      <TextEquiv engine="tesseract"><Unicode>AAA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2f6fca54-7305-41f7-90be-feefe455dd2a">
+        <Coords points="2177,163 2177,166 2262,166 2262,163" />
+        <Baseline points="2177,164 2261,166" />
+      <TextEquiv engine="tesseract"><Unicode>e</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_7197aa4e-2ab5-44e1-a79d-98ad1b164fc8">
+        <Coords points="117,304 117,322 2514,322 2514,304" />
+        <Baseline points="118,322 168,317 368,314 1317,311 1417,308 1967,305 2513,307" />
+      <TextEquiv engine="tesseract"><Unicode>Loctutora.- No le querian dejar partir por cuanvo Le aran. Sn AAA MOR Su</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_462e6f82-bb06-459e-b11e-81bc449a266c">
+        <Coords points="327,357 327,372 2452,372 2452,357" />
+        <Baseline points="328,372 728,366 1627,360 1677,362 2427,358 2451,363" />
+      <TextEquiv engine="tesseract"><Unicode>amor 8a Cristo le impulsaba a seguir convirtiendo y 11bBrando pueblosy</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ad5fd823-9387-40cc-8b78-9ca9e237ee49">
+        <Coords points="329,411 329,427 2472,427 2472,411" />
+        <Baseline points="330,427 680,420 1379,418 1629,414 2429,412 2471,418" />
+      <TextEquiv engine="tesseract"><Unicode>destruyendo los idolos del paganismo Cual en segruva el monstruo Ue e</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_72a524c4-d560-438e-83bc-f6fd0c75e814">
+        <Coords points="331,463 331,481 2498,481 2498,463" />
+        <Baseline points="332,481 382,477 882,475 1232,470 1331,472 2381,464 2497,466" />
+      <TextEquiv engine="tesseract"><Unicode>idolatria. Asi llegó a Nicomedia, donde el imperador “Miocieclialo,y turft=</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_069423d8-f2fd-40f4-8d05-59df0cb1fef1">
+        <Coords points="335,516 335,533 2480,533 2480,516" />
+        <Baseline points="336,533 386,530 686,530 886,526 2085,522 2479,517" />
+      <TextEquiv engine="tesseract"><Unicode>bundo perseguidor de los cristianos, incignaco por el lefguaje qe .Jus=</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_06b21149-d240-463f-b8e3-8b760c679071">
+        <Coords points="337,568 337,586 2516,586 2516,568" />
+        <Baseline points="338,583 488,586 1138,578 2037,572 2137,574 2437,569 2515,574" />
+      <TextEquiv engine="tesseract"><Unicode>ticia y misericordia que Jorge :nabiada, mandqom encarcelarje, siendo tras</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_6018ffbd-32e7-47ca-8772-c3a02583de04">
+        <Coords points="333,629 333,637 1158,637 1158,629" />
+        <Baseline points="334,637 834,632 984,634 1158,630" />
+      <TextEquiv engine="tesseract"><Unicode>J11eros tormentos aegol lado.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_70c7ab8b-f646-4159-8b9c-e4ce8252eb63">
+        <Coords points="131,726 131,753 2480,753 2480,726" />
+        <Baseline points="132,753 182,747 832,745 982,741 1282,740 1431,735 2231,732 2479,727" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_d9d372bc-2155-4842-bf6d-341dc4fe0939">
+        <Coords points="331,783 331,801 2232,801 2232,783" />
+        <Baseline points="332,801 982,792 1331,792 1631,787 2231,784" />
+      <TextEquiv engine="tesseract"><Unicode>cia, el Santo de las dulces simpatias y.de Los amables necios</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_582706af-2cc4-439a-989e-8609f418ef93">
+        <Coords points="389,889 389,914 2470,914 2470,889" />
+        <Baseline points="390,914 490,906 890,904 1240,898 1439,899 1689,894 2439,890 2469,894" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_a66136d5-32d0-4c9c-806a-3a5bc98d4e05">
+        <Coords points="337,938 337,967 2508,967 2508,938" />
+        <Baseline points="338,967 388,962 588,958 688,959 1537,948 2087,946 2507,939" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_a60d68d9-5353-44ff-94ee-ba9f8f89c4be">
+        <Coords points="335,994 335,1020 2512,1020 2512,994" />
+        <Baseline points="336,1020 586,1012 1286,1004 1335,1006 2485,995 2511,998" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_eb7d3c6d-3fc3-4f40-8182-53e8e814c1e6">
+        <Coords points="337,1049 337,1072 2432,1072 2432,1049" />
+        <Baseline points="338,1072 488,1066 838,1066 1088,1061 2431,1050" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_7521ced7-b10e-497c-9538-894411d44384">
+        <Coords points="339,1104 339,1125 2400,1125 2400,1104" />
+        <Baseline points="340,1125 390,1122 1639,1110 1689,1112 1939,1106 2399,1105" />
+      <TextEquiv engine="tesseract"><Unicode>encomiendan a su valiosa tutela sientense orgullosos ae tenderete put</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5c75bb82-5b43-45c5-b11b-77cae5ab7441">
+        <Coords points="335,1170 335,1182 896,1182 896,1170" />
+        <Baseline points="336,1182 386,1178 896,1171" />
+      <TextEquiv engine="tesseract"><Unicode>patron y aeleclsore</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b6d66d2d-0671-45bc-bc8e-3813157e7958">
+        <Coords points="1121,1259 1121,1260 1192,1260 1192,1259" />
+        <Baseline points="1122,1260 1192,1260" />
+      <TextEquiv engine="tesseract"><Unicode>AL</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d1ece509-9099-44b1-9853-789079da0217">
+        <Coords points="123,1281 123,1285 350,1285 350,1281" />
+        <Baseline points="124,1285 350,1282" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_dc015522-7aaa-4453-8b8c-4c39f61a2769">
+        <Coords points="1517,1299 1517,1336 2536,1336 2536,1299" />
+        <Baseline points="1517,1336 1567,1328 1667,1323 1867,1322 2017,1308 2167,1302 2467,1300 2535,1306" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_60d6c882-2cff-4d7f-88ed-27a2cb5667f1">
+        <Coords points="1405,1331 1405,1338 1496,1338 1496,1331" />
+        <Baseline points="1405,1332 1455,1333 1495,1338" />
+      <TextEquiv engine="tesseract"><Unicode>MA</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f59a24d6-ba35-4b9b-be99-0d305f1db12c">
+        <Coords points="345,1363 345,1391 2490,1391 2490,1363" />
+        <Baseline points="346,1386 446,1391 996,1384 1146,1386 1445,1380 1495,1383 1595,1379 2395,1370 2489,1364" />
+      <TextEquiv engine="tesseract"><Unicode>“Y después de esta magnifica Teyenda, ofrecida a ustedes en este pror</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_4a4cdb5a-16c4-456d-ba68-ae17ac4a9d3e">
+        <Coords points="127,1393 127,1394 262,1394 262,1393" />
+        <Baseline points="128,1394 262,1394" />
+      <TextEquiv engine="tesseract"><Unicode>YO Ge —</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_98c699e4-2c45-4516-94a2-73ec116736a7">
+        <Coords points="337,1419 337,1451 2438,1451 2438,1419" />
+        <Baseline points="338,1451 438,1446 538,1448 638,1444 1337,1434 1487,1436 2437,1420" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_c8200b00-5407-410a-bfa8-71d135c07b86">
+        <Coords points="341,1487 341,1505 1488,1505 1488,1487" />
+        <Baseline points="342,1505 392,1500 692,1496 892,1496 1441,1488 1487,1491" />
+      <TextEquiv engine="tesseract"><Unicode>las siete de ¿a tarde Sl D1OS QULOLCe</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_fea3eb79-333b-4caa-8176-56fe6a66f71e">
+        <Coords points="1869,1488 1869,1490 2062,1490 2062,1488" />
+        <Baseline points="1869,1490 2061,1489" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_767e3aa9-65db-44e2-8055-f4845914530a">
+        <Coords points="125,1607 125,1611 374,1611 374,1607" />
+        <Baseline points="126,1611 374,1608" />
+      <TextEquiv engine="tesseract"><Unicode>SONLQGÓOe —</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1a552d7b-ba63-4b58-b454-ba0cc228eeae">
+        <Coords points="127,1690 127,1719 2528,1719 2528,1690" />
+        <Baseline points="128,1719 328,1719 678,1710 1427,1705 1727,1698 2527,1691" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_88e88f64-5591-4415-a325-6715513cfaf0">
+        <Coords points="343,1743 343,1775 2480,1775 2480,1743" />
+        <Baseline points="344,1775 394,1770 944,1764 1294,1757 2393,1744 2479,1747" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_dc69cc7d-2e9f-49df-a1fa-78527f1c55b1">
+        <Coords points="343,1795 343,1826 2528,1826 2528,1795" />
+        <Baseline points="344,1826 494,1820 894,1818 1144,1812 1693,1808 2527,1796" />
+      <TextEquiv engine="tesseract"><Unicode>de Belleza Francis,¡56-2% a donde deben dirigir sus consultas 0 E ALY-0</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5e64dc71-261b-45db-ab03-8dddd1deafe7">
+        <Coords points="347,1866 347,1878 1096,1878 1096,1866" />
+        <Baseline points="348,1877 1096,1866" />
+      <TextEquiv engine="tesseract"><Unicode>Barcelena, Caspe, 4 L'e</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_802ddccc-142f-4289-ba92-8e97d547c7f4">
+        <Coords points="99,1978 99,1987 960,1987 960,1978" />
+        <Baseline points="100,1986 300,1984 450,1978 550,1981 960,1978" />
+      <TextEquiv engine="tesseract"><Unicode>DON210600e -=-----=-Final SLO OIL Le</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ed21ed53-0383-4291-9d89-1a2d9a38e9d3">
+        <Coords points="1143,2160 1143,2194 1506,2194 1506,2160" />
+        <Baseline points="1144,2193 1505,2160" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>

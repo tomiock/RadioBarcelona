@@ -1,0 +1,208 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<PcGts xmlns="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd">
+  <Metadata>
+    <Creator>laypa</Creator>
+    <Created>2026-06-01T16:45:33</Created>
+    <LastChange>2026-06-01T16:45:33</LastChange>
+    <MetadataItem type="processingStep" name="layout-analysis" value="laypa">
+      <Labels>
+        <Label type="githash" value="d0ed632ab6ca4e595d7224f0bc046d337b1bcb0e" />
+        <Label type="uuid" value="0d8fab1d-82fd-4209-987f-b5496f82a7d5" />
+        <Label type="confidence" value="0.9065911173820496" />
+      </Labels>
+    </MetadataItem>
+  </Metadata>
+  <Page imageFilename="1943_1.png" imageWidth="1785" imageHeight="2526">
+    <TextRegion id="textregion_22e7bb78-6c07-4157-9920-45e32bbf1b03">
+      <Coords points="0,0 0,2526 1785,2526 1785,0" />
+      <TextLine id="textline_f882a8ae-102a-4230-a018-5dfa9bc2685e">
+        <Coords points="1087,75 1087,76 1118,76 1118,75" />
+        <Baseline points="1087,75 1117,75" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_e4bfe643-c25c-439d-974a-0e4b4f211b45">
+        <Coords points="1421,99 1421,109 1620,109 1620,99" />
+        <Baseline points="1421,108 1619,99" />
+      <TextEquiv engine="tesseract"><Unicode>(29144 3,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_6896aa5c-d2c0-427e-90c4-50b28e2160b3">
+        <Coords points="1647,98 1647,101 1686,101 1686,98" />
+        <Baseline points="1647,100 1685,98" />
+      <TextEquiv engine="tesseract"><Unicode>us. Milla</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a5cc430a-c73d-4934-a915-0984618586e2">
+        <Coords points="577,175 577,183 1406,183 1406,175" />
+        <Baseline points="578,175 778,179 1277,182 1405,180" />
+      <TextEquiv engine="tesseract"><Unicode>PROGRAMA: DE "RADIO BARCELONA ".E.A.J.-1</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_13fe5470-230c-4435-9704-9d8c2b7596b6">
+        <Coords points="639,234 639,243 1366,243 1366,234" />
+        <Baseline points="640,234 840,238 1339,238 1365,242" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_f8f7432c-6438-41ce-8a2e-e8e4cd5d808d">
+        <Coords points="749,293 749,301 1298,301 1298,293" />
+        <Baseline points="750,293 800,296 1149,296 1297,300" />
+      <TextEquiv engine="tesseract"><Unicode>VIERNES, 24 Diciembre 1943</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_71feda53-5b4d-433e-8275-016af8865d8c">
+        <Coords points="797,331 797,336 1216,336 1216,331" />
+        <Baseline points="798,335 1147,335 1215,331" />
+      <TextEquiv engine="tesseract"><Unicode>do cri RECe OS IS SE EES:</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_414e4cb9-cd31-494a-a0e4-acd5198d980b">
+        <Coords points="421,411 421,419 1646,419 1646,411" />
+        <Baseline points="422,411 1621,413 1645,418" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_fc68e074-da41-476b-8cd0-1dc685d16e79">
+        <Coords points="303,411 303,415 392,415 392,411" />
+        <Baseline points="304,411 354,414 392,411" />
+      <TextEquiv engine="tesseract"><Unicode>8h.--</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ccf7e97d-adfc-4805-8394-8128f315a60a">
+        <Coords points="433,452 433,455 1718,455 1718,452" />
+        <Baseline points="434,452 1717,454" />
+      <TextEquiv engine="tesseract"><Unicode>BARCELONA EAJ-1,.al servicio de España y de su Caudillo Fran-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_f264278f-c525-4dcf-8b85-72e28a36344a">
+        <Coords points="431,489 431,497 1656,497 1656,489" />
+        <Baseline points="432,492 682,489 931,493 1331,490 1581,492 1655,496" />
+      <TextEquiv engine="tesseract"><Unicode>CO. Señores radioyentes, muy buenos. días. Saludo a. Franco.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e27f48ae-5c0e-4bcb-a7ab-9362cb83d012">
+        <Coords points="427,528 427,539 726,539 726,528" />
+        <Baseline points="428,538 478,530 578,528 678,530 726,534" />
+      <TextEquiv engine="tesseract"><Unicode>Arriba España.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8596a293-216e-4bb5-8f99-0067ddce8218">
+        <Coords points="411,588 411,593 1314,593 1314,588" />
+        <Baseline points="412,588 1211,589 1313,592" />
+      <TextEquiv engine="tesseract"><Unicode>- Campanadas desde la Catedral de Barcelona,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_da76691b-fedd-471b-a8b7-f1f411211a85">
+        <Coords points="407,666 407,673 1678,673 1678,666" />
+        <Baseline points="408,666 1607,668 1677,672" />
+      <TextEquiv engine="tesseract"><Unicode>. Canciones por Jeannette Mac Donald y Pot pourri de operetas</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_ea5b1c1e-dd32-42be-8212-10fb2ec2a56c">
+        <Coords points="429,701 429,707 810,707 810,701" />
+        <Baseline points="430,701 480,706 810,706" />
+      <TextEquiv engine="tesseract"><Unicode>vienesasi (Discos)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5207ba3f-4402-46b7-94e7-807f7b24820e">
+        <Coords points="295,780 295,787 1732,787 1732,780" />
+        <Baseline points="296,780 396,784 746,780 1445,786 1731,785" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_cd896eb2-0495-43af-918f-9c7d6222d722">
+        <Coords points="425,822 425,825 1180,825 1180,822" />
+        <Baseline points="426,822 1179,824" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_6b06a47d-97ab-405d-9405-39041965ea35">
+        <Coords points="303,898 303,904 1678,904 1678,898" />
+        <Baseline points="304,898 354,903 554,898 1677,903" />
+      <TextEquiv engine="tesseract"><Unicode>8h, 3o ACABAN VDES, DE OIR LA EMISIÓN LOCAL DE BARCELONA DE LA RED</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_54df82c2-6ec9-4013-ac8b-705862bca183">
+        <Coords points="429,937 429,943 980,943 980,937" />
+        <Baseline points="430,941 830,937 979,942" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_e960ab1c-2f04-41f9-9a24-d1d1f2dc5310">
+        <Coords points="395,1015 395,1021 1124,1021 1124,1015" />
+        <Baseline points="396,1015 596,1020 1123,1019" />
+      <TextEquiv engine="tesseract"><Unicode>- Música ligera orquestal (Discos)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_eb42ff62-07da-4e47-ba3b-72f1c76cc15d">
+        <Coords points="301,1094 301,1099 742,1099 742,1094" />
+        <Baseline points="302,1096 652,1094 742,1098" />
+      <TextEquiv engine="tesseract"><Unicode>5h,40 Guía comercial.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_052aeacf-252f-4acc-af29-a41530c8c086">
+        <Coords points="299,1174 299,1176 1058,1176 1058,1174" />
+        <Baseline points="300,1174 1057,1175" />
+      <TextEquiv engine="tesseract"><Unicode>05.45 Boletin informativo religioso.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_8b8bf926-43b6-427d-8356-ff3a38b424e2">
+        <Coords points="301,1249 301,1254 958,1254 958,1249" />
+        <Baseline points="302,1249 352,1253 957,1251" />
+      <TextEquiv engine="tesseract"><Unicode>8h.50 Música de Weber: (Discos)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_accb6345-bd7e-4315-aac8-26faf4a36963">
+        <Coords points="409,1328 409,1332 1724,1332 1724,1328" />
+        <Baseline points="410,1331 460,1328 1723,1331" />
+      <TextEquiv engine="tesseract"><Unicode>- Damos por termineda nuestra emisión'de la mañana y nos despe—</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e1430ad9-a323-4c6f-89f6-960d7a60b94c">
+        <Coords points="303,1329 303,1333 398,1333 398,1329" />
+        <Baseline points="304,1329 354,1332 398,1330" />
+      <TextEquiv engine="tesseract"><Unicode>9h.--</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_b651ff1d-c0ae-49a9-9ead-ee6e477ab552">
+        <Coords points="425,1368 425,1369 1736,1369 1736,1368" />
+        <Baseline points="426,1368 1735,1368" />
+      <TextEquiv engine="tesseract"><Unicode>dimos de ustedes hasta hasta'las. doce, si Dios quiere, Señores</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_2adee39b-cacf-417f-a8df-5945a5cee86e">
+        <Coords points="429,1406 429,1411 1676,1411 1676,1406" />
+        <Baseline points="430,1410 780,1406 1329,1406 1429,1409 1675,1407" />
+      <TextEquiv engine="tesseract"><Unicode>radi oyentes, muy buenos dias, SOCIEDAD ESPAÑOLA DE RADIODI-=</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_e0a9b216-5c52-4a0f-a323-fc97a3bda7c3">
+        <Coords points="427,1445 427,1451 1676,1451 1676,1445" />
+        <Baseline points="428,1450 828,1445 1675,1446" />
+      <TextEquiv engine="tesseract"><Unicode>FUSIÓN, EMISORA DE BARCELONA EAJ"1.. Saludo. a Franco, Arriba</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_267070d8-e1e0-49bb-af8f-cf5ea6d4b9e0">
+        <Coords points="425,1484 425,1487 574,1487 574,1484" />
+        <Baseline points="426,1486 574,1484" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_cf419d0e-e265-4e1e-b67c-2cf58c00f456">
+        <Coords points="441,1535 441,1574 1656,1574 1656,1535" />
+        <Baseline points="442,1573 492,1570 542,1560 692,1556 792,1558 892,1550 941,1553 1441,1550 1541,1538 1641,1535 1655,1538" />
+      <TextEquiv engine="tesseract"><Unicode>ANA al yd PGA AA IS LIA Pd</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_7e96855b-11d4-4bd3-8413-3ac5c84a7825">
+        <Coords points="423,1599 423,1610 1730,1610 1730,1599" />
+        <Baseline points="424,1609 474,1603 774,1604 824,1600 1373,1604 1523,1599 1623,1602 1729,1601" />
+      <TextEquiv engine="tesseract"><Unicode>Sintonía. - SOCIEDAD ESPAÑOLA DE RADIODIFUSIÓN. EMISORA DE BAR-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_31ffe6bd-01d5-463d-a631-68770b37444a">
+        <Coords points="291,1603 291,1609 382,1609 382,1603" />
+        <Baseline points="292,1606 342,1608 382,1603" />
+      <TextEquiv engine="tesseract"><Unicode>12h.-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_0d1b6baf-b0de-44f0-8a33-dab9b07c7393">
+        <Coords points="421,1638 421,1646 1696,1646 1696,1638" />
+        <Baseline points="422,1643 1571,1638 1695,1645" />
+      <TextEquiv engine="tesseract"><Unicode>CBLONA ' EAJ-1, al servicio "de¡España. y de:su Caudillo Franco.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_5afe9be2-f31e-4ab5-93a0-23af3ebfcdf8">
+        <Coords points="417,1679 417,1686 1692,1686 1692,1679" />
+        <Baseline points="418,1685 568,1681 1691,1679" />
+      <TextEquiv engine="tesseract"><Unicode>iSefiores. radi oyentes, muy buenos dias, Saludo a Franco, Arri-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_4356e1eb-3c15-4090-844c-06de0294f0d2">
+        <Coords points="423,1722 423,1728 636,1728 636,1722" />
+        <Baseline points="424,1727 474,1722 636,1723" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_3b9ef4fe-9c50-4a3e-a7a0-fad004ee4f77">
+        <Coords points="273,1731 273,1739 394,1739 394,1731" />
+        <Baseline points="274,1738 394,1731" />
+      <TextEquiv engine="tesseract"><Unicode>IQ, O</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_60e679e1-e5e6-4988-a1fa-689e19534936">
+        <Coords points="389,1779 389,1787 1312,1787 1312,1779" />
+        <Baseline points="390,1786 440,1781 590,1779 1311,1781" />
+      <TextEquiv engine="tesseract"><Unicode>X Campanadas desde la Catedral de Barcelona,</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_415c7f76-7861-4696-b54a-a3f43cfe70ec">
+        <Coords points="373,1856 373,1864 1102,1864 1102,1856" />
+        <Baseline points="374,1863 424,1857 1073,1856 1101,1859" />
+      <TextEquiv engine="tesseract"><Unicode>ad SERVICIO METEOROLÓGICO NACIONAL.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a86b5eb4-5289-48aa-8ad9-b45841d94f6f">
+        <Coords points="257,1932 257,1943 1732,1943 1732,1932" />
+        <Baseline points="258,1942 308,1936 957,1932 1731,1932" />
+      <TextEquiv engine="tesseract"><Unicode>X12h.05 Teatro lírico español: "Doña Francisquita", de Vives: (Discos)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_97690d6e-e2c0-48a6-bd38-08340d9d01eb">
+        <Coords points="257,2014 257,2019 848,2019 848,2014" />
+        <Baseline points="258,2018 308,2014 848,2016" />
+      <TextEquiv engine="tesseract"><Unicode>/T12h,55 Boletin informativo.</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_1e32a498-64a4-4e6b-8468-54ab06834e12">
+        <Coords points="253,2091 253,2096 1456,2096 1456,2091" />
+        <Baseline points="254,2095 454,2092 504,2094 1455,2091" />
+      <TextEquiv engine="tesseract"><Unicode>Al3h.--— "Algunos consejos prácticos de utilidad general",</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a7df1adb-8fb8-4088-bddf-6e3db9be67d0">
+        <Coords points="261,2167 261,2175 1700,2175 1700,2167" />
+        <Baseline points="262,2170 362,2174 562,2170 1111,2170 1211,2167 1699,2171" />
+      <TextEquiv engine="tesseract"><Unicode>213h.05 Continuación: Teatro lírico español: "Doña Francisquita", de</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_a0733ab7-9629-4e5a-a88d-a8e9e32f9c2d">
+        <Coords points="431,2205 431,2213 742,2213 742,2205" />
+        <Baseline points="432,2209 482,2212 732,2210 742,2205" />
+      <TextEquiv engine="tesseract"><Unicode>Vives: (Discos)</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_d5e1896a-39ba-48ea-88bd-1e95bfcf0741">
+        <Coords points="259,2286 259,2296 1728,2296 1728,2286" />
+        <Baseline points="260,2295 460,2289 760,2286 1727,2286" />
+      <TextEquiv engine="tesseract"><Unicode>. 5 CONEC TAMC CON Ls "i ED. SPA OL v Di E ¡AD .ODIFUSIOÓN, v BRA RETR: NS-</Unicode></TextEquiv></TextLine>
+      <TextLine id="textline_524115a7-219b-4331-b3d2-c62d680952e7">
+        <Coords points="431,2326 431,2331 1184,2331 1184,2326" />
+        <Baseline points="432,2329 1031,2326 1183,2330" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_26c8de15-6def-44dd-8228-a9805e47cda2">
+        <Coords points="253,2405 253,2417 1658,2417 1658,2405" />
+        <Baseline points="254,2411 354,2412 554,2406 953,2405 1203,2407 1553,2416 1657,2415" />
+      <TextEquiv><Unicode /></TextEquiv></TextLine>
+      <TextLine id="textline_661ac7cc-3e21-4118-9244-5e8b8c98382a">
+        <Coords points="425,2448 425,2452 980,2452 980,2448" />
+        <Baseline points="426,2451 979,2448" />
+      <TextEquiv engine="tesseract"><Unicode>ESPAÑOLA DE RADIODLFUS ION ..:</Unicode></TextEquiv></TextLine>
+    </TextRegion>
+  </Page>
+</PcGts>
