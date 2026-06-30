@@ -45,3 +45,88 @@
 
 #### Task 4.2 Stress-Testing of Webinterface
 - Test with 5k pages
+
+
+# Product Usage
+## Requirements
+Before running the software, ensure you have the following installed on your system:
+
+- Node.js (v14 or higher) - For the web server and data processing.
+
+- Python 3.8+ - For the FAISS visual stamp search API.
+
+- Elasticsearch (v8.x recommended) - Running locally on port 9200.
+
+- Ollama - Running locally on port 11434 with the bge-m3 model installed.
+
+  - To install the model, run: ollama pull bge-m3
+
+## Directory Structure
+For the application to run successfully, your prototype data must be organized in the root of the project as follows:
+```
+├── seg_split_A_package/
+│   ├── original_images/       # The raw vintage scans (.png)
+│   ├── layer_separation/
+│   │   ├── blue/              # Typewritten layers (_blue.png)
+│   │   └── red/               # Handwritten layers (_red.png)
+│   └── pagexml_tesseract/     # The OCR bounding box data (.xml)
+├── visual_index.faiss         # FAISS vector database for stamps
+├── metadata.jsonl             # Stamp metadata 
+├── vae_best.pt                # Trained VAE model weights
+└── vae_model.py               # VAE PyTorch architecture blueprint
+```
+## Installation
+### 1. Node.js Dependencies
+
+Open your terminal in the project root and install the required Node packages:
+```
+npm install express cors @elastic/elasticsearch xml2js
+```
+### 2. Python Dependencies
+
+Install the required Python libraries for the computer vision API:
+```
+pip install fastapi uvicorn faiss-cpu torch torchvision Pillow numpy python-multipart
+```
+## Data Preparation Pipeline
+Before running the server for the first time, you must parse the raw XML data and load it into your Elasticsearch database.
+
+Extract the Text & Bounding Boxes:
+This reads the pagexml_tesseract folder and generates a data.js file for the frontend.
+```
+node build_data.js
+```
+Index the Data (Conceptual & Exact Search):
+This sends the text to Ollama to create AI embeddings, and saves everything into Elasticsearch. (Note: Ollama and Elasticsearch must be running before you execute this).
+```
+node index_data.js
+```
+## Running the Application
+
+To use the full Tri-Modal search engine, you need to spin up the two local servers.
+
+Terminal 1: Start the Visual Stamp Search API (Python)
+```
+uvicorn stamp_api:app --reload --port 8000
+```
+Terminal 2: Start the Main Search Server (Node.js)
+```
+node server.js
+```
+## Usage
+
+Once both servers are running, open your web browser and navigate to:
+
+-> http://localhost:3000/in.html
+
+Search Modes:
+
+- Exact Match (Text): Select "Exact Match" in the dropdown to search for specific words using Elasticsearch BM25.
+
+- Conceptual Search (Semantics): Select "Conceptual" to search for broad ideas (e.g., "politics", "war"). The AI will find text blocks that share that meaning.
+
+- Visual Stamp Search: Click the Paperclip Icon in the search bar to upload a local crop of a stamp. The FAISS engine will instantly find and display visually similar documents in the archive.
+
+Viewer Mode:
+
+Click on any document in the grid to open the Projector Layer UI. You can toggle search highlights on/off, or switch to "Separated Layers" to view the isolated handwritten (red) and typewritten (blue) extractions side-by-side. Click on any highlighted red stamp to query the database for similar stamps.
